@@ -2,6 +2,7 @@ FROM php:8.2-fpm-alpine
 
 # Install system dependencies
 RUN apk add --no-cache \
+    $PHPIZE_DEPS \
     git \
     curl \
     libpng-dev \
@@ -12,6 +13,7 @@ RUN apk add --no-cache \
     postgresql-dev \
     oniguruma-dev \
     libxml2-dev \
+    autoconf \
     zip \
     unzip
 
