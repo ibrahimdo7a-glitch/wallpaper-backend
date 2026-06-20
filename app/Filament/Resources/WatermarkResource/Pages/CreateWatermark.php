@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 namespace App\Filament\Resources\WatermarkResource\Pages;
 

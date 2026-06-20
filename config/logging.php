@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 return [
     'default' => env('LOG_CHANNEL', 'stderr'),

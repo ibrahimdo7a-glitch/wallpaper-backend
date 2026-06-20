@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 namespace App\Filament\Resources\TagResource\Pages;
 use App\Filament\Resources\TagResource;
 
