@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 return [
     'default' => env('FILESYSTEM_DISK', 'r2'),
