@@ -39,13 +39,14 @@ WORKDIR /var/www/html
 
 # Copy composer file only (no composer.lock)
 COPY composer.json ./
-RUN composer install --no-scripts --no-autoloader --prefer-dist --no-dev
+ENV COMPOSER_ALLOW_SUPERUSER=1
+RUN composer install --no-scripts --no-autoloader --prefer-dist --no-dev --no-audit --ignore-platform-reqs
 
 # Copy application
 COPY . .
 
 # Finish composer install
-RUN composer dump-autoload --optimize
+RUN composer dump-autoload --optimize --no-scripts
 
 # Set permissions
 RUN mkdir -p /var/www/html/storage/logs \
