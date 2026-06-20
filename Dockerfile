@@ -40,7 +40,7 @@ WORKDIR /var/www/html
 # Copy composer file only (no composer.lock)
 COPY composer.json ./
 ENV COMPOSER_ALLOW_SUPERUSER=1
-RUN composer install --no-scripts --no-autoloader --prefer-dist --no-dev --no-audit --ignore-platform-reqs
+RUN composer install --no-scripts --no-autoloader --prefer-dist --no-dev --no-security-blocking --ignore-platform-reqs
 
 # Copy application
 COPY . .
