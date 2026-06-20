@@ -1,21 +1,24 @@
 FROM php:8.2-fpm-alpine
 
-# Install system dependencies
+# Install system dependencies + build tools
 RUN apk add --no-cache \
-    $PHPIZE_DEPS \
     git \
     curl \
     libpng-dev \
     libjpeg-turbo-dev \
     freetype-dev \
     libwebp-dev \
-    imagemagick-dev \
     postgresql-dev \
     oniguruma-dev \
     libxml2-dev \
     autoconf \
+    g++ \
+    make \
     zip \
     unzip
+
+# Install Redis extension FIRST (before php-ext-install purges autoconf)
+RUN pecl install redis && docker-php-ext-enable redis
 
 # Install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
@@ -29,15 +32,12 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
         xml \
         opcache
 
-# Install Redis extension
-RUN pecl install redis && docker-php-ext-enable redis
-
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Copy composer file
+# Copy composer file only (no composer.lock)
 COPY composer.json ./
 RUN composer install --no-scripts --no-autoloader --prefer-dist --no-dev
 
@@ -48,8 +48,9 @@ COPY . .
 RUN composer dump-autoload --optimize
 
 # Set permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+RUN mkdir -p /var/www/html/storage/logs \
+    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 EXPOSE ${PORT:-8000}
 
