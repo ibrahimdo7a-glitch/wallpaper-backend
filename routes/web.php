@@ -7,20 +7,16 @@ Route::get('/', function () {
 });
 
 Route::get('/debug-error', function () {
-    $results = [];
-    try {
-        $disk = config('filesystems.default');
-        $results['filesystem_disk'] = $disk;
-        \Storage::disk($disk)->exists('test');
-        $results['filesystem_connection'] = 'OK';
-    } catch (\Throwable $e) {
-        $results['filesystem_connection'] = 'FAIL: ' . $e->getMessage();
-    }
-    try {
-        class_exists(\App\Filament\Resources\WallpaperResource::class);
-        $results['WallpaperResource'] = 'OK';
-    } catch (\Throwable $e) {
-        $results['WallpaperResource'] = 'FAIL: ' . $e->getMessage();
-    }
-    return response()->json($results, 200, [], JSON_PRETTY_PRINT);
+    return response()->json([
+        'env_FILESYSTEM_DISK' => env('FILESYSTEM_DISK', 'NOT_SET'),
+        'config_disk' => config('filesystems.default'),
+        'disk_test' => (function() {
+            try {
+                \Storage::disk(config('filesystems.default'))->exists('test');
+                return 'OK';
+            } catch (\Throwable $e) {
+                return 'FAIL: ' . $e->getMessage();
+            }
+        })(),
+    ], 200, [], JSON_PRETTY_PRINT);
 });
