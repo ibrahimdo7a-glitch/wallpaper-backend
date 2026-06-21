@@ -6,55 +6,18 @@ Route::get('/', function () {
     return redirect('/admin');
 });
 
-Route::get('/debug-last-error', function () {
-    $file = storage_path('logs/laravel-' . date('Y-m-d') . '.log');
-    if (!file_exists($file)) return response()->json(['error' => 'no log file']);
-    $content = file_get_contents($file);
-    preg_match_all('/\[\d{4}-\d{2}-\d{2}.*?\] \w+\.ERROR:.*?(?=\[\d{4}-\d{2}-\d{2}|\z)/s', $content, $matches);
-    if (empty($matches[0])) return response()->json(['error' => 'no errors found']);
-    $last = end($matches[0]);
-    return response(substr($last, 0, 3000), 200, ['Content-Type' => 'text/plain']);
-});
+// Serve uploaded files directly (fallback when storage symlink is unreliable in Docker)
+Route::get('/storage/{path}', function (string $path) {
+    $filePath = storage_path('app/public/' . $path);
 
-Route::get('/debug-upload', function () {
-    $results = [];
-
-    // Redis check
-    try {
-        \Cache::store('redis')->put('test', 'ok', 10);
-        $results['redis'] = 'OK';
-    } catch (\Throwable $e) {
-        $results['redis'] = 'FAIL: ' . $e->getMessage();
+    if (! file_exists($filePath) || ! is_file($filePath)) {
+        abort(404);
     }
 
-    // Session driver
-    $results['session_driver'] = config('session.driver');
+    $mime = mime_content_type($filePath) ?: 'application/octet-stream';
 
-    // Livewire temp dirs
-    $dirs = [
-        storage_path('app/livewire-tmp'),
-        storage_path('app/public/livewire-tmp'),
-        storage_path('app/private/livewire-tmp'),
-    ];
-    foreach ($dirs as $dir) {
-        $exists = is_dir($dir);
-        $writable = $exists && is_writable($dir);
-        $results['dir_' . basename(dirname($dir)) . '_livewire-tmp'] = $exists ? ($writable ? 'OK writable' : 'exists but NOT writable') : 'MISSING';
-    }
-
-    // Try writing to temp dir
-    try {
-        $path = storage_path('app/livewire-tmp/test-' . time() . '.txt');
-        file_put_contents($path, 'test');
-        unlink($path);
-        $results['write_test'] = 'OK';
-    } catch (\Throwable $e) {
-        $results['write_test'] = 'FAIL: ' . $e->getMessage();
-    }
-
-    // Livewire disk config
-    $results['livewire_disk'] = config('livewire.temporary_file_upload.disk', 'NOT SET');
-
-    return response()->json($results, 200, [], JSON_PRETTY_PRINT);
-});
-
+    return response()->file($filePath, [
+        'Content-Type'  => $mime,
+        'Cache-Control' => 'public, max-age=31536000, immutable',
+    ]);
+})->where('path', '.*');
