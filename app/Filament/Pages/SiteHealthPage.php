@@ -86,10 +86,13 @@ class SiteHealthPage extends Page
     {
         $url = config('app.frontend_url', 'https://qev.app');
         try {
-            $res = Http::timeout(5)->get($url);
-            return $res->successful()
-                ? ['status' => 'ok', 'message' => "الموقع يستجيب ({$res->status()})"]
-                : ['status' => 'error', 'message' => "الموقع أعاد خطأ {$res->status()}"];
+            // withoutRedirecting: a 3xx response still means the server is alive
+            $res = Http::timeout(8)->withoutRedirecting()->get($url);
+            $code = $res->status();
+            if ($code < 500) {
+                return ['status' => 'ok', 'message' => "الموقع يستجيب ({$code})"];
+            }
+            return ['status' => 'error', 'message' => "الموقع أعاد خطأ {$code}"];
         } catch (\Throwable $e) {
             return ['status' => 'error', 'message' => 'الموقع لا يستجيب: ' . $e->getMessage()];
         }
