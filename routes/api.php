@@ -57,12 +57,23 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
             'feature_quality_ar', 'feature_quality_en',
             'feature_fast_ar', 'feature_fast_en',
             'footer_copyright_ar', 'footer_copyright_en',
+            'ilink_enabled',
+            'ilink_label_ar', 'ilink_label_en',
+            'ilink_tooltip_ar', 'ilink_tooltip_en',
+            'ilink_file_path',
         ];
         $settings = collect($keys)->mapWithKeys(fn($k) => [$k => \App\Models\Setting::get($k, '')]);
 
         // Parse popular_tags as arrays
         $settings['popular_tags_ar'] = array_filter(array_map('trim', explode(',', $settings['popular_tags_ar'] ?? '')));
         $settings['popular_tags_en'] = array_filter(array_map('trim', explode(',', $settings['popular_tags_en'] ?? '')));
+
+        // Build iLink file URL from stored path
+        $filePath = $settings['ilink_file_path'] ?? '';
+        $settings['ilink_file_url'] = $filePath
+            ? \Illuminate\Support\Facades\Storage::disk(config('filesystems.default', 'public'))->url($filePath)
+            : '';
+        unset($settings['ilink_file_path']);
 
         return response()->json([
             'data' => $settings,

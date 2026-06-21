@@ -51,6 +51,10 @@ class SiteSettingsPage extends Page
             'feature_quality_ar', 'feature_quality_en',
             'feature_fast_ar', 'feature_fast_en',
             'footer_copyright_ar', 'footer_copyright_en',
+            'ilink_enabled',
+            'ilink_label_ar', 'ilink_label_en',
+            'ilink_tooltip_ar', 'ilink_tooltip_en',
+            'ilink_file_path',
         ];
 
         $formData = [];
@@ -161,6 +165,45 @@ class SiteSettingsPage extends Page
                                         ->label('حقوق النشر (إنجليزي)')
                                         ->placeholder('© 2025 Leopard Wallpapers. All rights reserved.'),
                                 ]),
+                            ]),
+
+                        Forms\Components\Tabs\Tab::make('iLink')
+                            ->icon('heroicon-o-link')
+                            ->schema([
+                                Forms\Components\Toggle::make('ilink_enabled')
+                                    ->label('تفعيل iLink')
+                                    ->helperText('إظهار زر iLink في رأس الصفحة')
+                                    ->inline(false),
+
+                                Forms\Components\Grid::make(2)->schema([
+                                    Forms\Components\TextInput::make('ilink_label_ar')
+                                        ->label('نص الزر (عربي)')
+                                        ->placeholder('حمّل التطبيق'),
+                                    Forms\Components\TextInput::make('ilink_label_en')
+                                        ->label('نص الزر (إنجليزي)')
+                                        ->placeholder('Download App'),
+                                ]),
+
+                                Forms\Components\Grid::make(2)->schema([
+                                    Forms\Components\TextInput::make('ilink_tooltip_ar')
+                                        ->label('رسالة التمرير (عربي)')
+                                        ->helperText('تظهر عند وضع الماوس على الزر')
+                                        ->placeholder('اضغط لتحميل ملف التطبيق'),
+                                    Forms\Components\TextInput::make('ilink_tooltip_en')
+                                        ->label('رسالة التمرير (إنجليزي)')
+                                        ->helperText('Shown when hovering over the button')
+                                        ->placeholder('Click to download the app file'),
+                                ]),
+
+                                Forms\Components\FileUpload::make('ilink_file_path')
+                                    ->label('ملف التطبيق')
+                                    ->helperText('IPA أو APK أو أي ملف للتحميل — الحد الأقصى 500 ميغابايت')
+                                    ->disk(config('filesystems.default', 'public'))
+                                    ->directory('ilink')
+                                    ->visibility('public')
+                                    ->preserveFilenames()
+                                    ->maxSize(512000)
+                                    ->columnSpanFull(),
                             ]),
                     ])
                     ->columnSpanFull(),
