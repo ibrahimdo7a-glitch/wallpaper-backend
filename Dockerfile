@@ -57,6 +57,6 @@ RUN mkdir -p /var/www/html/storage/logs \
     && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-EXPOSE ${PORT:-8000}
+EXPOSE 8080
 
-CMD php artisan migrate --force && php artisan db:seed --class=RolesAndPermissionsSeeder --force 2>/dev/null || true && php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
+CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
