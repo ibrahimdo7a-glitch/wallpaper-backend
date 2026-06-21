@@ -118,7 +118,7 @@ class WallpaperResource extends Resource
                 ->schema([
                     Forms\Components\Select::make('watermark_id')
                         ->label('التوقيع')
-                        ->relationship('watermark', 'name', fn($q) => $q->active())
+                        ->relationship('watermark', 'name', fn(\Illuminate\Database\Eloquent\Builder $q) => $q->where('is_active', true))
                         ->nullable()
                         ->placeholder('بدون توقيع')
                         ->visible(fn() => $user->can_upload_without_watermark || true),
