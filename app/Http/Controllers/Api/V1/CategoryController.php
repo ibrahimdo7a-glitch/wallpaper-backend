@@ -14,7 +14,8 @@ class CategoryController extends Controller
         $categories = Cache::remember('categories.tree', 3600, function () {
             return Category::active()
                 ->root()
-                ->with('children.children')
+                ->withCount(['wallpapers as wallpapers_count' => fn($q) => $q->where('status', 'published')])
+                ->with(['children' => fn($q) => $q->withCount(['wallpapers as wallpapers_count' => fn($q2) => $q2->where('status', 'published')]), 'children.children'])
                 ->orderBy('sort_order')
                 ->get()
                 ->map(fn($c) => $this->formatCategory($c));

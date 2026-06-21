@@ -19,6 +19,13 @@ class Wallpaper extends Model
 
     protected static function booted(): void
     {
+        // Clear category cache whenever a wallpaper is published, unpublished, or moved
+        static::saved(static function (self $wallpaper) {
+            if ($wallpaper->wasChanged('status') || $wallpaper->wasChanged('category_id') || $wallpaper->wasRecentlyCreated) {
+                \Illuminate\Support\Facades\Cache::forget('categories.tree');
+            }
+        });
+
         static::creating(function (self $wallpaper) {
             // Auto-generate slug
             if (empty($wallpaper->slug)) {
