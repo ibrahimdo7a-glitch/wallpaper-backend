@@ -106,9 +106,9 @@ class WallpaperResource extends Resource
                     Forms\Components\FileUpload::make('original_file')
                         ->label('صورة الخلفية')
                         ->image()
-                        ->disk('r2')
+                        ->disk(config('filesystems.default', 'public'))
                         ->directory('wallpapers/original/' . date('Y/m'))
-                        ->visibility('private')
+                        ->visibility(config('filesystems.default', 'public') === 'r2' ? 'private' : 'public')
                         ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
                         ->maxSize(20480)
                         ->required(fn($context) => $context === 'create'),
