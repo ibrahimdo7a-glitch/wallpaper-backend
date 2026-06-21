@@ -62,7 +62,7 @@ class Category extends Model
             return null;
         }
 
-        return Storage::disk('r2')->url($this->cover_image);
+        return Storage::disk(config('filesystems.default', 'public'))->url($this->cover_image);
     }
 
     public function getNameAttribute(): string

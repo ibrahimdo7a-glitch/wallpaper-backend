@@ -166,6 +166,7 @@ class WallpaperResource extends Resource
             ->columns([
                 Tables\Columns\ImageColumn::make('thumbnail_file')
                     ->label('معاينة')
+                    ->state(fn($record) => $record->thumbnail_file ?? $record->original_file)
                     ->disk(config('filesystems.default', 'public'))
                     ->width(80)
                     ->height(50),

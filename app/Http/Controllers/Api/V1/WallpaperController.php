@@ -30,7 +30,13 @@ class WallpaperController extends Controller
 
         // Filters
         if ($request->category) {
-            $query->where('category_id', $request->category);
+            $cat = $request->category;
+            if (is_numeric($cat)) {
+                $query->where('category_id', (int) $cat);
+            } else {
+                $catId = \App\Models\Category::where('slug', $cat)->value('id');
+                if ($catId) $query->where('category_id', $catId);
+            }
         }
 
         if ($request->device_type) {
