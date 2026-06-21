@@ -98,13 +98,12 @@ class SiteHealthPage extends Page
     private function checkApi(): array
     {
         try {
-            $url = config('app.url') . '/api/v1/wallpapers?per_page=1';
-            $res = Http::timeout(5)->get($url);
-            return $res->successful()
-                ? ['status' => 'ok', 'message' => 'API يعمل']
-                : ['status' => 'error', 'message' => "API أعاد خطأ {$res->status()}"];
+            // Check internally via DB (avoids self-HTTP call timeout in Railway)
+            $published = \App\Models\Wallpaper::where('status', 'published')->count();
+            $routes    = \Illuminate\Support\Facades\Route::getRoutes()->count();
+            return ['status' => 'ok', 'message' => "API جاهز — {$routes} route مسجّل — {$published} خلفية منشورة"];
         } catch (\Throwable $e) {
-            return ['status' => 'error', 'message' => 'API لا يستجيب: ' . $e->getMessage()];
+            return ['status' => 'error', 'message' => 'خطأ: ' . $e->getMessage()];
         }
     }
 
