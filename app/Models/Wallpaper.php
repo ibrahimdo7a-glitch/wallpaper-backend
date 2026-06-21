@@ -20,11 +20,51 @@ class Wallpaper extends Model
     protected static function booted(): void
     {
         static::creating(function (self $wallpaper) {
+            // Auto-generate slug
             if (empty($wallpaper->slug)) {
                 $base = $wallpaper->title_en ?? $wallpaper->title_ar ?? 'wallpaper';
                 $slug = Str::slug($base) ?: 'wallpaper';
-                $unique = $slug . '-' . Str::random(8);
-                $wallpaper->slug = $unique;
+                $wallpaper->slug = $slug . '-' . Str::random(8);
+            }
+
+            // Extract image metadata from uploaded file
+            if ($wallpaper->original_file && empty($wallpaper->mime_type)) {
+                try {
+                    $disk = config('filesystems.default', 'public');
+                    $fullPath = Storage::disk($disk)->path($wallpaper->original_file);
+
+                    if (file_exists($fullPath)) {
+                        $wallpaper->mime_type  = mime_content_type($fullPath) ?: 'image/jpeg';
+                        $wallpaper->file_size  = filesize($fullPath) ?: 0;
+                        $size = @getimagesize($fullPath);
+                        $wallpaper->width  = (int) ($size[0] ?? 0);
+                        $wallpaper->height = (int) ($size[1] ?? 0);
+
+                        if ($wallpaper->width && $wallpaper->height) {
+                            $mp = ($wallpaper->width * $wallpaper->height) / 1_000_000;
+                            $wallpaper->resolution_label = match (true) {
+                                $mp >= 33  => '8K',
+                                $mp >= 8   => '4K',
+                                $mp >= 3.7 => 'QHD',
+                                $mp >= 2   => 'FHD',
+                                $mp >= 0.9 => 'HD',
+                                default    => 'SD',
+                            };
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    \Log::warning('Could not extract image metadata: ' . $e->getMessage());
+                }
+            }
+
+            // Absolute fallback for NOT NULL column
+            if (empty($wallpaper->mime_type)) {
+                $ext = strtolower(pathinfo($wallpaper->original_file ?? '', PATHINFO_EXTENSION));
+                $wallpaper->mime_type = match ($ext) {
+                    'png'  => 'image/png',
+                    'webp' => 'image/webp',
+                    default => 'image/jpeg',
+                };
             }
         });
     }
@@ -111,11 +151,12 @@ class Wallpaper extends Model
 
     public function getPublicImageUrlAttribute(): string
     {
+        $disk = config('filesystems.default', 'public');
         $file = $this->watermark_applied && $this->watermarked_webp_file
             ? $this->watermarked_webp_file
             : ($this->webp_file ?? $this->original_file);
 
-        return Storage::disk('r2')->url($file);
+        return Storage::disk($disk)->url($file);
     }
 
     public function getThumbnailUrlAttribute(): ?string
@@ -124,16 +165,22 @@ class Wallpaper extends Model
             return null;
         }
 
-        return Storage::disk('r2')->url($this->thumbnail_file);
+        $disk = config('filesystems.default', 'public');
+        return Storage::disk($disk)->url($this->thumbnail_file);
     }
 
     public function getDownloadUrlAttribute(): string
     {
+        $disk = config('filesystems.default', 'public');
         $file = $this->watermark_applied && $this->watermarked_file
             ? $this->watermarked_file
             : $this->original_file;
 
-        return Storage::disk('r2')->temporaryUrl($file, now()->addMinutes(5));
+        if (in_array($disk, ['r2', 's3'])) {
+            return Storage::disk($disk)->temporaryUrl($file, now()->addMinutes(5));
+        }
+
+        return Storage::disk($disk)->url($file);
     }
 
     public function scopePublished($query)

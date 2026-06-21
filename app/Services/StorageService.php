@@ -19,8 +19,9 @@ class StorageService
     {
         $path = 'wallpapers/original/' . date('Y/m');
         $filename = Str::random(40) . '.' . $file->getClientOriginalExtension();
+        $visibility = in_array($this->disk, ['r2', 's3']) ? 'private' : 'public';
 
-        Storage::disk($this->disk)->putFileAs($path, $file, $filename, 'private');
+        Storage::disk($this->disk)->putFileAs($path, $file, $filename, $visibility);
 
         return "{$path}/{$filename}";
     }
@@ -78,7 +79,11 @@ class StorageService
 
     public function getTemporaryUrl(string $path, int $minutes = 5): string
     {
-        return Storage::disk($this->disk)->temporaryUrl($path, now()->addMinutes($minutes));
+        if (in_array($this->disk, ['r2', 's3'])) {
+            return Storage::disk($this->disk)->temporaryUrl($path, now()->addMinutes($minutes));
+        }
+
+        return Storage::disk($this->disk)->url($path);
     }
 
     public function delete(string $path): bool

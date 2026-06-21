@@ -239,6 +239,7 @@ class WallpaperController extends Controller
 
     protected function formatWallpaper(Wallpaper $wallpaper): array
     {
+        $disk = config('filesystems.default', 'public');
         $imageFile = $wallpaper->watermark_applied && $wallpaper->watermarked_webp_file
             ? $wallpaper->watermarked_webp_file
             : ($wallpaper->webp_file ?? $wallpaper->original_file);
@@ -248,8 +249,8 @@ class WallpaperController extends Controller
             'title_ar' => $wallpaper->title_ar,
             'title_en' => $wallpaper->title_en,
             'slug' => $wallpaper->slug,
-            'thumbnail_url' => $wallpaper->thumbnail_file ? \Storage::disk('r2')->url($wallpaper->thumbnail_file) : null,
-            'image_url' => \Storage::disk('r2')->url($imageFile),
+            'thumbnail_url' => $wallpaper->thumbnail_file ? \Storage::disk($disk)->url($wallpaper->thumbnail_file) : null,
+            'image_url' => \Storage::disk($disk)->url($imageFile),
             'width' => $wallpaper->width,
             'height' => $wallpaper->height,
             'resolution_label' => $wallpaper->resolution_label,
@@ -268,7 +269,7 @@ class WallpaperController extends Controller
                 'name' => $wallpaper->uploader->name,
                 'username' => $wallpaper->uploader->username,
                 'avatar_url' => $wallpaper->uploader->avatar
-                    ? \Storage::disk('r2')->url($wallpaper->uploader->avatar)
+                    ? \Storage::disk($disk)->url($wallpaper->uploader->avatar)
                     : null,
             ] : null,
             'category' => $wallpaper->category ? [
@@ -290,6 +291,8 @@ class WallpaperController extends Controller
     {
         $base = $this->formatWallpaper($wallpaper);
 
+        $disk = config('filesystems.default', 'public');
+
         return array_merge($base, [
             'description_ar' => $wallpaper->description_ar,
             'description_en' => $wallpaper->description_en,
@@ -302,7 +305,7 @@ class WallpaperController extends Controller
                 'bio_ar' => $wallpaper->uploader->bio_ar,
                 'bio_en' => $wallpaper->uploader->bio_en,
                 'avatar_url' => $wallpaper->uploader->avatar
-                    ? \Storage::disk('r2')->url($wallpaper->uploader->avatar)
+                    ? \Storage::disk($disk)->url($wallpaper->uploader->avatar)
                     : null,
                 'stats' => $wallpaper->uploader->getPublicStats(),
             ] : null,

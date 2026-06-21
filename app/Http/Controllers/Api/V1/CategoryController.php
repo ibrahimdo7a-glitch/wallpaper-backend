@@ -57,7 +57,7 @@ class CategoryController extends Controller
             'slug' => $category->slug,
             'icon' => $category->icon,
             'cover_image_url' => $category->cover_image
-                ? \Storage::disk('r2')->url($category->cover_image)
+                ? \Storage::disk(config('filesystems.default', 'public'))->url($category->cover_image)
                 : null,
             'wallpapers_count' => $category->wallpapers_count,
             'downloads_count' => $category->downloads_count,
