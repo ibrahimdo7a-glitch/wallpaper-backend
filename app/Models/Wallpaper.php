@@ -9,12 +9,25 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 class Wallpaper extends Model
 {
     use HasFactory, LogsActivity, SoftDeletes;
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $wallpaper) {
+            if (empty($wallpaper->slug)) {
+                $base = $wallpaper->title_en ?? $wallpaper->title_ar ?? 'wallpaper';
+                $slug = Str::slug($base) ?: 'wallpaper';
+                $unique = $slug . '-' . Str::random(8);
+                $wallpaper->slug = $unique;
+            }
+        });
+    }
 
     protected $fillable = [
         'title_ar', 'title_en', 'slug', 'description_ar', 'description_en',
