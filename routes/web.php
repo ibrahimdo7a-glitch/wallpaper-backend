@@ -6,6 +6,16 @@ Route::get('/', function () {
     return redirect('/admin');
 });
 
+Route::get('/debug-last-error', function () {
+    $file = storage_path('logs/laravel-' . date('Y-m-d') . '.log');
+    if (!file_exists($file)) return response()->json(['error' => 'no log file']);
+    $content = file_get_contents($file);
+    preg_match_all('/\[\d{4}-\d{2}-\d{2}.*?\] \w+\.ERROR:.*?(?=\[\d{4}-\d{2}-\d{2}|\z)/s', $content, $matches);
+    if (empty($matches[0])) return response()->json(['error' => 'no errors found']);
+    $last = end($matches[0]);
+    return response(substr($last, 0, 3000), 200, ['Content-Type' => 'text/plain']);
+});
+
 Route::get('/debug-upload', function () {
     $results = [];
 
