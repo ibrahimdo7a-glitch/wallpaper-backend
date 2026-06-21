@@ -11,17 +11,19 @@ use Filament\Pages\Page;
 
 class ManageSettings extends Page
 {
+    use \Filament\Forms\Concerns\InteractsWithForms;
+
     protected static ?string $navigationIcon = 'heroicon-o-cog-8-tooth';
 
     protected static ?string $navigationGroup = 'الإعدادات';
 
-    protected static ?string $title = 'إعدادات الموقع';
+    protected static ?string $title = 'إعدادات متقدمة';
 
     protected static ?int $navigationSort = 10;
 
     protected static string $view = 'filament.pages.manage-settings';
 
-    public array $data = [];
+    public ?array $data = [];
 
     public static function canAccess(): bool
     {
@@ -30,8 +32,22 @@ class ManageSettings extends Page
 
     public function mount(): void
     {
-        $settings = Setting::all()->pluck('value', 'key')->toArray();
-        $this->data = $settings;
+        $keys = [
+            'require_review', 'watermark_enabled', 'watermark_force_all',
+            'watermark_default_id', 'download_watermarked',
+            'likes_enabled', 'downloads_enabled', 'reports_enabled',
+            'max_upload_size_mb', 'default_language',
+            'meta_title_ar', 'meta_title_en',
+            'meta_description_ar', 'meta_description_en',
+            'login_attempts_limit', 'login_lockout_minutes',
+        ];
+
+        $formData = [];
+        foreach ($keys as $key) {
+            $formData[$key] = Setting::get($key, '');
+        }
+
+        $this->form->fill($formData);
     }
 
     public function form(Form $form): Form
@@ -40,70 +56,55 @@ class ManageSettings extends Page
             ->schema([
                 Forms\Components\Tabs::make('settings_tabs')
                     ->tabs([
-                        Forms\Components\Tabs\Tab::make('عام')
-                            ->schema([
-                                Forms\Components\TextInput::make('data.site_name_ar')
-                                    ->label('اسم الموقع (عربي)')
-                                    ->required(),
-                                Forms\Components\TextInput::make('data.site_name_en')
-                                    ->label('اسم الموقع (إنجليزي)')
-                                    ->required(),
-                                Forms\Components\Select::make('data.default_language')
-                                    ->label('اللغة الافتراضية')
-                                    ->options(['ar' => 'العربية', 'en' => 'English']),
-                                Forms\Components\FileUpload::make('data.logo')
-                                    ->label('الشعار')
-                                    ->image()
-                                    ->disk('r2')
-                                    ->directory('site'),
-                            ])->columns(2),
-
                         Forms\Components\Tabs\Tab::make('الرفع')
                             ->schema([
-                                Forms\Components\TextInput::make('data.max_upload_size_mb')
+                                Forms\Components\TextInput::make('max_upload_size_mb')
                                     ->label('الحد الأقصى للملف (MB)')
                                     ->numeric()
                                     ->minValue(1)
                                     ->maxValue(100),
-                                Forms\Components\Toggle::make('data.require_review')
+                                Forms\Components\Select::make('default_language')
+                                    ->label('اللغة الافتراضية')
+                                    ->options(['ar' => 'العربية', 'en' => 'English']),
+                                Forms\Components\Toggle::make('require_review')
                                     ->label('الصور تحتاج مراجعة قبل النشر'),
-                            ]),
+                            ])->columns(2),
 
                         Forms\Components\Tabs\Tab::make('التوقيع')
                             ->schema([
-                                Forms\Components\Toggle::make('data.watermark_enabled')
+                                Forms\Components\Toggle::make('watermark_enabled')
                                     ->label('تفعيل التوقيع'),
-                                Forms\Components\Toggle::make('data.watermark_force_all')
+                                Forms\Components\Toggle::make('watermark_force_all')
                                     ->label('إجبار التوقيع على كل الصور'),
-                                Forms\Components\Select::make('data.watermark_default_id')
+                                Forms\Components\Select::make('watermark_default_id')
                                     ->label('التوقيع الافتراضي')
-                                    ->options(Watermark::active()->pluck('name', 'id'))
+                                    ->options(fn () => Watermark::active()->pluck('name', 'id')->toArray())
                                     ->nullable(),
-                                Forms\Components\Toggle::make('data.download_watermarked')
+                                Forms\Components\Toggle::make('download_watermarked')
                                     ->label('تحميل النسخة الموقعة'),
                             ])->columns(2),
 
                         Forms\Components\Tabs\Tab::make('الميزات')
                             ->schema([
-                                Forms\Components\Toggle::make('data.likes_enabled')->label('الإعجابات'),
-                                Forms\Components\Toggle::make('data.downloads_enabled')->label('التحميل'),
-                                Forms\Components\Toggle::make('data.reports_enabled')->label('البلاغات'),
+                                Forms\Components\Toggle::make('likes_enabled')->label('الإعجابات'),
+                                Forms\Components\Toggle::make('downloads_enabled')->label('التحميل'),
+                                Forms\Components\Toggle::make('reports_enabled')->label('البلاغات'),
                             ])->columns(3),
 
                         Forms\Components\Tabs\Tab::make('SEO')
                             ->schema([
-                                Forms\Components\TextInput::make('data.meta_title_ar')->label('Meta Title (عربي)'),
-                                Forms\Components\TextInput::make('data.meta_title_en')->label('Meta Title (إنجليزي)'),
-                                Forms\Components\Textarea::make('data.meta_description_ar')->label('Meta Description (عربي)')->rows(2),
-                                Forms\Components\Textarea::make('data.meta_description_en')->label('Meta Description (إنجليزي)')->rows(2),
+                                Forms\Components\TextInput::make('meta_title_ar')->label('Meta Title (عربي)'),
+                                Forms\Components\TextInput::make('meta_title_en')->label('Meta Title (إنجليزي)'),
+                                Forms\Components\Textarea::make('meta_description_ar')->label('Meta Description (عربي)')->rows(2),
+                                Forms\Components\Textarea::make('meta_description_en')->label('Meta Description (إنجليزي)')->rows(2),
                             ])->columns(2),
 
                         Forms\Components\Tabs\Tab::make('الأمان')
                             ->schema([
-                                Forms\Components\TextInput::make('data.login_attempts_limit')
+                                Forms\Components\TextInput::make('login_attempts_limit')
                                     ->label('محاولات الدخول قبل القفل')
                                     ->numeric(),
-                                Forms\Components\TextInput::make('data.login_lockout_minutes')
+                                Forms\Components\TextInput::make('login_lockout_minutes')
                                     ->label('مدة القفل (دقيقة)')
                                     ->numeric(),
                             ])->columns(2),
@@ -114,15 +115,25 @@ class ManageSettings extends Page
 
     public function save(): void
     {
-        foreach ($this->data as $key => $value) {
-            if ($value !== null) {
-                Setting::set($key, $value);
-            }
+        $data = $this->form->getState();
+
+        foreach ($data as $key => $value) {
+            Setting::set($key, $value ?? '');
         }
 
         Notification::make()
-            ->title('تم حفظ الإعدادات بنجاح')
+            ->title('تم حفظ الإعدادات بنجاح ✓')
             ->success()
             ->send();
+    }
+
+    protected function getFormActions(): array
+    {
+        return [
+            \Filament\Actions\Action::make('save')
+                ->label('حفظ الإعدادات')
+                ->icon('heroicon-o-check')
+                ->action('save'),
+        ];
     }
 }
