@@ -15,7 +15,7 @@ class WatermarkResource extends Resource
 {
     protected static ?string $model = Watermark::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-stamp';
+    protected static ?string $navigationIcon = 'heroicon-o-paint-brush';
 
     protected static ?string $navigationGroup = 'الإعدادات';
 

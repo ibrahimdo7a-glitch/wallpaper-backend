@@ -280,7 +280,7 @@ class WallpaperResource extends Resource
 
                 Tables\Actions\Action::make('reapply_watermark')
                     ->label('إعادة تطبيق التوقيع')
-                    ->icon('heroicon-o-stamp')
+                    ->icon('heroicon-o-paint-brush')
                     ->color('info')
                     ->visible(fn(Wallpaper $w) => Auth::user()->hasPermissionTo('can_apply_watermarks') && $w->watermark_id)
                     ->action(function (Wallpaper $wallpaper) {
