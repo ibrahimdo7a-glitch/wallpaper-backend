@@ -8,6 +8,7 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Illuminate\Support\Facades\Http;
 
 class ManageSettings extends Page
 {
@@ -121,10 +122,28 @@ class ManageSettings extends Page
             Setting::set($key, $value ?? '');
         }
 
+        $this->revalidateFrontend();
+
         Notification::make()
             ->title('تم حفظ الإعدادات بنجاح ✓')
             ->success()
             ->send();
+    }
+
+    private function revalidateFrontend(): void
+    {
+        $token = config('app.revalidate_token');
+        $url   = config('app.frontend_url') . '/api/revalidate';
+
+        if (! $token || ! $url) {
+            return;
+        }
+
+        try {
+            Http::timeout(5)->withHeaders(['x-revalidate-token' => $token])->post($url);
+        } catch (\Throwable) {
+            // non-critical — frontend will refresh on its own schedule
+        }
     }
 
     protected function getFormActions(): array
