@@ -5,6 +5,8 @@ return [
     'env' => env('APP_ENV', 'production'),
     'debug' => (bool) env('APP_DEBUG', false),
     'url' => env('APP_URL', 'http://localhost'),
+    'frontend_url' => env('FRONTEND_URL', 'https://qev.app'),
+    'revalidate_token' => env('REVALIDATE_TOKEN', ''),
     'timezone' => 'UTC',
     'locale' => 'en',
     'fallback_locale' => 'en',

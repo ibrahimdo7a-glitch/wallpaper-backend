@@ -9,6 +9,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 
 class SiteSettingsPage extends Page
 {
@@ -176,8 +177,16 @@ class SiteSettingsPage extends Page
             Setting::set($key, $value ?? '');
         }
 
-        // Setting::set() already invalidates per-key cache; no global flush needed
-        \Illuminate\Support\Facades\Cache::forget('categories.tree');
+        // Notify Next.js to revalidate the homepage immediately
+        try {
+            $url = rtrim(config('app.frontend_url', ''), '/') . '/api/revalidate';
+            $token = config('app.revalidate_token', '');
+            if ($token) {
+                \Illuminate\Support\Facades\Http::timeout(5)
+                    ->withHeaders(['x-revalidate-token' => $token])
+                    ->post($url);
+            }
+        } catch (\Throwable) {}
 
         Notification::make()
             ->title('تم حفظ الإعدادات بنجاح ✓')
