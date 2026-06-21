@@ -40,7 +40,12 @@ class DefaultCategoriesSeeder extends Seeder
         ];
 
         foreach ($categories as $data) {
-            Category::firstOrCreate(['slug' => $data['slug']], $data);
+            // Use withTrashed() so soft-deleted categories are found and restored
+            // instead of failing with a unique constraint violation on re-insert
+            Category::withTrashed()->updateOrCreate(
+                ['slug' => $data['slug']],
+                array_merge($data, ['deleted_at' => null])
+            );
         }
 
         $this->command->info('Default categories seeded.');

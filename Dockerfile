@@ -85,4 +85,4 @@ RUN echo "upload_max_filesize=50M" >> /usr/local/etc/php/conf.d/uploads.ini \
 
 EXPOSE 8080
 
-CMD mkdir -p storage/app/public/livewire-tmp storage/app/private/livewire-tmp storage/app/livewire-tmp && chmod -R 777 storage/app && php artisan config:clear && php artisan cache:clear && php artisan migrate --force && php artisan package:discover --ansi && php artisan filament:assets && php artisan db:seed --class=DefaultCategoriesSeeder --force && php artisan storage:link --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
+CMD mkdir -p storage/app/public/livewire-tmp storage/app/private/livewire-tmp storage/app/livewire-tmp && chmod -R 777 storage && php artisan config:clear || true && php artisan cache:clear || true && php artisan migrate --force && php artisan package:discover --ansi && php artisan filament:assets && php artisan db:seed --class=DefaultCategoriesSeeder --force && php artisan storage:link --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
