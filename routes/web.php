@@ -8,37 +8,59 @@ Route::get('/', function () {
 
 // Temporary debug route
 Route::get('/debug-error', function () {
+    $results = [];
     try {
-        // Try to instantiate the problematic resource
-        $user = \App\Models\User::first();
-        if (!$user) return 'No users found in DB';
-
-        auth()->login($user);
-
-        $panel = \Filament\Facades\Filament::getDefaultPanel();
-
-        // Try building the form
-        $resource = \App\Filament\Resources\WallpaperResource::class;
-        $form = \Filament\Forms\Form::make(
-            new class extends \Livewire\Component {
-                public function render() { return ''; }
-            }
-        )->model(\App\Models\Wallpaper::class);
-
-        $resource::form($form);
-
-        return response()->json(['status' => 'OK - form loaded successfully']);
-
+        // 1. Check DB connection
+        \DB::connection()->getPdo();
+        $results['db'] = 'OK';
     } catch (\Throwable $e) {
-        return response()->json([
-            'error' => $e->getMessage(),
-            'type'  => get_class($e),
-            'file'  => str_replace(base_path(), '', $e->getFile()),
-            'line'  => $e->getLine(),
-            'trace' => collect(explode("\n", $e->getTraceAsString()))
-                ->take(15)
-                ->map(fn($l) => str_replace(base_path(), '', $l))
-                ->values(),
-        ], 200);
+        $results['db'] = 'FAIL: ' . $e->getMessage();
     }
+
+    try {
+        // 2. Check tables exist
+        $results['wallpapers_table'] = \Schema::hasTable('wallpapers') ? 'exists' : 'MISSING';
+        $results['categories_table'] = \Schema::hasTable('categories') ? 'exists' : 'MISSING';
+        $results['permissions_table'] = \Schema::hasTable('permissions') ? 'exists' : 'MISSING';
+    } catch (\Throwable $e) {
+        $results['tables'] = 'FAIL: ' . $e->getMessage();
+    }
+
+    try {
+        // 3. Check filesystem disk
+        $disk = config('filesystems.default');
+        $results['filesystem_disk'] = $disk;
+        \Storage::disk($disk)->exists('test');
+        $results['filesystem_connection'] = 'OK';
+    } catch (\Throwable $e) {
+        $results['filesystem_connection'] = 'FAIL: ' . $e->getMessage();
+    }
+
+    try {
+        // 4. Check BadgeColumn exists
+        $results['BadgeColumn'] = class_exists(\Filament\Tables\Columns\BadgeColumn::class) ? 'exists' : 'MISSING';
+    } catch (\Throwable $e) {
+        $results['BadgeColumn'] = 'ERROR: ' . $e->getMessage();
+    }
+
+    try {
+        // 5. Check WallpaperResource class loads
+        class_exists(\App\Filament\Resources\WallpaperResource::class);
+        $results['WallpaperResource'] = 'loaded OK';
+    } catch (\Throwable $e) {
+        $results['WallpaperResource'] = 'FAIL: ' . $e->getMessage() . ' in ' . str_replace(base_path(), '', $e->getFile()) . ':' . $e->getLine();
+    }
+
+    try {
+        // 6. Check user + permissions
+        $user = \App\Models\User::first();
+        $results['first_user'] = $user ? $user->email : 'NO USERS';
+        if ($user) {
+            $results['user_permissions'] = $user->getAllPermissions()->pluck('name')->toArray();
+        }
+    } catch (\Throwable $e) {
+        $results['user_check'] = 'FAIL: ' . $e->getMessage();
+    }
+
+    return response()->json($results, 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 });
