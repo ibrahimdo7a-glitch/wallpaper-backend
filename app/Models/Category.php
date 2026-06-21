@@ -72,6 +72,16 @@ class Category extends Model
         return $locale === 'ar' ? ($this->name_ar ?: $this->name_en) : ($this->name_en ?: $this->name_ar);
     }
 
+    protected static function booted(): void
+    {
+        // Clear the categories tree cache whenever any category changes
+        $flush = fn() => \Illuminate\Support\Facades\Cache::forget('categories.tree');
+        static::created($flush);
+        static::updated($flush);
+        static::deleted($flush);
+        static::restored($flush);
+    }
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
