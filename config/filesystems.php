@@ -1,7 +1,9 @@
 <?php
 
 return [
-    'default' => env('FILESYSTEM_DISK', 'public'),
+    'default' => (env('R2_ACCESS_KEY_ID') && env('R2_SECRET_ACCESS_KEY') && env('R2_BUCKET'))
+        ? env('FILESYSTEM_DISK', 'public')
+        : 'public',
 
     'disks' => [
         'local' => [
