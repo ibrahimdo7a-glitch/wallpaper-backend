@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
 class Category extends Model
@@ -75,26 +74,13 @@ class Category extends Model
 
     protected static function booted(): void
     {
-        $onChange = function () {
+        $onChange = static function () {
             \Illuminate\Support\Facades\Cache::forget('categories.tree');
-            static::pingFrontend();
         };
         static::created($onChange);
         static::updated($onChange);
         static::deleted($onChange);
         static::restored($onChange);
-    }
-
-    protected static function pingFrontend(): void
-    {
-        try {
-            $url = rtrim(config('app.frontend_url', ''), '/') . '/api/revalidate';
-            $token = config('app.revalidate_token', '');
-            if (! $token) return;
-            \Illuminate\Support\Facades\Http::timeout(5)
-                ->withHeaders(['x-revalidate-token' => $token])
-                ->post($url);
-        } catch (\Throwable) {}
     }
 
     public function scopeActive($query)
