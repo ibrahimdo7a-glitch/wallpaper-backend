@@ -72,9 +72,16 @@ RUN mkdir -p /var/www/html/storage/logs \
     /var/www/html/storage/framework/cache \
     /var/www/html/storage/framework/sessions \
     /var/www/html/storage/framework/views \
+    /var/www/html/storage/app/public \
+    /var/www/html/storage/app/livewire-tmp \
     /var/www/html/bootstrap/cache \
     && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+    && chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Increase PHP upload limits
+RUN echo "upload_max_filesize=50M" >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "post_max_size=55M" >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "memory_limit=256M" >> /usr/local/etc/php/conf.d/uploads.ini
 
 EXPOSE 8080
 
