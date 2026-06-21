@@ -54,7 +54,7 @@ class ApplyWatermark implements ShouldQueue
         $wallpaper->update($updateData);
 
         // Auto-publish if user has permission
-        if ($wallpaper->uploader->auto_publish) {
+        if ($wallpaper->uploader && $wallpaper->uploader->auto_publish) {
             $wallpaper->publish($wallpaper->uploader);
         }
     }

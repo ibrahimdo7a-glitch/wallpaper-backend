@@ -54,7 +54,7 @@ class ProcessWallpaperImage implements ShouldQueue
             // Dispatch watermark job if needed
             if ($wallpaper->watermark_id) {
                 ApplyWatermark::dispatch($wallpaper->id)->onQueue('watermark');
-            } elseif ($wallpaper->uploader->auto_publish) {
+            } elseif ($wallpaper->uploader && $wallpaper->uploader->auto_publish) {
                 $wallpaper->publish($wallpaper->uploader);
             }
 

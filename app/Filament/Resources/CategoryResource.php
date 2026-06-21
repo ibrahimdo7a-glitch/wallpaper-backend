@@ -54,14 +54,28 @@ class CategoryResource extends Resource
                         ->required()
                         ->maxLength(255)
                         ->live(onBlur: true)
-                        ->afterStateUpdated(fn(Forms\Set $set, ?string $state) =>
-                            $set('slug', Str::slug($state ?? ''))
-                        ),
+                        ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, ?string $state) {
+                            // Arabic text doesn't produce slugs with Str::slug; fall back to English name
+                            $slug = Str::slug($state ?? '');
+                            if (empty($slug)) {
+                                $slug = Str::slug($get('name_en') ?? '');
+                            }
+                            if (! empty($slug)) {
+                                $set('slug', $slug);
+                            }
+                        }),
 
                     Forms\Components\TextInput::make('name_en')
                         ->label('الاسم (إنجليزي)')
                         ->required()
-                        ->maxLength(255),
+                        ->maxLength(255)
+                        ->live(onBlur: true)
+                        ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, ?string $state) {
+                            // Auto-fill slug from English name when slug is still empty
+                            if (empty($get('slug'))) {
+                                $set('slug', Str::slug($state ?? ''));
+                            }
+                        }),
 
                     Forms\Components\TextInput::make('slug')
                         ->label('Slug')
@@ -83,7 +97,7 @@ class CategoryResource extends Resource
                     Forms\Components\FileUpload::make('cover_image')
                         ->label('صورة الغلاف')
                         ->image()
-                        ->disk('r2')
+                        ->disk(config('filesystems.default', 'public'))
                         ->directory('categories')
                         ->visibility('public'),
 
@@ -120,7 +134,7 @@ class CategoryResource extends Resource
             ->columns([
                 Tables\Columns\ImageColumn::make('cover_image')
                     ->label('الصورة')
-                    ->disk('r2')
+                    ->disk(config('filesystems.default', 'public'))
                     ->width(60)
                     ->height(40),
 

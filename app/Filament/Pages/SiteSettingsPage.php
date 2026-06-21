@@ -176,7 +176,8 @@ class SiteSettingsPage extends Page
             Setting::set($key, $value ?? '');
         }
 
-        Cache::flush();
+        // Setting::set() already invalidates per-key cache; no global flush needed
+        \Illuminate\Support\Facades\Cache::forget('categories.tree');
 
         Notification::make()
             ->title('تم حفظ الإعدادات بنجاح ✓')

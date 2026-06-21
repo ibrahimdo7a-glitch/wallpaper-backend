@@ -18,9 +18,10 @@ class CreateWallpaper extends CreateRecord
     protected function afterCreate(): void
     {
         try {
-            ProcessWallpaperImage::dispatch($this->record->id)->onQueue('image-processing');
+            // Run synchronously (no queue worker in this deployment)
+            ProcessWallpaperImage::dispatchSync($this->record->id);
         } catch (\Throwable $e) {
-            \Log::warning("Could not queue image processing for wallpaper {$this->record->id}: " . $e->getMessage());
+            \Log::warning("Image processing failed for wallpaper {$this->record->id}: " . $e->getMessage());
         }
     }
 
