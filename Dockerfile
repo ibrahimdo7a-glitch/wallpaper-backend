@@ -11,6 +11,7 @@ RUN apk add --no-cache \
     postgresql-dev \
     oniguruma-dev \
     libxml2-dev \
+    icu-dev \
     autoconf \
     g++ \
     make \
@@ -30,7 +31,8 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
         bcmath \
         gd \
         xml \
-        opcache
+        opcache \
+        intl
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
