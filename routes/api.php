@@ -45,6 +45,30 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
         ]);
     });
 
+    // Site content settings (for frontend dynamic content)
+    Route::get('/settings/site-content', function () {
+        $keys = [
+            'site_name_ar', 'site_name_en',
+            'hero_title_ar', 'hero_title_en',
+            'hero_subtitle_ar', 'hero_subtitle_en',
+            'search_placeholder_ar', 'search_placeholder_en',
+            'popular_tags_ar', 'popular_tags_en',
+            'feature_car_ar', 'feature_car_en',
+            'feature_quality_ar', 'feature_quality_en',
+            'feature_fast_ar', 'feature_fast_en',
+            'footer_copyright_ar', 'footer_copyright_en',
+        ];
+        $settings = collect($keys)->mapWithKeys(fn($k) => [$k => \App\Models\Setting::get($k, '')]);
+
+        // Parse popular_tags as arrays
+        $settings['popular_tags_ar'] = array_filter(array_map('trim', explode(',', $settings['popular_tags_ar'] ?? '')));
+        $settings['popular_tags_en'] = array_filter(array_map('trim', explode(',', $settings['popular_tags_en'] ?? '')));
+
+        return response()->json([
+            'data' => $settings,
+        ]);
+    });
+
     // Ads
     Route::get('/ads/{position}', function (string $position) {
         $locale = request('locale', 'ar');
