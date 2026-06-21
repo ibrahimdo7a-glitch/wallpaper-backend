@@ -139,6 +139,7 @@ class WallpaperResource extends Resource
                             'rejected' => 'مرفوض',
                             'hidden' => 'مخفي',
                         ])
+                        ->default('published')
                         ->visible(fn() => Auth::user()->hasPermissionTo('can_publish_wallpapers')),
 
                     Forms\Components\Textarea::make('rejection_reason')
