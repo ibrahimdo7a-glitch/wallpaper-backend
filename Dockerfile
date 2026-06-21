@@ -72,10 +72,10 @@ RUN mkdir -p /var/www/html/storage/logs \
     /var/www/html/storage/framework/cache \
     /var/www/html/storage/framework/sessions \
     /var/www/html/storage/framework/views \
-    /var/www/html/storage/app/public \
+    /var/www/html/storage/app/public/livewire-tmp \
+    /var/www/html/storage/app/private/livewire-tmp \
     /var/www/html/storage/app/livewire-tmp \
     /var/www/html/bootstrap/cache \
-    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Increase PHP upload limits
@@ -85,4 +85,4 @@ RUN echo "upload_max_filesize=50M" >> /usr/local/etc/php/conf.d/uploads.ini \
 
 EXPOSE 8080
 
-CMD php artisan config:clear && php artisan cache:clear && php artisan migrate --force && php artisan package:discover --ansi && php artisan db:seed --class=DefaultCategoriesSeeder --force && php artisan storage:link --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
+CMD mkdir -p storage/app/public/livewire-tmp storage/app/private/livewire-tmp storage/app/livewire-tmp && chmod -R 777 storage/app && php artisan config:clear && php artisan cache:clear && php artisan migrate --force && php artisan package:discover --ansi && php artisan db:seed --class=DefaultCategoriesSeeder --force && php artisan storage:link --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
