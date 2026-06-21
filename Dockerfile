@@ -48,6 +48,23 @@ COPY . .
 # Finish composer install
 RUN composer dump-autoload --optimize --no-scripts
 
+# Copy Filament compiled assets to public/ so php artisan serve can serve them as static files
+# (Filament asset routes require package:discover at runtime; static copy is more reliable)
+RUN mkdir -p \
+    public/css/filament/forms \
+    public/css/filament/support \
+    public/css/filament/filament \
+    public/js/filament/filament \
+    public/js/filament/notifications \
+    public/js/filament/support \
+    && cp vendor/filament/forms/dist/index.css public/css/filament/forms/forms.css \
+    && cp vendor/filament/support/dist/index.css public/css/filament/support/support.css \
+    && cp vendor/filament/filament/dist/theme.css public/css/filament/filament/app.css \
+    && cp vendor/filament/notifications/dist/index.js public/js/filament/notifications/notifications.js \
+    && cp vendor/filament/support/dist/index.js public/js/filament/support/support.js \
+    && cp vendor/filament/filament/dist/echo.js public/js/filament/filament/echo.js \
+    && cp vendor/filament/filament/dist/index.js public/js/filament/filament/app.js
+
 # Set permissions
 RUN mkdir -p /var/www/html/storage/logs \
     /var/www/html/storage/framework/cache \
@@ -59,4 +76,4 @@ RUN mkdir -p /var/www/html/storage/logs \
 
 EXPOSE 8080
 
-CMD php artisan migrate --force && php artisan package:discover --ansi && php artisan optimize:clear && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
+CMD php artisan migrate --force && php artisan package:discover --ansi && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
