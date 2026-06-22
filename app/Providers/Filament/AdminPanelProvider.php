@@ -47,16 +47,18 @@ class AdminPanelProvider extends PanelProvider
                 'warning' => Color::Orange,
             ])
             ->font('Noto Kufi Arabic')
-            ->brandName('منصة الخلفيات')
+            ->brandName('QEV - لوحة التحكم')
             ->favicon(asset('favicon.ico'))
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->navigationGroups([
+                NavigationGroup::make('السيارات')->icon('heroicon-o-truck'),
                 NavigationGroup::make('المحتوى')->icon('heroicon-o-squares-2x2'),
+                NavigationGroup::make('الأخبار')->icon('heroicon-o-newspaper'),
+                NavigationGroup::make('التطبيقات')->icon('heroicon-o-device-phone-mobile'),
                 NavigationGroup::make('الإدارة')->icon('heroicon-o-cog'),
                 NavigationGroup::make('الإعدادات')->icon('heroicon-o-wrench-screwdriver'),
-                NavigationGroup::make('التطبيقات')->icon('heroicon-o-device-phone-mobile'),
                 NavigationGroup::make('التحليلات')->icon('heroicon-o-chart-bar'),
             ])
             ->middleware([

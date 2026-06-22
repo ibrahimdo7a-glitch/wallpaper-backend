@@ -2,7 +2,10 @@
 
 use App\Http\Controllers\Api\V1\AppController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\BrandController;
+use App\Http\Controllers\Api\V1\CarModelController;
 use App\Http\Controllers\Api\V1\CategoryController;
+use App\Http\Controllers\Api\V1\NewsController;
 use App\Http\Controllers\Api\V1\UploaderController;
 use App\Http\Controllers\Api\V1\WallpaperController;
 use App\Http\Controllers\Api\V1\WallpaperUploadController;
@@ -26,6 +29,24 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
     // Categories
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/categories/{slug}', [CategoryController::class, 'show']);
+
+    // Brands & Car Models
+    Route::get('/brands', [BrandController::class, 'index']);
+    Route::get('/brands/{slug}', [BrandController::class, 'show']);
+    Route::get('/brands/{slug}/models', [BrandController::class, 'models']);
+    Route::get('/brands/{brandSlug}/models/{modelSlug}', [CarModelController::class, 'show']);
+    Route::get('/brands/{brandSlug}/models/{modelSlug}/wallpapers', [CarModelController::class, 'wallpapers']);
+    Route::get('/brands/{brandSlug}/models/{modelSlug}/apps', [CarModelController::class, 'apps']);
+    Route::get('/brands/{brandSlug}/models/{modelSlug}/important-apps', [CarModelController::class, 'importantApps']);
+    Route::get('/brands/{brandSlug}/models/{modelSlug}/tutorials', [CarModelController::class, 'tutorials']);
+    Route::get('/brands/{brandSlug}/models/{modelSlug}/files', [CarModelController::class, 'files']);
+
+    // News
+    Route::get('/news', [NewsController::class, 'index']);
+    Route::get('/news/categories', [NewsController::class, 'categories']);
+    Route::get('/news/{slug}', [NewsController::class, 'show']);
+    Route::post('/news/subscribe', [NewsController::class, 'subscribe'])->middleware('throttle:5,1');
+    Route::get('/news/unsubscribe/{token}', [NewsController::class, 'unsubscribe']);
 
     // Apps
     Route::get('/app-categories', [AppController::class, 'categories']);
