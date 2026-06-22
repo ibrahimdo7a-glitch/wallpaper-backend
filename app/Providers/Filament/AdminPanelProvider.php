@@ -56,6 +56,7 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make('المحتوى')->icon('heroicon-o-squares-2x2'),
                 NavigationGroup::make('الإدارة')->icon('heroicon-o-cog'),
                 NavigationGroup::make('الإعدادات')->icon('heroicon-o-wrench-screwdriver'),
+                NavigationGroup::make('التطبيقات')->icon('heroicon-o-device-phone-mobile'),
                 NavigationGroup::make('التحليلات')->icon('heroicon-o-chart-bar'),
             ])
             ->middleware([

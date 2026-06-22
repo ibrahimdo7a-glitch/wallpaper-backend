@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AppController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\UploaderController;
@@ -25,6 +26,12 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
     // Categories
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/categories/{slug}', [CategoryController::class, 'show']);
+
+    // Apps
+    Route::get('/app-categories', [AppController::class, 'categories']);
+    Route::get('/apps', [AppController::class, 'index']);
+    Route::get('/apps/{slug}', [AppController::class, 'show']);
+    Route::post('/apps/{id}/download', [AppController::class, 'download'])->middleware('throttle:20,1');
 
     // Uploaders
     Route::get('/uploaders/{username}', [UploaderController::class, 'show']);
