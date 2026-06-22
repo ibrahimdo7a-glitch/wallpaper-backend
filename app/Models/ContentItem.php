@@ -15,10 +15,10 @@ class ContentItem extends Model
     protected $fillable = [
         'brand_id', 'brand_section_id', 'content_collection_id', 'car_model_id', 'content_type',
         'title_ar', 'title_en', 'slug',
-        'description_ar', 'description_en',
+        'description_ar', 'description_en', 'author_name',
         'image_path', 'thumbnail_path', 'file_path', 'video_url', 'external_url',
         'metadata', 'status', 'is_featured', 'is_pinned',
-        'sort_order', 'views_count', 'downloads_count', 'published_at',
+        'sort_order', 'views_count', 'downloads_count', 'likes_count', 'published_at',
     ];
 
     protected $casts = [

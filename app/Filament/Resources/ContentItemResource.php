@@ -85,6 +85,8 @@ class ContentItemResource extends Resource
                     Forms\Components\Textarea::make('description_ar')->label('الوصف (عربي)')->rows(3),
                     Forms\Components\Textarea::make('description_en')->label('الوصف (إنجليزي)')->rows(3),
                 ]),
+                Forms\Components\TextInput::make('author_name')->label('اسم المصمم / المصدر')
+                    ->placeholder('مثال: تصميم فريق ليوبارد')->maxLength(255),
             ]),
 
             Forms\Components\Section::make('الوسائط والملفات')->columns(2)->schema([

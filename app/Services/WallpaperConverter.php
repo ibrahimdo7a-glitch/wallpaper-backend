@@ -41,6 +41,8 @@ class WallpaperConverter
             'title_en'              => $wallpaper->title_en,
             'description_ar'        => $wallpaper->description_ar,
             'description_en'        => $wallpaper->description_en,
+            'author_name'           => $wallpaper->uploader?->name,
+            'likes_count'           => (int) ($wallpaper->likes_count ?? 0),
             'image_path'            => $wallpaper->original_file,
             'thumbnail_path'        => $wallpaper->thumbnail_file ?: $wallpaper->original_file,
             'file_path'             => $wallpaper->original_file,   // downloadable
