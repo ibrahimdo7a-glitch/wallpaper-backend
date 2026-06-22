@@ -13,6 +13,8 @@ class DatabaseSeeder extends Seeder
             SuperAdminSeeder::class,
             SettingsSeeder::class,
             TranslationSeeder::class,
+            BrandsAndModelsSeeder::class,
+            NewsCategoriesSeeder::class,
         ]);
     }
 }
