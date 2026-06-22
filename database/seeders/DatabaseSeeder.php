@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             SectionTypesSeeder::class,
             BrandsAndModelsSeeder::class,
             NewsCategoriesSeeder::class,
+            HomepageSeeder::class,
         ]);
     }
 }

@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BrandController;
 use App\Http\Controllers\Api\V1\CarModelController;
 use App\Http\Controllers\Api\V1\CategoryController;
+use App\Http\Controllers\Api\V1\HomepageController;
 use App\Http\Controllers\Api\V1\NewsController;
 use App\Http\Controllers\Api\V1\UploaderController;
 use App\Http\Controllers\Api\V1\WallpaperController;
@@ -29,6 +30,11 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
     // Categories
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/categories/{slug}', [CategoryController::class, 'show']);
+
+    // Homepage & Navigation
+    Route::get('/homepage', [HomepageController::class, 'index']);
+    Route::get('/navigation', [HomepageController::class, 'navigation']);
+    Route::get('/search', [HomepageController::class, 'search']);
 
     // Brands — dynamic Brand Builder system
     Route::get('/brands', [BrandController::class, 'index']);
