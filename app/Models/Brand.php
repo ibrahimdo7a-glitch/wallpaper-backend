@@ -63,6 +63,11 @@ class Brand extends Model
         return $this->hasMany(ContentItem::class);
     }
 
+    public function collections(): HasMany
+    {
+        return $this->hasMany(ContentCollection::class)->orderBy('sort_order');
+    }
+
     public function wallpapers(): HasMany
     {
         return $this->hasMany(Wallpaper::class);

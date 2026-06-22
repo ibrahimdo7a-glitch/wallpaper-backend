@@ -149,6 +149,7 @@ class BrandResource extends Resource
     {
         return [
             RelationManagers\BrandSectionsRelationManager::class,
+            RelationManagers\CollectionsRelationManager::class,
             RelationManagers\CarModelsRelationManager::class,
             RelationManagers\ContentItemsRelationManager::class,
         ];

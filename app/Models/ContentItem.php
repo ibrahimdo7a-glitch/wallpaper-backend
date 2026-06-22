@@ -13,7 +13,7 @@ class ContentItem extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'brand_id', 'brand_section_id', 'car_model_id', 'content_type',
+        'brand_id', 'brand_section_id', 'content_collection_id', 'car_model_id', 'content_type',
         'title_ar', 'title_en', 'slug',
         'description_ar', 'description_en',
         'image_path', 'thumbnail_path', 'file_path', 'video_url', 'external_url',
@@ -45,6 +45,7 @@ class ContentItem extends Model
 
     public function brand(): BelongsTo        { return $this->belongsTo(Brand::class); }
     public function brandSection(): BelongsTo { return $this->belongsTo(BrandSection::class); }
+    public function collection(): BelongsTo   { return $this->belongsTo(ContentCollection::class, 'content_collection_id'); }
     public function carModel(): BelongsTo     { return $this->belongsTo(CarModel::class); }
 
     // ─── URL Accessors ─────────────────────────────────────────────────────────
@@ -75,5 +76,6 @@ class ContentItem extends Model
     public function scopePinned($q)     { return $q->where('is_pinned', true)->orderBy('sort_order'); }
     public function scopeForBrand($q, int $brandId) { return $q->where('brand_id', $brandId); }
     public function scopeForModel($q, int $modelId) { return $q->where('car_model_id', $modelId); }
+    public function scopeForCollection($q, int $collectionId) { return $q->where('content_collection_id', $collectionId); }
     public function scopeOfType($q, string $type)   { return $q->where('content_type', $type); }
 }

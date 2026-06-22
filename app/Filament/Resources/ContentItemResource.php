@@ -6,6 +6,7 @@ use App\Filament\Resources\ContentItemResource\Pages;
 use App\Models\Brand;
 use App\Models\BrandSection;
 use App\Models\CarModel;
+use App\Models\ContentCollection;
 use App\Models\ContentItem;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -46,12 +47,33 @@ class ContentItemResource extends Resource
                         }),
                 ]),
                 Forms\Components\Grid::make(2)->schema([
+                    Forms\Components\Select::make('content_collection_id')->label('المجموعة (قسم فرعي)')
+                        ->options(fn(Forms\Get $get) => ContentCollection::where('brand_id', $get('brand_id'))
+                            ->where('is_active', true)->orderBy('sort_order')
+                            ->get()->mapWithKeys(fn($c) => [$c->id => ($c->icon ? $c->icon . ' ' : '') . $c->name_ar]))
+                        ->searchable()->nullable()->placeholder('بدون مجموعة')
+                        ->helperText('مثل: ليوبارد 5 / خلفيات قطر')
+                        ->createOptionForm([
+                            Forms\Components\TextInput::make('name_ar')->label('اسم المجموعة (عربي)')->required(),
+                            Forms\Components\TextInput::make('name_en')->label('اسم المجموعة (إنجليزي)'),
+                            Forms\Components\TextInput::make('icon')->label('أيقونة / علم')->placeholder('🇶🇦'),
+                        ])
+                        ->createOptionUsing(function (array $data, Forms\Get $get) {
+                            return ContentCollection::create([
+                                'brand_id'         => $get('brand_id'),
+                                'brand_section_id' => $get('brand_section_id'),
+                                'name_ar'          => $data['name_ar'],
+                                'name_en'          => $data['name_en'] ?? null,
+                                'icon'             => $data['icon'] ?? null,
+                            ])->id;
+                        }),
+
                     Forms\Components\Select::make('car_model_id')->label('الموديل (اختياري)')
                         ->options(fn(Forms\Get $get) => CarModel::where('brand_id', $get('brand_id'))
                             ->where('is_active', true)->pluck('name_ar', 'id'))
                         ->searchable()->nullable()->placeholder('عام للماركة'),
-                    Forms\Components\TextInput::make('content_type')->label('نوع المحتوى')->disabled()->dehydrated(),
                 ]),
+                Forms\Components\TextInput::make('content_type')->label('نوع المحتوى')->disabled()->dehydrated(),
             ]),
 
             Forms\Components\Section::make('المحتوى')->schema([
@@ -105,6 +127,7 @@ class ContentItemResource extends Resource
                 Tables\Columns\TextColumn::make('title_ar')->label('العنوان')->searchable()->limit(35)->weight('bold'),
                 Tables\Columns\TextColumn::make('brand.name_ar')->label('الماركة')->badge()->color('primary')->searchable(),
                 Tables\Columns\TextColumn::make('brandSection.slug')->label('القسم')->badge()->color('success'),
+                Tables\Columns\TextColumn::make('collection.name_ar')->label('المجموعة')->badge()->color('warning')->placeholder('—'),
                 Tables\Columns\TextColumn::make('content_type')->label('النوع')->badge()->color('gray'),
                 Tables\Columns\TextColumn::make('carModel.name_ar')->label('الموديل')->placeholder('عام')->color('gray'),
                 Tables\Columns\BadgeColumn::make('status')->label('الحالة')

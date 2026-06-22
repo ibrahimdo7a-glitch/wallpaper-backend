@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\BrandSection;
 use App\Models\CarModel;
+use App\Models\ContentCollection;
 use App\Models\ContentItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -86,18 +87,42 @@ class BrandController extends Controller
 
         $perPage = min((int)$request->get('per_page', 20), 100);
 
-        $items = ContentItem::where('brand_section_id', $section->id)
+        // Collections (sub-folders) available in this section
+        $collections = ContentCollection::where('brand_id', $brand->id)
+            ->where('is_active', true)
+            ->where(fn($q) => $q->where('brand_section_id', $section->id)->orWhereNull('brand_section_id'))
+            ->orderBy('sort_order')
+            ->withCount(['contentItems' => fn($q) => $q->where('status', 'published')])
+            ->get()
+            ->map(fn($c) => $this->collectionCard($c))
+            ->filter(fn($c) => $c['items_count'] > 0)   // only show non-empty folders
+            ->values();
+
+        // Optional: filter content by a specific collection slug
+        $activeCollection = null;
+        $query = ContentItem::where('brand_section_id', $section->id)
             ->where('status', 'published')
-            ->whereNull('car_model_id')   // brand-level items only
-            ->orderByDesc('is_pinned')
+            ->whereNull('car_model_id');   // brand-level items only
+
+        if ($collectionSlug = $request->get('collection')) {
+            $activeCollection = ContentCollection::where('brand_id', $brand->id)
+                ->where('slug', $collectionSlug)->first();
+            if ($activeCollection) {
+                $query->where('content_collection_id', $activeCollection->id);
+            }
+        }
+
+        $items = $query->orderByDesc('is_pinned')
             ->orderBy('sort_order')
             ->orderByDesc('published_at')
             ->paginate($perPage);
 
         return response()->json([
-            'section' => $this->sectionCard($section),
-            'brand'   => ['name_ar' => $brand->name_ar, 'name_en' => $brand->name_en, 'slug' => $brand->slug],
-            'data'    => $items->map(fn($i) => $this->contentCard($i)),
+            'section'           => $this->sectionCard($section),
+            'brand'             => ['name_ar' => $brand->name_ar, 'name_en' => $brand->name_en, 'slug' => $brand->slug],
+            'collections'       => $collections,
+            'active_collection' => $activeCollection ? $this->collectionCard($activeCollection) : null,
+            'data'              => $items->map(fn($i) => $this->contentCard($i)),
             'meta'    => [
                 'current_page' => $items->currentPage(),
                 'last_page'    => $items->lastPage(),
@@ -241,11 +266,27 @@ class BrandController extends Controller
             'external_url'    => $i->external_url,
             'metadata'        => $i->metadata,
             'content_type'    => $i->content_type,
+            'collection_id'   => $i->content_collection_id,
             'is_featured'     => $i->is_featured,
             'is_pinned'       => $i->is_pinned,
             'views_count'     => $i->views_count,
             'downloads_count' => $i->downloads_count,
             'published_at'    => $i->published_at,
+        ];
+    }
+
+    private function collectionCard(ContentCollection $c): array
+    {
+        return [
+            'id'          => $c->id,
+            'name_ar'     => $c->name_ar,
+            'name_en'     => $c->name_en,
+            'slug'        => $c->slug,
+            'icon'        => $c->icon,
+            'image_url'   => $c->image_url,
+            'description_ar' => $c->description_ar,
+            'description_en' => $c->description_en,
+            'items_count' => $c->content_items_count ?? $c->contentItems()->where('status', 'published')->count(),
         ];
     }
 
