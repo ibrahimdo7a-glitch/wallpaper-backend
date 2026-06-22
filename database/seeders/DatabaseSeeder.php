@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             SuperAdminSeeder::class,
             SettingsSeeder::class,
             TranslationSeeder::class,
+            SectionTypesSeeder::class,
             BrandsAndModelsSeeder::class,
             NewsCategoriesSeeder::class,
         ]);

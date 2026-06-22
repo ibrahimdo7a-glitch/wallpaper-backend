@@ -4,95 +4,266 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
+use App\Models\BrandSection;
+use App\Models\CarModel;
+use App\Models\ContentItem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class BrandController extends Controller
 {
+    // ─── GET /api/v1/brands ───────────────────────────────────────────────────
     public function index(Request $request)
     {
-        $brands = Brand::active()
-            ->when($request->boolean('featured'), fn($q) => $q->featured())
-            ->withCount(['carModels', 'wallpapers', 'apps'])
-            ->orderBy('sort_order')
-            ->get()
-            ->map(fn($b) => [
-                'id'               => $b->id,
-                'name_ar'          => $b->name_ar,
-                'name_en'          => $b->name_en,
-                'slug'             => $b->slug,
-                'logo_url'         => $b->logo_url,
-                'cover_image_url'  => $b->cover_image_url,
-                'description_ar'   => $b->description_ar,
-                'description_en'   => $b->description_en,
-                'country'          => $b->country,
-                'models_count'     => $b->models_count,
-                'wallpapers_count' => $b->wallpapers_count,
-                'apps_count'       => $b->apps_count,
-                'is_featured'      => $b->is_featured,
-            ]);
+        $cacheKey = 'brands.list.' . ($request->boolean('featured') ? 'featured' : 'all');
+
+        $brands = Cache::remember($cacheKey, 300, function () use ($request) {
+            return Brand::active()
+                ->when($request->boolean('featured'), fn($q) => $q->featured())
+                ->orderBy('sort_order')
+                ->get()
+                ->map(fn($b) => $this->brandCard($b));
+        });
 
         return response()->json(['data' => $brands]);
     }
 
+    // ─── GET /api/v1/brands/{slug} ────────────────────────────────────────────
     public function show(string $slug)
     {
-        $brand = Brand::active()
-            ->where('slug', $slug)
+        $brand = Cache::remember("brand.{$slug}", 300, function () use ($slug) {
+            $b = Brand::active()->where('slug', $slug)->firstOrFail();
+            return array_merge($this->brandCard($b), [
+                'description_ar'         => $b->description_ar,
+                'description_en'         => $b->description_en,
+                'website_url'            => $b->website_url,
+                'telegram_url'           => $b->telegram_url,
+                'whatsapp_url'           => $b->whatsapp_url,
+                'channel_url'            => $b->channel_url,
+                'download_cta_url'       => $b->download_cta_url,
+                'download_cta_label_ar'  => $b->download_cta_label_ar,
+                'download_cta_label_en'  => $b->download_cta_label_en,
+                'primary_color'          => $b->primary_color,
+                'accent_color'           => $b->accent_color,
+                'news_count'             => $b->news_count,
+                'tutorials_count'        => $b->tutorials_count,
+                'total_downloads'        => $b->total_downloads,
+                'meta_title_ar'          => $b->meta_title_ar,
+                'meta_title_en'          => $b->meta_title_en,
+                'meta_description_ar'    => $b->meta_description_ar,
+                'meta_description_en'    => $b->meta_description_en,
+            ]);
+        });
+
+        return response()->json(['data' => $brand]);
+    }
+
+    // ─── GET /api/v1/brands/{slug}/sections ───────────────────────────────────
+    public function sections(string $slug)
+    {
+        $brand = Brand::active()->where('slug', $slug)->firstOrFail();
+
+        $sections = Cache::remember("brand.{$slug}.sections", 300, function () use ($brand) {
+            return $brand->enabledSections()
+                ->with('sectionType')
+                ->get()
+                ->map(fn($s) => $this->sectionCard($s));
+        });
+
+        return response()->json(['data' => $sections]);
+    }
+
+    // ─── GET /api/v1/brands/{slug}/sections/{sectionSlug} ────────────────────
+    public function sectionContent(string $brandSlug, string $sectionSlug, Request $request)
+    {
+        $brand = Brand::active()->where('slug', $brandSlug)->firstOrFail();
+
+        $section = BrandSection::where('brand_id', $brand->id)
+            ->where('slug', $sectionSlug)
+            ->where('is_enabled', true)
+            ->with('sectionType')
             ->firstOrFail();
 
+        $perPage = min((int)$request->get('per_page', 20), 100);
+
+        $items = ContentItem::where('brand_section_id', $section->id)
+            ->where('status', 'published')
+            ->whereNull('car_model_id')   // brand-level items only
+            ->orderByDesc('is_pinned')
+            ->orderBy('sort_order')
+            ->orderByDesc('published_at')
+            ->paginate($perPage);
+
         return response()->json([
-            'data' => [
-                'id'               => $brand->id,
-                'name_ar'          => $brand->name_ar,
-                'name_en'          => $brand->name_en,
-                'slug'             => $brand->slug,
-                'logo_url'         => $brand->logo_url,
-                'cover_image_url'  => $brand->cover_image_url,
-                'description_ar'   => $brand->description_ar,
-                'description_en'   => $brand->description_en,
-                'country'          => $brand->country,
-                'website_url'      => $brand->website_url,
-                'models_count'     => $brand->models_count,
-                'wallpapers_count' => $brand->wallpapers_count,
-                'apps_count'       => $brand->apps_count,
-                'is_featured'      => $brand->is_featured,
-                'meta_title'       => $brand->meta_title,
-                'meta_description' => $brand->meta_description,
+            'section' => $this->sectionCard($section),
+            'brand'   => ['name_ar' => $brand->name_ar, 'name_en' => $brand->name_en, 'slug' => $brand->slug],
+            'data'    => $items->map(fn($i) => $this->contentCard($i)),
+            'meta'    => [
+                'current_page' => $items->currentPage(),
+                'last_page'    => $items->lastPage(),
+                'per_page'     => $items->perPage(),
+                'total'        => $items->total(),
             ],
         ]);
     }
 
+    // ─── GET /api/v1/brands/{slug}/models ─────────────────────────────────────
     public function models(string $slug, Request $request)
     {
         $brand = Brand::active()->where('slug', $slug)->firstOrFail();
 
-        $models = $brand->carModels()
-            ->where('is_active', true)
-            ->when($request->get('car_type'), fn($q, $v) => $q->where('car_type', $v))
-            ->when($request->get('fuel_type'), fn($q, $v) => $q->where('fuel_type', $v))
-            ->orderBy('sort_order')
-            ->get()
-            ->map(fn($m) => [
-                'id'               => $m->id,
-                'name_ar'          => $m->name_ar,
-                'name_en'          => $m->name_en,
-                'slug'             => $m->slug,
-                'image_url'        => $m->image_url,
-                'cover_image_url'  => $m->cover_image_url,
-                'car_type'         => $m->car_type,
-                'fuel_type'        => $m->fuel_type,
-                'year_from'        => $m->year_from,
-                'year_to'          => $m->year_to,
-                'year_label'       => $m->year_label,
-                'wallpapers_count' => $m->wallpapers_count,
-                'apps_count'       => $m->apps_count,
-                'tutorials_count'  => $m->tutorials_count,
-                'is_featured'      => $m->is_featured,
-            ]);
+        $models = Cache::remember("brand.{$slug}.models", 300, function () use ($brand, $request) {
+            return $brand->carModels()
+                ->where('is_active', true)
+                ->when($request->get('car_type'), fn($q, $v) => $q->where('car_type', $v))
+                ->when($request->get('fuel_type'), fn($q, $v) => $q->where('fuel_type', $v))
+                ->get()
+                ->map(fn($m) => $this->modelCard($m));
+        });
 
         return response()->json([
             'brand' => ['name_ar' => $brand->name_ar, 'name_en' => $brand->name_en, 'slug' => $brand->slug],
             'data'  => $models,
         ]);
+    }
+
+    // ─── GET /api/v1/brands/{slug}/models/{modelSlug} ─────────────────────────
+    public function modelShow(string $brandSlug, string $modelSlug)
+    {
+        $brand = Brand::active()->where('slug', $brandSlug)->firstOrFail();
+        $model = $brand->carModels()->where('slug', $modelSlug)->where('is_active', true)->firstOrFail();
+
+        // Sections that are model-specific AND enabled for this brand
+        $sections = BrandSection::where('brand_id', $brand->id)
+            ->where('is_enabled', true)
+            ->where('is_model_specific', true)
+            ->with('sectionType')
+            ->orderBy('sort_order')
+            ->get()
+            ->map(fn($s) => $this->sectionCard($s));
+
+        return response()->json([
+            'data' => array_merge($this->modelCard($model), [
+                'description_ar' => $model->description_ar,
+                'description_en' => $model->description_en,
+                'brand' => ['name_ar' => $brand->name_ar, 'name_en' => $brand->name_en, 'slug' => $brand->slug, 'logo_url' => $brand->logo_url, 'primary_color' => $brand->primary_color],
+            ]),
+            'sections' => $sections,
+        ]);
+    }
+
+    // ─── GET /api/v1/brands/{slug}/models/{modelSlug}/sections/{sectionSlug} ──
+    public function modelSectionContent(string $brandSlug, string $modelSlug, string $sectionSlug, Request $request)
+    {
+        $brand = Brand::active()->where('slug', $brandSlug)->firstOrFail();
+        $model = $brand->carModels()->where('slug', $modelSlug)->where('is_active', true)->firstOrFail();
+
+        $section = BrandSection::where('brand_id', $brand->id)
+            ->where('slug', $sectionSlug)
+            ->where('is_enabled', true)
+            ->firstOrFail();
+
+        $perPage = min((int)$request->get('per_page', 20), 100);
+
+        $items = ContentItem::where('brand_section_id', $section->id)
+            ->where('car_model_id', $model->id)
+            ->where('status', 'published')
+            ->orderByDesc('is_pinned')
+            ->orderBy('sort_order')
+            ->orderByDesc('published_at')
+            ->paginate($perPage);
+
+        return response()->json([
+            'section' => $this->sectionCard($section),
+            'brand'   => ['name_ar' => $brand->name_ar, 'slug' => $brand->slug],
+            'model'   => ['name_ar' => $model->name_ar, 'slug' => $model->slug],
+            'data'    => $items->map(fn($i) => $this->contentCard($i)),
+            'meta'    => [
+                'current_page' => $items->currentPage(),
+                'last_page'    => $items->lastPage(),
+                'total'        => $items->total(),
+            ],
+        ]);
+    }
+
+    // ─── Private helpers ──────────────────────────────────────────────────────
+    private function brandCard(Brand $b): array
+    {
+        return [
+            'id'               => $b->id,
+            'name_ar'          => $b->name_ar,
+            'name_en'          => $b->name_en,
+            'slug'             => $b->slug,
+            'logo_url'         => $b->logo_url,
+            'cover_image_url'  => $b->cover_image_url,
+            'country'          => $b->country,
+            'is_featured'      => $b->is_featured,
+            'models_count'     => $b->models_count,
+            'wallpapers_count' => $b->wallpapers_count,
+            'apps_count'       => $b->apps_count,
+        ];
+    }
+
+    private function sectionCard(BrandSection $s): array
+    {
+        return [
+            'id'              => $s->id,
+            'slug'            => $s->slug,
+            'name_ar'         => $s->getNameAr(),
+            'name_en'         => $s->getNameEn(),
+            'icon'            => $s->getIcon(),
+            'description_ar'  => $s->custom_description_ar ?? $s->sectionType?->description_ar,
+            'description_en'  => $s->custom_description_en ?? $s->sectionType?->description_en,
+            'cover_image_url' => $s->cover_image_url,
+            'layout_type'     => $s->layout_type,
+            'is_model_specific' => $s->is_model_specific,
+            'show_in_navigation' => $s->show_in_navigation,
+            'show_in_brand_home' => $s->show_in_brand_home,
+            'sort_order'      => $s->sort_order,
+            'settings'        => $s->settings,
+        ];
+    }
+
+    private function contentCard(ContentItem $i): array
+    {
+        return [
+            'id'              => $i->id,
+            'title_ar'        => $i->title_ar,
+            'title_en'        => $i->title_en,
+            'slug'            => $i->slug,
+            'description_ar'  => $i->description_ar,
+            'description_en'  => $i->description_en,
+            'image_url'       => $i->image_url,
+            'thumbnail_url'   => $i->thumbnail_url,
+            'file_url'        => $i->file_url,
+            'file_size_label' => $i->file_size_label,
+            'video_url'       => $i->video_url,
+            'external_url'    => $i->external_url,
+            'metadata'        => $i->metadata,
+            'content_type'    => $i->content_type,
+            'is_featured'     => $i->is_featured,
+            'is_pinned'       => $i->is_pinned,
+            'views_count'     => $i->views_count,
+            'downloads_count' => $i->downloads_count,
+            'published_at'    => $i->published_at,
+        ];
+    }
+
+    private function modelCard(CarModel $m): array
+    {
+        return [
+            'id'               => $m->id,
+            'name_ar'          => $m->name_ar,
+            'name_en'          => $m->name_en,
+            'slug'             => $m->slug,
+            'image_url'        => $m->image_url,
+            'cover_image_url'  => $m->cover_image_url,
+            'car_type'         => $m->car_type,
+            'fuel_type'        => $m->fuel_type,
+            'year_from'        => $m->year_from,
+            'year_to'          => $m->year_to,
+            'year_label'       => $m->year_label,
+            'is_featured'      => $m->is_featured,
+        ];
     }
 }
