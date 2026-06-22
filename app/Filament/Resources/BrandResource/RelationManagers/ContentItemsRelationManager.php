@@ -4,6 +4,7 @@ namespace App\Filament\Resources\BrandResource\RelationManagers;
 
 use App\Models\BrandSection;
 use App\Models\CarModel;
+use App\Models\ContentCollection;
 use App\Models\SectionType;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -45,10 +46,27 @@ class ContentItemsRelationManager extends RelationManager
                             $set('content_type', $section->sectionType?->key);
                         }
                     }),
-                Forms\Components\Select::make('car_model_id')->label('الموديل (اختياري)')
-                    ->options($models)->searchable()->nullable()
-                    ->placeholder('عام للماركة'),
+                Forms\Components\Select::make('content_collection_id')->label('المجموعة (قسم فرعي)')
+                    ->options(fn() => ContentCollection::where('brand_id', $brandId)
+                        ->where('is_active', true)->orderBy('sort_order')
+                        ->get()->mapWithKeys(fn($c) => [$c->id => ($c->icon ? $c->icon . ' ' : '') . $c->name_ar]))
+                    ->searchable()->nullable()->placeholder('بدون مجموعة')
+                    ->helperText('مثل: ليوبارد 5 / خلفيات قطر')
+                    ->createOptionForm([
+                        Forms\Components\TextInput::make('name_ar')->label('اسم المجموعة (عربي)')->required(),
+                        Forms\Components\TextInput::make('name_en')->label('اسم المجموعة (إنجليزي)'),
+                        Forms\Components\TextInput::make('icon')->label('أيقونة / علم')->placeholder('🇶🇦'),
+                    ])
+                    ->createOptionUsing(fn(array $data) => ContentCollection::create([
+                        'brand_id' => $brandId,
+                        'name_ar'  => $data['name_ar'],
+                        'name_en'  => $data['name_en'] ?? null,
+                        'icon'     => $data['icon'] ?? null,
+                    ])->id),
             ]),
+            Forms\Components\Select::make('car_model_id')->label('الموديل (اختياري)')
+                ->options($models)->searchable()->nullable()
+                ->placeholder('عام للماركة'),
             Forms\Components\Hidden::make('content_type'),
 
             Forms\Components\Grid::make(2)->schema([
@@ -95,6 +113,7 @@ class ContentItemsRelationManager extends RelationManager
                 Tables\Columns\ImageColumn::make('image_path')->label('')->disk(config('filesystems.default', 'public'))->square()->size(40),
                 Tables\Columns\TextColumn::make('title_ar')->label('العنوان')->searchable()->limit(40),
                 Tables\Columns\TextColumn::make('brandSection.slug')->label('القسم')->badge()->color('primary'),
+                Tables\Columns\TextColumn::make('collection.name_ar')->label('المجموعة')->badge()->color('warning')->placeholder('—'),
                 Tables\Columns\TextColumn::make('content_type')->label('النوع')->badge()->color('gray'),
                 Tables\Columns\TextColumn::make('carModel.name_ar')->label('الموديل')->placeholder('عام'),
                 Tables\Columns\BadgeColumn::make('status')->label('الحالة')
