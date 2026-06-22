@@ -4,7 +4,12 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\WallpaperResource\Pages;
 use App\Jobs\ApplyWatermark;
+use App\Models\Brand;
+use App\Models\BrandSection;
+use App\Models\ContentCollection;
+use App\Models\CarModel;
 use App\Models\Wallpaper;
+use App\Services\WallpaperConverter;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -290,6 +295,23 @@ class WallpaperResource extends Resource
                         Notification::make()->title('جاري إعادة تطبيق التوقيع')->info()->send();
                     }),
 
+                Tables\Actions\Action::make('convert_to_brand')
+                    ->label('تحويل لماركة')
+                    ->icon('heroicon-o-arrow-right-circle')
+                    ->color('primary')
+                    ->modalHeading('تحويل الخلفية إلى ماركة')
+                    ->modalDescription('اختر الماركة والقسم والمجموعة التي ستذهب إليها هذه الخلفية.')
+                    ->modalSubmitActionLabel('تحويل')
+                    ->form(fn() => static::convertFormSchema())
+                    ->action(function (Wallpaper $record, array $data) {
+                        $item = WallpaperConverter::convert($record, $data);
+                        if ($item) {
+                            Notification::make()->title('تم تحويل الخلفية للماركة بنجاح')->success()->send();
+                        } else {
+                            Notification::make()->title('فشل التحويل — تأكد أن القسم مُفعّل')->danger()->send();
+                        }
+                    }),
+
                 Tables\Actions\EditAction::make()
                     ->visible(fn(Wallpaper $w) => Auth::user()->hasPermissionTo('can_edit_all_wallpapers')
                         || ($w->uploaded_by === Auth::id() && Auth::user()->hasPermissionTo('can_edit_own_wallpapers'))),
@@ -306,6 +328,25 @@ class WallpaperResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('convert_to_brand_bulk')
+                        ->label('تحويل المحدد لماركة')
+                        ->icon('heroicon-o-arrow-right-circle')
+                        ->color('primary')
+                        ->modalHeading('تحويل الخلفيات المحددة إلى ماركة')
+                        ->modalDescription('كل الخلفيات المحددة ستُنقل لنفس الماركة والقسم والمجموعة.')
+                        ->modalSubmitActionLabel('تحويل الكل')
+                        ->form(fn() => static::convertFormSchema())
+                        ->action(function ($records, array $data) {
+                            $ok = 0;
+                            foreach ($records as $w) {
+                                if (WallpaperConverter::convert($w, $data)) $ok++;
+                            }
+                            Notification::make()
+                                ->title("تم تحويل {$ok} خلفية للماركة")
+                                ->success()->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
+
                     Tables\Actions\BulkAction::make('publish_selected')
                         ->label('نشر المحدد')
                         ->icon('heroicon-o-check-circle')
@@ -327,6 +368,63 @@ class WallpaperResource extends Resource
                         ->visible(fn() => Auth::user()->hasPermissionTo('can_force_delete_wallpapers')),
                 ]),
             ]);
+    }
+
+    /**
+     * Reusable form schema for the "Convert to brand" action.
+     * brand → section → collection (optional) → model (optional).
+     */
+    public static function convertFormSchema(): array
+    {
+        return [
+            Forms\Components\Select::make('brand_id')->label('الماركة')
+                ->options(Brand::orderBy('sort_order')->pluck('name_ar', 'id'))
+                ->required()->searchable()->live()
+                ->afterStateUpdated(function (Forms\Set $set) {
+                    $set('brand_section_id', null);
+                    $set('content_collection_id', null);
+                    $set('car_model_id', null);
+                }),
+
+            Forms\Components\Select::make('brand_section_id')->label('القسم')
+                ->options(fn(Forms\Get $get) => $get('brand_id')
+                    ? BrandSection::where('brand_id', $get('brand_id'))->where('is_enabled', true)
+                        ->with('sectionType')->get()
+                        ->mapWithKeys(fn($s) => [$s->id => $s->getIcon() . ' ' . $s->getNameAr()])
+                    : [])
+                ->required()->searchable()->live()
+                ->helperText('لازم القسم يكون مُفعّلاً للماركة. لو ما يظهر، فعّله من تبويب الأقسام في الماركة.'),
+
+            Forms\Components\Select::make('content_collection_id')->label('المجموعة (اختياري)')
+                ->options(fn(Forms\Get $get) => $get('brand_id')
+                    ? ContentCollection::where('brand_id', $get('brand_id'))->where('is_active', true)
+                        ->orderBy('sort_order')->get()
+                        ->mapWithKeys(fn($c) => [$c->id => ($c->icon ? $c->icon . ' ' : '') . $c->name_ar])
+                    : [])
+                ->searchable()->nullable()->placeholder('بدون مجموعة')
+                ->createOptionForm([
+                    Forms\Components\TextInput::make('name_ar')->label('اسم المجموعة (عربي)')->required(),
+                    Forms\Components\TextInput::make('name_en')->label('اسم المجموعة (إنجليزي)'),
+                    Forms\Components\TextInput::make('icon')->label('أيقونة / علم')->placeholder('🇶🇦'),
+                ])
+                ->createOptionUsing(fn(array $data, Forms\Get $get) => ContentCollection::create([
+                    'brand_id'         => $get('brand_id'),
+                    'brand_section_id' => $get('brand_section_id'),
+                    'name_ar'          => $data['name_ar'],
+                    'name_en'          => $data['name_en'] ?? null,
+                    'icon'             => $data['icon'] ?? null,
+                ])->id),
+
+            Forms\Components\Select::make('car_model_id')->label('الموديل (اختياري)')
+                ->options(fn(Forms\Get $get) => $get('brand_id')
+                    ? CarModel::where('brand_id', $get('brand_id'))->where('is_active', true)->pluck('name_ar', 'id')
+                    : [])
+                ->searchable()->nullable()->placeholder('عام للماركة'),
+
+            Forms\Components\Toggle::make('delete_original')->label('حذف الخلفية القديمة بعد التحويل')
+                ->default(true)->inline(false)
+                ->helperText('الصور تبقى محفوظة وتُستخدم في العنصر الجديد — يُحذف فقط السجل القديم.'),
+        ];
     }
 
     public static function getPages(): array
