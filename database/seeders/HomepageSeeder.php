@@ -91,6 +91,21 @@ class HomepageSeeder extends Seeder
                 'sort_order' => 5,
                 'settings' => ['limit' => 6, 'featured_only' => false],
             ],
+            [
+                'name'     => 'مميزات الموقع',
+                'type'     => 'custom_content',
+                'layout'   => 'grid',
+                'sort_order' => 6,
+                'settings' => [
+                    'items' => [
+                        ['icon' => '📦', 'title_ar' => 'محتوى متنوع',     'title_en' => 'Diverse Content',    'subtitle_ar' => 'خلفيات، تطبيقات، شروحات، ملفات', 'subtitle_en' => 'Wallpapers, apps, tutorials, files'],
+                        ['icon' => '⚡', 'title_ar' => 'تحميل سريع',      'title_en' => 'Fast Downloads',     'subtitle_ar' => 'خوادم سريعة لتحميل الملفات',      'subtitle_en' => 'Fast servers for file downloads'],
+                        ['icon' => '🔄', 'title_ar' => 'تحديثات مستمرة',  'title_en' => 'Regular Updates',    'subtitle_ar' => 'نقوم بتحديث المحتوى باستمرار',    'subtitle_en' => 'We update content regularly'],
+                        ['icon' => '👥', 'title_ar' => 'مجتمع نشط',       'title_en' => 'Active Community',   'subtitle_ar' => 'انضم إلى مجتمع مالكي السيارات',   'subtitle_en' => 'Join the car owners community'],
+                        ['icon' => '✅', 'title_ar' => 'محتوى موثوق',     'title_en' => 'Trusted Content',    'subtitle_ar' => 'جميع المحتويات مختبرة وآمنة',     'subtitle_en' => 'All content is tested and safe'],
+                    ],
+                ],
+            ],
         ];
 
         foreach ($sections as $section) {
