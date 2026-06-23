@@ -183,18 +183,22 @@ class HomepageController extends Controller
     private function wallpapersData(HomepageSection $s): array
     {
         $limit = $s->settings['limit'] ?? 10;
-        $items = Wallpaper::where('is_featured', true)->where('status', 'published')
+        $items = ContentItem::where('content_type', 'wallpapers')
+            ->where('is_featured', true)->where('status', 'published')
+            ->with(['brand:id,slug', 'brandSection:id,slug'])
             ->orderByDesc('downloads_count')->limit($limit)->get()
-            ->map(fn($w) => [
-                'id'              => $w->id,
-                'title_ar'        => $w->title_ar,
-                'title_en'        => $w->title_en,
-                'slug'            => $w->slug,
-                'thumbnail_url'   => $w->thumbnail_url,
-                'image_url'       => $w->image_url,
-                'downloads_count' => $w->downloads_count,
-                'resolution_label'=> $w->resolution_label,
-                'type'            => 'wallpaper',
+            ->map(fn($i) => [
+                'id'               => $i->id,
+                'title_ar'         => $i->title_ar,
+                'title_en'         => $i->title_en,
+                'slug'             => $i->slug,
+                'thumbnail_url'    => $i->thumbnail_url,
+                'image_url'        => $i->image_url,
+                'downloads_count'  => $i->downloads_count,
+                'resolution_label' => $i->metadata['resolution'] ?? null,
+                'brand_slug'       => $i->brand?->slug,
+                'section_slug'     => $i->brandSection?->slug,
+                'type'             => 'wallpaper',
             ]);
         return ['items' => $items->values()];
     }
