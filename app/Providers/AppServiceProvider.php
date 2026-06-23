@@ -26,11 +26,14 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(60)->by($request->ip());
         });
 
-        // Cloudflare R2 does not support ACLs — uploading with public visibility
-        // fails silently. Default all Filament uploads to private; files stay
-        // publicly served via the R2 public bucket URL.
+        // Default ALL Filament uploads to the app's storage disk (R2) with private
+        // visibility. Two reasons:
+        //  1. Fields without an explicit ->disk() otherwise upload to Filament's
+        //     default disk (local) while the model URL accessors read from R2 → 404.
+        //  2. Cloudflare R2 rejects ACLs, so public visibility fails silently
+        //     (throw=false). Private objects are still served via the R2 public URL.
         FileUpload::configureUsing(function (FileUpload $upload) {
-            $upload->visibility('private');
+            $upload->disk(config('filesystems.default', 'public'))->visibility('private');
         });
     }
 }
