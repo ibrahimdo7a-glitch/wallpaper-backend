@@ -64,6 +64,19 @@ class WallpaperResource extends Resource
         $user = Auth::user();
 
         return $form->schema([
+            Forms\Components\Section::make('معاينة الصورة')
+                ->schema([
+                    Forms\Components\Placeholder::make('image_preview')
+                        ->label('')
+                        ->content(fn($record) => $record && $record->original_file
+                            ? new \Illuminate\Support\HtmlString(
+                                '<img src="' . e($record->public_image_url) . '" alt="preview" '
+                                . 'style="max-height:420px;width:auto;border-radius:12px;border:1px solid #374151;" />'
+                            )
+                            : '—'),
+                ])
+                ->visibleOn('edit'),
+
             Forms\Components\Section::make('معلومات الخلفية')
                 ->schema([
                     Forms\Components\TextInput::make('title_ar')
