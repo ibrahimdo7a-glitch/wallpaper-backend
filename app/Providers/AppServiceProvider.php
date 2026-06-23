@@ -26,14 +26,12 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(60)->by($request->ip());
         });
 
-        // Default ALL Filament uploads to the app's storage disk (R2) with private
-        // visibility. Two reasons:
-        //  1. Fields without an explicit ->disk() otherwise upload to Filament's
-        //     default disk (local) while the model URL accessors read from R2 → 404.
-        //  2. Cloudflare R2 rejects ACLs, so public visibility fails silently
-        //     (throw=false). Private objects are still served via the R2 public URL.
+        // R2 rejects ACLs, so public-visibility uploads fail silently. Default all
+        // Filament uploads to private (still served via the R2 public bucket URL).
+        // NOTE: we intentionally do NOT force ->disk() here — fields set their disk
+        // explicitly, and forcing r2 globally triggered slow/hung r2 round-trips.
         FileUpload::configureUsing(function (FileUpload $upload) {
-            $upload->disk(config('filesystems.default', 'public'))->visibility('private');
+            $upload->visibility('private');
         });
     }
 }

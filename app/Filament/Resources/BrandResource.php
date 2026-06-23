@@ -50,12 +50,12 @@ class BrandResource extends Resource
 
                 Forms\Components\Tabs\Tab::make('الصور')->icon('heroicon-o-photo')->schema([
                     Forms\Components\FileUpload::make('logo')->label('شعار الماركة')
-                        ->image()->directory('brands/logos')
-                        ->imageResizeMode('contain')->imageResizeTargetWidth(300)->imageResizeTargetHeight(300)
+                        ->image()->disk(config('filesystems.default', 'public'))->directory('brands/logos')
+                        ->maxSize(2048)
                         ->helperText('300×300 px — PNG شفاف مفضل'),
                     Forms\Components\FileUpload::make('cover_image')->label('صورة الغلاف')
-                        ->image()->directory('brands/covers')
-                        ->imageResizeMode('cover')->imageResizeTargetWidth(1920)->imageResizeTargetHeight(600)
+                        ->image()->disk(config('filesystems.default', 'public'))->directory('brands/covers')
+                        ->maxSize(5120)
                         ->helperText('1920×600 px'),
                 ]),
 

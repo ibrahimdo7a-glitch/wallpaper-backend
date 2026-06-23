@@ -74,8 +74,8 @@ class TutorialResource extends Resource
 
                 Forms\Components\Tabs\Tab::make('الصورة والـ SEO')->schema([
                     Forms\Components\FileUpload::make('cover_image')->label('صورة الغلاف')
-                        ->image()->directory('tutorials/covers')->imageResizeMode('cover')
-                        ->imageResizeTargetWidth(1200)->imageResizeTargetHeight(630),
+                        ->image()->disk(config('filesystems.default', 'public'))->directory('tutorials/covers')
+                        ->maxSize(5120),
                     Forms\Components\Grid::make(2)->schema([
                         Forms\Components\TextInput::make('meta_title')->label('Meta Title'),
                         Forms\Components\TextInput::make('meta_description')->label('Meta Description'),
