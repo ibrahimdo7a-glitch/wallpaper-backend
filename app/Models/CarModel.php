@@ -80,6 +80,22 @@ class CarModel extends Model
         return $this->hasMany(CarFile::class, 'car_model_id');
     }
 
+    // ─── Per-type content scoped to this model (admin tabs) ─────────────────────
+    public function wallpaperContent(): HasMany
+    {
+        return $this->hasMany(ContentItem::class, 'car_model_id')->where('content_type', 'wallpapers');
+    }
+
+    public function tutorialContent(): HasMany
+    {
+        return $this->hasMany(ContentItem::class, 'car_model_id')->whereIn('content_type', ['tutorial_images', 'tutorial_videos', 'tutorials']);
+    }
+
+    public function fileContent(): HasMany
+    {
+        return $this->hasMany(ContentItem::class, 'car_model_id')->whereIn('content_type', ['files', 'manuals']);
+    }
+
     public function newsArticles(): BelongsToMany
     {
         return $this->belongsToMany(NewsArticle::class, 'news_article_car_model');

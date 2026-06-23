@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\CarModelResource\Pages;
+use App\Filament\Resources\CarModelResource\RelationManagers;
 use App\Models\Brand;
 use App\Models\CarModel;
 use Filament\Forms;
@@ -123,6 +124,15 @@ class CarModelResource extends Resource
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([Tables\Actions\BulkActionGroup::make([Tables\Actions\DeleteBulkAction::make()])]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            RelationManagers\ModelWallpapersRelationManager::class,
+            RelationManagers\ModelTutorialsRelationManager::class,
+            RelationManagers\ModelFilesRelationManager::class,
+        ];
     }
 
     public static function getPages(): array
