@@ -26,15 +26,18 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(60)->by($request->ip());
         });
 
-        // Filament uploads on Cloudflare R2:
-        //  - visibility('private'): R2 rejects ACLs, public visibility fails silently.
+        // Filament uploads on Cloudflare R2 (applies to EVERY FileUpload):
+        //  - disk(r2): fields without an explicit ->disk() otherwise upload to the
+        //    default (local) disk while the model URL accessors read from R2 → 404.
+        //    This was the cause of broken content/wallpaper thumbnails.
+        //  - visibility('private'): R2 rejects ACLs; public visibility fails silently.
         //    Files are still served via the R2 public bucket URL.
-        //  - fetchFileInformation(false): the metadata request Filament makes to read
-        //    an existing file's size is what hangs forever on "Waiting for size" with
-        //    R2 (no CORS on the signed endpoint). Disabling it fixes the stuck preview
-        //    and restores the remove/replace controls on edit forms.
+        //  - fetchFileInformation(false): skips the metadata request that hangs on
+        //    "Waiting for size" for existing files.
         FileUpload::configureUsing(function (FileUpload $upload) {
-            $upload->visibility('private')->fetchFileInformation(false);
+            $upload->disk(config('filesystems.default', 'public'))
+                ->visibility('private')
+                ->fetchFileInformation(false);
         });
     }
 }
