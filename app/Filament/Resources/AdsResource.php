@@ -65,7 +65,7 @@ class AdsResource extends Resource
                 ->image()
                 ->disk('r2')
                 ->directory('ads')
-                ->visibility('public')
+                ->visibility('private')
                 ->visible(fn(Forms\Get $get) => $get('type') === 'image'),
 
             Forms\Components\TextInput::make('link_url')->label('رابط الإعلان')->url(),

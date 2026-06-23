@@ -90,7 +90,7 @@ class WatermarkResource extends Resource
                         ->image()
                         ->disk('r2')
                         ->directory('watermarks')
-                        ->visibility('public')
+                        ->visibility('private')
                         ->acceptedFileTypes(['image/png', 'image/webp']),
                 ])
                 ->visible(fn(Forms\Get $get) => in_array($get('type'), ['image', 'combined'])),

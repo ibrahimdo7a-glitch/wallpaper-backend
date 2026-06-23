@@ -58,7 +58,7 @@ class AppCategoryResource extends Resource
                     ->image()
                     ->disk(config('filesystems.default', 'public'))
                     ->directory('app-categories')
-                    ->visibility('public'),
+                    ->visibility('private'),
 
                 Forms\Components\Toggle::make('is_active')
                     ->label('مفعّل')

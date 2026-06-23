@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Filament\Forms\Components\FileUpload;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -23,6 +24,13 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(60)->by($request->ip());
+        });
+
+        // Cloudflare R2 does not support ACLs — uploading with public visibility
+        // fails silently. Default all Filament uploads to private; files stay
+        // publicly served via the R2 public bucket URL.
+        FileUpload::configureUsing(function (FileUpload $upload) {
+            $upload->visibility('private');
         });
     }
 }

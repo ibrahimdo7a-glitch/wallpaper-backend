@@ -120,12 +120,12 @@ class AndroidAppResource extends Resource
                     ->icon('heroicon-o-arrow-down-tray')
                     ->schema([
                         Forms\Components\FileUpload::make('icon_file')->label('أيقونة التطبيق')
-                            ->image()->disk($disk)->directory('apps/icons')->visibility('public')
+                            ->image()->disk($disk)->directory('apps/icons')->visibility('private')
                             ->maxSize(2048)->imagePreviewHeight('80'),
                         Forms\Components\FileUpload::make('cover_image')->label('صورة الغلاف')
-                            ->image()->disk($disk)->directory('apps/covers')->visibility('public')->maxSize(5120),
+                            ->image()->disk($disk)->directory('apps/covers')->visibility('private')->maxSize(5120),
                         Forms\Components\FileUpload::make('apk_file')->label('ملف APK')
-                            ->disk($disk)->directory('apps/apk')->visibility('public')
+                            ->disk($disk)->directory('apps/apk')->visibility('private')
                             ->acceptedFileTypes(['application/vnd.android.package-archive', 'application/octet-stream'])
                             ->maxSize(512000)->helperText('الحد الأقصى 500 MB'),
                         Forms\Components\TextInput::make('external_url')->label('رابط خارجي (Play Store أو موقع)')
@@ -165,7 +165,7 @@ class AndroidAppResource extends Resource
                             ->orderColumn('sort_order')
                             ->schema([
                                 Forms\Components\FileUpload::make('image_file')->label('الصورة')
-                                    ->image()->disk($disk)->directory('apps/screenshots')->visibility('public')
+                                    ->image()->disk($disk)->directory('apps/screenshots')->visibility('private')
                                     ->required()->maxSize(5120),
                                 Forms\Components\Grid::make(2)->schema([
                                     Forms\Components\TextInput::make('caption_ar')->label('تعليق (عربي)')->maxLength(200),
@@ -188,7 +188,7 @@ class AndroidAppResource extends Resource
                             ->schema([
                                 Forms\Components\Hidden::make('step_number')->default(1),
                                 Forms\Components\FileUpload::make('image_file')->label('صورة الخطوة')
-                                    ->image()->disk($disk)->directory('apps/steps')->visibility('public')
+                                    ->image()->disk($disk)->directory('apps/steps')->visibility('private')
                                     ->required()->maxSize(5120),
                                 Forms\Components\Grid::make(2)->schema([
                                     Forms\Components\TextInput::make('title_ar')->label('عنوان الخطوة (عربي)')->maxLength(150),

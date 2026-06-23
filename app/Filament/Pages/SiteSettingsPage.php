@@ -200,7 +200,7 @@ class SiteSettingsPage extends Page
                                     ->helperText('IPA أو APK أو أي ملف للتحميل — الحد الأقصى 500 ميغابايت')
                                     ->disk(config('filesystems.default', 'public'))
                                     ->directory('ilink')
-                                    ->visibility('public')
+                                    ->visibility('private')
                                     ->preserveFilenames()
                                     ->maxSize(512000)
                                     ->columnSpanFull(),

@@ -86,7 +86,7 @@ class NewsArticleResource extends Resource
 
                 Forms\Components\Tabs\Tab::make('الصورة والإعدادات')->icon('heroicon-o-photo')->schema([
                     Forms\Components\FileUpload::make('cover_image')->label('صورة الغلاف')
-                        ->image()->disk($disk)->directory('news/covers')->visibility('public')->maxSize(5120),
+                        ->image()->disk($disk)->directory('news/covers')->visibility('private')->maxSize(5120),
 
                     Forms\Components\Grid::make(3)->schema([
                         Forms\Components\Select::make('status')->label('الحالة')

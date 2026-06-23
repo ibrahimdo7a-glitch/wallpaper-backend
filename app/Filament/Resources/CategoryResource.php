@@ -99,7 +99,7 @@ class CategoryResource extends Resource
                         ->image()
                         ->disk(config('filesystems.default', 'public'))
                         ->directory('categories')
-                        ->visibility('public'),
+                        ->visibility('private'),
 
                     Forms\Components\TextInput::make('icon')
                         ->label('أيقونة (CSS class أو emoji)')

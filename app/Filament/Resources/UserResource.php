@@ -76,7 +76,7 @@ class UserResource extends Resource
                         ->image()
                         ->disk('r2')
                         ->directory('avatars')
-                        ->visibility('public'),
+                        ->visibility('private'),
                 ])->columns(2),
 
             Forms\Components\Section::make('الأدوار والصلاحيات')
