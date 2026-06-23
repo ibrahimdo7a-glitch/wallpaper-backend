@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AndroidApp;
 use App\Models\Brand;
 use App\Models\CarModel;
+use App\Models\ContentItem;
 use App\Models\HeroBanner;
 use App\Models\HomepageSection;
 use App\Models\NavigationItem;
@@ -109,6 +110,7 @@ class HomepageController extends Controller
             'hero'                => $this->heroData($s),
             'brands'              => $this->brandsData($s),
             'featured_brands'     => $this->featuredBrandsData($s),
+            'latest_wallpapers'   => $this->latestWallpapersData($s),
             'featured_wallpapers' => $this->wallpapersData($s),
             'featured_apps'       => $this->appsData($s),
             'news'                => $this->newsData($s),
@@ -150,6 +152,32 @@ class HomepageController extends Controller
     {
         $limit = $s->settings['limit'] ?? 8;
         return ['items' => Brand::active()->where('is_featured', true)->orderBy('sort_order')->limit($limit)->get()->map(fn($b) => $this->brandCard($b))->values()];
+    }
+
+    private function latestWallpapersData(HomepageSection $s): array
+    {
+        $limit = $s->settings['limit'] ?? 12;
+        $items = ContentItem::where('content_type', 'wallpapers')
+            ->where('status', 'published')
+            ->with(['brand:id,slug,name_ar', 'brandSection:id,slug'])
+            ->orderByDesc('published_at')
+            ->orderByDesc('created_at')
+            ->limit($limit)
+            ->get()
+            ->map(fn($i) => [
+                'id'               => $i->id,
+                'title_ar'         => $i->title_ar,
+                'title_en'         => $i->title_en,
+                'slug'             => $i->slug,
+                'image_url'        => $i->image_url,
+                'thumbnail_url'    => $i->thumbnail_url,
+                'downloads_count'  => $i->downloads_count,
+                'resolution_label' => $i->metadata['resolution'] ?? null,
+                'brand_slug'       => $i->brand?->slug,
+                'section_slug'     => $i->brandSection?->slug,
+                'type'             => 'wallpaper',
+            ]);
+        return ['items' => $items->values()];
     }
 
     private function wallpapersData(HomepageSection $s): array

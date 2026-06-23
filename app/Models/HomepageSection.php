@@ -27,6 +27,7 @@ class HomepageSection extends Model
             'hero'                => 'Hero Banner',
             'brands'              => 'الماركات',
             'featured_brands'     => 'الماركات المميزة',
+            'latest_wallpapers'   => 'آخر الخلفيات المضافة',
             'featured_wallpapers' => 'خلفيات مميزة',
             'featured_apps'       => 'تطبيقات مميزة',
             'news'                => 'أخبار',
