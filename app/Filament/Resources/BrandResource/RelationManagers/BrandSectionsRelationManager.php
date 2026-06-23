@@ -76,7 +76,9 @@ class BrandSectionsRelationManager extends RelationManager
             ->reorderable('sort_order')
             ->defaultSort('sort_order')
             ->columns([
-                Tables\Columns\TextColumn::make('icon')->label('')->getStateUsing(fn($record) => $record->getIcon()),
+                Tables\Columns\ImageColumn::make('cover_image')->label('الغلاف')
+                    ->disk(config('filesystems.default', 'public'))->square()->size(44),
+                Tables\Columns\TextColumn::make('icon')->label('الأيقونة')->getStateUsing(fn($record) => $record->getIcon()),
                 Tables\Columns\TextColumn::make('sectionType.name_ar')->label('النوع')->badge()->color('primary'),
                 Tables\Columns\TextColumn::make('custom_name_ar')->label('الاسم المخصص')->placeholder('—'),
                 Tables\Columns\TextColumn::make('slug')->label('Slug')->badge()->color('gray')->fontFamily('mono'),
