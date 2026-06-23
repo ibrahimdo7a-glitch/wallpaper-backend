@@ -434,9 +434,9 @@ class WallpaperResource extends Resource
                     : [])
                 ->searchable()->nullable()->placeholder('عام للماركة'),
 
-            Forms\Components\Toggle::make('delete_original')->label('حذف الخلفية القديمة بعد التحويل')
-                ->default(true)->inline(false)
-                ->helperText('الصور تبقى محفوظة وتُستخدم في العنصر الجديد — يُحذف فقط السجل القديم.'),
+            Forms\Components\Toggle::make('delete_original')->label('أرشفة الخلفية القديمة بعد التحويل')
+                ->default(false)->inline(false)
+                ->helperText('افتراضياً تبقى الخلفية في قائمتها القديمة. فعّل هذا الخيار فقط لو تبي تنقلها نهائياً للنظام الجديد (تُؤرشف ويمكن استرجاعها من فلتر المؤرشفة).'),
         ];
     }
 
