@@ -151,7 +151,9 @@ class BrandResource extends Resource
             RelationManagers\BrandSectionsRelationManager::class,
             RelationManagers\CollectionsRelationManager::class,
             RelationManagers\CarModelsRelationManager::class,
-            RelationManagers\ContentItemsRelationManager::class,
+            RelationManagers\WallpapersRelationManager::class,
+            RelationManagers\TutorialsRelationManager::class,
+            RelationManagers\FilesRelationManager::class,
         ];
     }
 

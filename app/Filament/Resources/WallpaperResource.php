@@ -26,13 +26,13 @@ class WallpaperResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-photo';
 
-    protected static ?string $navigationGroup = 'المحتوى';
+    protected static ?string $navigationGroup = 'أدوات متقدمة';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 91;
 
     public static function getNavigationLabel(): string
     {
-        return 'الخلفيات';
+        return 'الخلفيات (النظام القديم)';
     }
 
     public static function getModelLabel(): string

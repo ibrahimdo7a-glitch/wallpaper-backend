@@ -18,10 +18,10 @@ class ContentItemResource extends Resource
 {
     protected static ?string $model = ContentItem::class;
     protected static ?string $navigationIcon  = 'heroicon-o-document-text';
-    protected static ?string $navigationGroup = 'السيارات';
-    protected static ?int    $navigationSort  = 6;
+    protected static ?string $navigationGroup = 'أدوات متقدمة';
+    protected static ?int    $navigationSort  = 92;
 
-    public static function getNavigationLabel(): string  { return 'المحتوى'; }
+    public static function getNavigationLabel(): string  { return 'كل المحتوى (عام)'; }
     public static function getModelLabel(): string       { return 'عنصر'; }
     public static function getPluralModelLabel(): string { return 'المحتوى'; }
 

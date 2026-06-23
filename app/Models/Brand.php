@@ -68,6 +68,32 @@ class Brand extends Model
         return $this->hasMany(ContentCollection::class)->orderBy('sort_order');
     }
 
+    // ─── Per-type content (used by brand admin tabs) ────────────────────────────
+    public function wallpaperContent(): HasMany
+    {
+        return $this->hasMany(ContentItem::class)->where('content_type', 'wallpapers');
+    }
+
+    public function tutorialContent(): HasMany
+    {
+        return $this->hasMany(ContentItem::class)->whereIn('content_type', ['tutorial_images', 'tutorial_videos', 'tutorials']);
+    }
+
+    public function fileContent(): HasMany
+    {
+        return $this->hasMany(ContentItem::class)->whereIn('content_type', ['files', 'manuals']);
+    }
+
+    /** Find an enabled section of this brand by its section-type key. */
+    public function sectionByKey(string $key): ?BrandSection
+    {
+        return $this->sections()
+            ->whereHas('sectionType', fn($q) => $q->where('key', $key))
+            ->where('is_enabled', true)
+            ->orderBy('sort_order')
+            ->first();
+    }
+
     public function wallpapers(): HasMany
     {
         return $this->hasMany(Wallpaper::class);
