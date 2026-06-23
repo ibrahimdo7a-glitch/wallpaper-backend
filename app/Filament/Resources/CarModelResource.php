@@ -64,9 +64,11 @@ class CarModelResource extends Resource
 
                 Forms\Components\Tabs\Tab::make('الصور')->icon('heroicon-o-photo')->schema([
                     Forms\Components\FileUpload::make('image')->label('صورة الموديل')
-                        ->image()->disk($disk)->directory('models/images')->visibility('private')->maxSize(5120),
+                        ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/webp'])
+                        ->disk($disk)->directory('models/images')->visibility('private')->maxSize(5120),
                     Forms\Components\FileUpload::make('cover_image')->label('صورة الغلاف')
-                        ->image()->disk($disk)->directory('models/covers')->visibility('private')->maxSize(5120),
+                        ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/webp'])
+                        ->disk($disk)->directory('models/covers')->visibility('private')->maxSize(5120),
                 ]),
 
                 Forms\Components\Tabs\Tab::make('الإعدادات')->icon('heroicon-o-cog')->schema([
