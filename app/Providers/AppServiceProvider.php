@@ -22,6 +22,11 @@ class AppServiceProvider extends ServiceProvider
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
 
+        // TEMP DIAGNOSTIC: show full errors on admin pages only (auth-gated). Remove after.
+        if (request()->is('admin') || request()->is('admin/*')) {
+            config(['app.debug' => true]);
+        }
+
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(60)->by($request->ip());
         });
