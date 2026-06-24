@@ -41,41 +41,14 @@ class ModelWallpapersRelationManager extends RelationManager
             ->toArray();
     }
 
-    /** Create a sub-section (collection) tied to this model. */
-    protected function createCollection(array $d): ?int
-    {
-        $model = $this->getOwnerRecord();
-        try {
-            return ContentCollection::create([
-                'brand_id'     => $model->brand_id,
-                'car_model_id' => $model->id,
-                'name_ar'      => $d['name_ar'],
-                'name_en'      => $d['name_en'] ?? null,
-                'icon'         => $d['icon'] ?? null,
-            ])->id;
-        } catch (\Throwable $e) {
-            Notification::make()->title('فشل إنشاء القسم الفرعي: ' . $e->getMessage())->danger()->persistent()->send();
-            return null;
-        }
-    }
-
-    protected function collectionCreateForm(): array
-    {
-        return [
-            Forms\Components\TextInput::make('name_ar')->label('اسم القسم الفرعي')->required()->placeholder('مثال: ليلية / رياضية / 4K'),
-            Forms\Components\TextInput::make('name_en')->label('بالإنجليزي (اختياري)'),
-            Forms\Components\TextInput::make('icon')->label('أيقونة')->placeholder('🌙'),
-        ];
-    }
-
     public function form(Form $form): Form
     {
         return $form->schema([
             Forms\Components\TextInput::make('title_ar')->label('العنوان (اختياري)')->maxLength(255),
             Forms\Components\Select::make('content_collection_id')->label('القسم الفرعي')
-                ->options(fn() => $this->collectionOptions())->searchable()->nullable()->placeholder('بدون قسم فرعي')
-                ->createOptionForm(fn() => $this->collectionCreateForm())
-                ->createOptionUsing(fn(array $d) => $this->createCollection($d)),
+                ->options(fn() => $this->collectionOptions())->searchable()->nullable()
+                ->placeholder('بدون قسم فرعي')
+                ->helperText('أنشئ الأقسام الفرعية من تبويب "الأقسام الفرعية"'),
             Forms\Components\FileUpload::make('image_path')->label('الصورة')
                 ->image()->directory('content-items/images')->required()->columnSpanFull(),
             Forms\Components\Select::make('status')->label('الحالة')
@@ -106,9 +79,7 @@ class ModelWallpapersRelationManager extends RelationManager
                     ->modalSubmitActionLabel('رفع الكل')
                     ->form([
                         Forms\Components\Select::make('content_collection_id')->label('القسم الفرعي')
-                            ->options(fn() => $this->collectionOptions())->searchable()->nullable()->placeholder('بدون قسم فرعي')
-                            ->createOptionForm(fn() => $this->collectionCreateForm())
-                            ->createOptionUsing(fn(array $d) => $this->createCollection($d)),
+                            ->options(fn() => $this->collectionOptions())->searchable()->nullable()->placeholder('بدون قسم فرعي'),
                         Forms\Components\FileUpload::make('images')->label('الصور')
                             ->image()->multiple()->reorderable()->directory('content-items/images')->required()
                             ->helperText('اسحب عدة صور دفعة واحدة'),

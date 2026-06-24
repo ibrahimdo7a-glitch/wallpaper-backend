@@ -96,6 +96,12 @@ class CarModel extends Model
         return $this->hasMany(ContentItem::class, 'car_model_id')->whereIn('content_type', ['files', 'manuals']);
     }
 
+    /** Sub-sections (collections) that belong to this model. */
+    public function collections(): HasMany
+    {
+        return $this->hasMany(ContentCollection::class, 'car_model_id')->orderBy('sort_order');
+    }
+
     public function newsArticles(): BelongsToMany
     {
         return $this->belongsToMany(NewsArticle::class, 'news_article_car_model');

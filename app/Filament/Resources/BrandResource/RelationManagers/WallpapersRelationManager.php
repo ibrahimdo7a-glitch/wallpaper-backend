@@ -82,15 +82,7 @@ class WallpapersRelationManager extends RelationManager
                         Forms\Components\Select::make('content_collection_id')->label('المجموعة (لكل الصور)')
                             ->options(fn() => $this->collectionOptions())
                             ->searchable()->nullable()->placeholder('بدون مجموعة')
-                            ->createOptionForm([
-                                Forms\Components\TextInput::make('name_ar')->label('اسم المجموعة')->required(),
-                                Forms\Components\TextInput::make('icon')->label('أيقونة')->placeholder('🇶🇦'),
-                            ])
-                            ->createOptionUsing(fn(array $d) => ContentCollection::create([
-                                'brand_id' => $this->getOwnerRecord()->id,
-                                'name_ar'  => $d['name_ar'],
-                                'icon'     => $d['icon'] ?? null,
-                            ])->id),
+                            ->helperText('أنشئ المجموعات من تبويب "المجموعات"'),
                         Forms\Components\FileUpload::make('images')->label('الصور')
                             ->image()->multiple()->reorderable()
                             ->directory('content-items/images')->required()

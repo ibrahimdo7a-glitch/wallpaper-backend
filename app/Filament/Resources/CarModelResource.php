@@ -131,6 +131,7 @@ class CarModelResource extends Resource
     public static function getRelations(): array
     {
         return [
+            RelationManagers\ModelCollectionsRelationManager::class,
             RelationManagers\ModelWallpapersRelationManager::class,
             RelationManagers\ModelTutorialsRelationManager::class,
             RelationManagers\ModelFilesRelationManager::class,
