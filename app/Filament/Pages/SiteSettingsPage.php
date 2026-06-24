@@ -45,6 +45,7 @@ class SiteSettingsPage extends Page
             'site_name_ar', 'site_name_en',
             'hero_title_ar', 'hero_title_en',
             'hero_subtitle_ar', 'hero_subtitle_en',
+            'search_enabled',
             'search_placeholder_ar', 'search_placeholder_en',
             'popular_tags_ar', 'popular_tags_en',
             'feature_car_ar', 'feature_car_en',
@@ -61,6 +62,11 @@ class SiteSettingsPage extends Page
         foreach ($keys as $key) {
             $formData[$key] = Setting::get($key, '');
         }
+
+        // search is enabled by default when no setting exists yet
+        $formData['search_enabled'] = $formData['search_enabled'] === ''
+            ? true
+            : filter_var($formData['search_enabled'], FILTER_VALIDATE_BOOLEAN);
 
         $this->form->fill($formData);
     }
@@ -105,6 +111,10 @@ class SiteSettingsPage extends Page
                                         ->label('العنوان الفرعي (إنجليزي)')
                                         ->placeholder('Premium wallpapers for the Leopard family'),
                                 ]),
+                                Forms\Components\Toggle::make('search_enabled')
+                                    ->label('تفعيل محرك البحث في الصفحة الرئيسية')
+                                    ->helperText('عند الإطفاء يختفي شريط البحث والوسوم الشائعة من الـ Hero')
+                                    ->default(true),
                                 Forms\Components\Grid::make(2)->schema([
                                     Forms\Components\TextInput::make('search_placeholder_ar')
                                         ->label('نص خانة البحث (عربي)')

@@ -87,6 +87,7 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
             'site_name_ar', 'site_name_en',
             'hero_title_ar', 'hero_title_en',
             'hero_subtitle_ar', 'hero_subtitle_en',
+            'search_enabled',
             'search_placeholder_ar', 'search_placeholder_en',
             'popular_tags_ar', 'popular_tags_en',
             'feature_car_ar', 'feature_car_en',
@@ -99,6 +100,11 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
             'ilink_file_path',
         ];
         $settings = collect($keys)->mapWithKeys(fn($k) => [$k => \App\Models\Setting::get($k, '')]);
+
+        // search defaults to enabled when no setting exists yet
+        $settings['search_enabled'] = $settings['search_enabled'] === ''
+            ? true
+            : filter_var($settings['search_enabled'], FILTER_VALIDATE_BOOLEAN);
 
         // Parse popular_tags as arrays
         $settings['popular_tags_ar'] = array_filter(array_map('trim', explode(',', $settings['popular_tags_ar'] ?? '')));
