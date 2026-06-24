@@ -68,6 +68,8 @@ class WallpapersRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('title_ar')
             ->defaultSort('created_at', 'desc')
+            ->paginationPageOptions([12, 24, 48])
+            ->defaultPaginationPageOption(12)
             ->columns([
                 Tables\Columns\ImageColumn::make('thumbnail_path')->label('')
                     ->disk(config('filesystems.default', 'public'))->square()->size(56)
