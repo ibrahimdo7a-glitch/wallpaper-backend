@@ -64,7 +64,8 @@ class TutorialsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('title_ar')->label('العنوان')->searchable()->limit(40),
                 Tables\Columns\IconColumn::make('video_url')->label('فيديو')->boolean()
                     ->trueIcon('heroicon-o-play-circle')->falseIcon('heroicon-o-photo'),
-                Tables\Columns\TextColumn::make('collection.name_ar')->label('القسم الفرعي')->badge()->color('warning')->placeholder('—'),
+                Tables\Columns\SelectColumn::make('content_collection_id')->label('القسم الفرعي')
+                    ->options(fn() => $this->collectionOptions())->placeholder('بدون قسم فرعي')->width('180px'),
                 Tables\Columns\BadgeColumn::make('status')->label('الحالة')->colors(['success' => 'published', 'gray' => 'draft']),
             ])
             ->filters([
