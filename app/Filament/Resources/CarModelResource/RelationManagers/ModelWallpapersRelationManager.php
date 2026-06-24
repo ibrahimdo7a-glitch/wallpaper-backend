@@ -42,16 +42,21 @@ class ModelWallpapersRelationManager extends RelationManager
     }
 
     /** Create a sub-section (collection) tied to this model. */
-    protected function createCollection(array $d): int
+    protected function createCollection(array $d): ?int
     {
         $model = $this->getOwnerRecord();
-        return ContentCollection::create([
-            'brand_id'     => $model->brand_id,
-            'car_model_id' => $model->id,
-            'name_ar'      => $d['name_ar'],
-            'name_en'      => $d['name_en'] ?? null,
-            'icon'         => $d['icon'] ?? null,
-        ])->id;
+        try {
+            return ContentCollection::create([
+                'brand_id'     => $model->brand_id,
+                'car_model_id' => $model->id,
+                'name_ar'      => $d['name_ar'],
+                'name_en'      => $d['name_en'] ?? null,
+                'icon'         => $d['icon'] ?? null,
+            ])->id;
+        } catch (\Throwable $e) {
+            Notification::make()->title('فشل إنشاء القسم الفرعي: ' . $e->getMessage())->danger()->persistent()->send();
+            return null;
+        }
     }
 
     protected function collectionCreateForm(): array
