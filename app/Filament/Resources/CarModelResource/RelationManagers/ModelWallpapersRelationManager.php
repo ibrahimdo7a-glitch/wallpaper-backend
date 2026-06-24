@@ -64,7 +64,7 @@ class ModelWallpapersRelationManager extends RelationManager
                 ->helperText('أضف المصممين من قسم "المصمّمون"'),
             Forms\Components\FileUpload::make('image_path')->label('الصورة')
                 ->image()->directory('content-items/images')->required()->columnSpanFull(),
-            $this->watermarkField(),
+            ...$this->watermarkFields(),
             Forms\Components\Select::make('status')->label('الحالة')
                 ->options(['published' => 'منشور', 'draft' => 'مسودة'])->default('published'),
         ]);
@@ -110,7 +110,7 @@ class ModelWallpapersRelationManager extends RelationManager
                         Forms\Components\FileUpload::make('images')->label('الصور')
                             ->image()->multiple()->reorderable()->directory('content-items/images')->required()
                             ->helperText('اسحب عدة صور دفعة واحدة'),
-                        $this->watermarkField(),
+                        ...$this->watermarkFields(),
                     ])
                     ->action(function (array $data) {
                         $sectionId = $this->sectionId();
@@ -120,6 +120,7 @@ class ModelWallpapersRelationManager extends RelationManager
                         }
                         $model = $this->getOwnerRecord();
                         $watermarkId = $data['watermark_id'] ?? null;
+                        $position = $data['watermark_position'] ?? null;
                         $count = 0;
                         foreach (($data['images'] ?? []) as $path) {
                             $item = ContentItem::create([
@@ -134,7 +135,7 @@ class ModelWallpapersRelationManager extends RelationManager
                                 'file_path'             => $path,
                                 'status'                => 'published',
                             ]);
-                            $this->applyWatermark($item, $watermarkId ? (int) $watermarkId : null);
+                            $this->applyWatermark($item, $watermarkId ? (int) $watermarkId : null, $position);
                             $count++;
                         }
                         $suffix = $watermarkId ? ' مع التوقيع' : '';

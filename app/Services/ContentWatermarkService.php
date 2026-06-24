@@ -20,8 +20,12 @@ class ContentWatermarkService
     /**
      * Apply (or re-apply) a watermark. Re-applying a different watermark always
      * starts from the clean original, never from an already-watermarked image.
+     *
+     * @param  string|null  $position  Per-image position override (one of the 9
+     *                                 keys). Null keeps the item's stored choice,
+     *                                 falling back to the preset's own position.
      */
-    public function apply(ContentItem $item, Watermark $watermark): bool
+    public function apply(ContentItem $item, Watermark $watermark, ?string $position = null): bool
     {
         $disk     = config('filesystems.default', 'public');
         $previous = $item->image_path;
@@ -36,6 +40,16 @@ class ContentWatermarkService
         $source = $item->original_image_path ?: $previous;
         if (! $source || ! Storage::disk($disk)->exists($source)) {
             return false;
+        }
+
+        // Resolve the position: explicit override > item's stored choice > preset.
+        if ($position) {
+            $item->watermark_position = $position;
+        }
+        $effectivePosition = $item->watermark_position ?: $watermark->position;
+        if ($effectivePosition !== $watermark->position) {
+            $watermark = clone $watermark;
+            $watermark->position = $effectivePosition;
         }
 
         $content    = $this->watermarks->apply($source, $watermark);

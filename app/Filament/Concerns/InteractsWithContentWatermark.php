@@ -2,6 +2,7 @@
 
 namespace App\Filament\Concerns;
 
+use App\Filament\Forms\Components\WatermarkPositionPicker;
 use App\Models\ContentItem;
 use App\Models\Watermark;
 use App\Services\ContentWatermarkService;
@@ -11,8 +12,9 @@ use Filament\Tables;
 
 /**
  * Drop-in watermark controls for any wallpaper relation manager:
- * a select field for the create/upload forms, plus row & bulk actions to apply,
- * change or remove a watermark on items that were already uploaded.
+ * a signature picker + a visual position picker for the create/upload forms,
+ * plus row & bulk actions to apply, change or remove a watermark on items that
+ * were already uploaded.
  */
 trait InteractsWithContentWatermark
 {
@@ -28,19 +30,38 @@ trait InteractsWithContentWatermark
         return Watermark::where('is_active', true)->exists();
     }
 
-    /** Select field to drop into a create / bulk-upload form. */
-    protected function watermarkField(): Forms\Components\Select
+    /** Signature dropdown. */
+    protected function watermarkSelectField(): Forms\Components\Select
     {
         return Forms\Components\Select::make('watermark_id')
             ->label('التوقيع')
             ->options(fn () => $this->watermarkOptions())
             ->searchable()
             ->nullable()
+            ->live()
             ->placeholder('بدون توقيع')
-            ->helperText('يُحفر على الصورة عند الحفظ. أنشئ/عدّل التواقيع من قسم "التواقيع". (يُحفظ الأصل بدون توقيع)');
+            ->helperText('يُحفر على الصورة عند الحفظ. (يُحفظ الأصل بدون توقيع)');
     }
 
-    protected function applyWatermark(ContentItem $item, ?int $watermarkId): bool
+    /** Visual position picker; pass an image URL to show it behind the grid. */
+    protected function watermarkPositionField(string|\Closure|null $imageUrl = null): WatermarkPositionPicker
+    {
+        return WatermarkPositionPicker::make('watermark_position')
+            ->label('موضع التوقيع')
+            ->image($imageUrl)
+            ->visible(fn (Forms\Get $get) => filled($get('watermark_id')));
+    }
+
+    /** Signature + position fields for create / bulk-upload forms. */
+    protected function watermarkFields(string|\Closure|null $imageUrl = null): array
+    {
+        return [
+            $this->watermarkSelectField(),
+            $this->watermarkPositionField($imageUrl),
+        ];
+    }
+
+    protected function applyWatermark(ContentItem $item, ?int $watermarkId, ?string $position = null): bool
     {
         if (! $watermarkId) {
             return false;
@@ -49,7 +70,7 @@ trait InteractsWithContentWatermark
         if (! $watermark) {
             return false;
         }
-        return app(ContentWatermarkService::class)->apply($item, $watermark);
+        return app(ContentWatermarkService::class)->apply($item, $watermark, $position);
     }
 
     /** Per-row action to apply or change a watermark on an existing image. */
@@ -61,12 +82,18 @@ trait InteractsWithContentWatermark
             ->color('info')
             ->visible(fn () => $this->hasWatermarks())
             ->modalHeading('تطبيق توقيع على الصورة')
+            ->modalSubmitActionLabel('تطبيق')
+            ->fillForm(fn (ContentItem $record) => [
+                'watermark_id'       => $record->watermark_id,
+                'watermark_position' => $record->watermark_position ?: 'bottom-left',
+            ])
             ->form([
                 Forms\Components\Select::make('watermark_id')->label('اختر التوقيع')
-                    ->options(fn () => $this->watermarkOptions())->required(),
+                    ->options(fn () => $this->watermarkOptions())->required()->live(),
+                $this->watermarkPositionField(fn (ContentItem $record) => $record->image_url),
             ])
             ->action(function (ContentItem $record, array $data) {
-                $ok = $this->applyWatermark($record, (int) $data['watermark_id']);
+                $ok = $this->applyWatermark($record, (int) $data['watermark_id'], $data['watermark_position'] ?? null);
                 $ok
                     ? Notification::make()->title('تم تطبيق التوقيع')->success()->send()
                     : Notification::make()->title('تعذّر تطبيق التوقيع على هذه الصورة')->danger()->send();
@@ -84,13 +111,15 @@ trait InteractsWithContentWatermark
             ->modalHeading('تطبيق توقيع على الصور المحددة')
             ->form([
                 Forms\Components\Select::make('watermark_id')->label('اختر التوقيع')
-                    ->options(fn () => $this->watermarkOptions())->required(),
+                    ->options(fn () => $this->watermarkOptions())->required()->live(),
+                $this->watermarkPositionField(),
             ])
             ->action(function ($records, array $data) {
                 $wid = (int) $data['watermark_id'];
+                $pos = $data['watermark_position'] ?? null;
                 $count = 0;
                 foreach ($records as $record) {
-                    if ($this->applyWatermark($record, $wid)) {
+                    if ($this->applyWatermark($record, $wid, $pos)) {
                         $count++;
                     }
                 }
@@ -128,9 +157,10 @@ trait InteractsWithContentWatermark
             $record->watermark_id
                 ? $this->applyWatermark($record, $record->watermark_id)
                 : app(ContentWatermarkService::class)->remove($record);
-        } elseif ($record->wasChanged('image_path') && $record->watermark_id
-            && ! str_contains((string) $record->image_path, 'content-items/watermarked')) {
-            // Image was replaced on edit → re-burn the watermark onto the new original.
+        } elseif ($record->watermark_id
+            && ($record->wasChanged('watermark_position')
+                || ($record->wasChanged('image_path')
+                    && ! str_contains((string) $record->image_path, 'content-items/watermarked')))) {
             $this->applyWatermark($record, $record->watermark_id);
         }
     }
