@@ -56,6 +56,7 @@ class SiteSettingsPage extends Page
             'ilink_label_ar', 'ilink_label_en',
             'ilink_tooltip_ar', 'ilink_tooltip_en',
             'ilink_file_path',
+            'telegram_bot_token', 'telegram_channel_id',
         ];
 
         $formData = [];
@@ -213,6 +214,19 @@ class SiteSettingsPage extends Page
                                     ->visibility('private')
                                     ->preserveFilenames()
                                     ->maxSize(512000)
+                                    ->columnSpanFull(),
+                            ]),
+
+                        Forms\Components\Tabs\Tab::make('تلجرام')
+                            ->icon('heroicon-o-paper-airplane')
+                            ->schema([
+                                Forms\Components\TextInput::make('telegram_bot_token')
+                                    ->label('توكن البوت (Bot Token)')
+                                    ->helperText('أنشئ بوت من @BotFather واحصل على التوكن. مثال: 123456789:ABCdef...')
+                                    ->columnSpanFull(),
+                                Forms\Components\TextInput::make('telegram_channel_id')
+                                    ->label('معرّف القناة')
+                                    ->helperText('مثال: ‎@qev_channel‎ أو ‎-1001234567890‎. لازم تضيف البوت كمشرف في القناة أولاً.')
                                     ->columnSpanFull(),
                             ]),
                     ])

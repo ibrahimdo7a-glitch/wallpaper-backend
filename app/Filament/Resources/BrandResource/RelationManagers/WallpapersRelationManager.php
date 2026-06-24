@@ -161,6 +161,7 @@ class WallpapersRelationManager extends RelationManager
                     ->after(fn (ContentItem $record) => $this->finalizeUpload($record, $record->watermark_id)),
             ])
             ->actions([
+                $this->publishToTelegramAction(),
                 $this->applyWatermarkRowAction(),
                 Tables\Actions\EditAction::make()
                     ->after(fn (ContentItem $record) => $this->syncWatermarkAfterSave($record)),
