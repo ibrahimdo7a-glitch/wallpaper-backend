@@ -76,10 +76,11 @@ class ModelWallpapersRelationManager extends RelationManager
             ->recordTitleAttribute('title_ar')
             ->defaultSort('created_at', 'desc')
             ->columns([
-                Tables\Columns\ImageColumn::make('image_path')->label('')
+                Tables\Columns\ImageColumn::make('thumbnail_path')->label('')
                     ->disk(config('filesystems.default', 'public'))->square()->size(56)
                     ->extraImgAttributes(fn ($record) => [
                         'style' => 'cursor: zoom-in;',
+                        'loading' => 'lazy',
                         'data-zoom-src' => $record->image_url,
                     ]),
                 Tables\Columns\TextColumn::make('title_ar')->label('العنوان')->searchable()->placeholder('—')->limit(30),
@@ -135,7 +136,7 @@ class ModelWallpapersRelationManager extends RelationManager
                                 'file_path'             => $path,
                                 'status'                => 'published',
                             ]);
-                            $this->applyWatermark($item, $watermarkId ? (int) $watermarkId : null, $position);
+                            $this->finalizeUpload($item, $watermarkId ? (int) $watermarkId : null, $position);
                             $count++;
                         }
                         $suffix = $watermarkId ? ' مع التوقيع' : '';
@@ -154,7 +155,7 @@ class ModelWallpapersRelationManager extends RelationManager
                         $data['file_path']        = $data['image_path'] ?? null;
                         return $data;
                     })
-                    ->after(fn (ContentItem $record) => $this->applyWatermark($record, $record->watermark_id)),
+                    ->after(fn (ContentItem $record) => $this->finalizeUpload($record, $record->watermark_id)),
             ])
             ->actions([
                 $this->applyWatermarkRowAction(),

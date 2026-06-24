@@ -6,6 +6,7 @@ use App\Filament\Forms\Components\WatermarkPositionPicker;
 use App\Models\ContentItem;
 use App\Models\Watermark;
 use App\Services\ContentWatermarkService;
+use App\Services\ImageThumbnailService;
 use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Tables;
@@ -71,6 +72,18 @@ trait InteractsWithContentWatermark
             return false;
         }
         return app(ContentWatermarkService::class)->apply($item, $watermark, $position);
+    }
+
+    /**
+     * Finish an upload: burn the watermark if one was chosen (that also rebuilds
+     * the thumbnail), otherwise just build a lightweight thumbnail so admin tables
+     * and grids don't load the full-size image.
+     */
+    protected function finalizeUpload(ContentItem $item, ?int $watermarkId, ?string $position = null): void
+    {
+        if (! $this->applyWatermark($item, $watermarkId, $position)) {
+            app(ImageThumbnailService::class)->refreshFor($item);
+        }
     }
 
     /** Per-row action to apply or change a watermark on an existing image. */
@@ -162,6 +175,9 @@ trait InteractsWithContentWatermark
                 || ($record->wasChanged('image_path')
                     && ! str_contains((string) $record->image_path, 'content-items/watermarked')))) {
             $this->applyWatermark($record, $record->watermark_id);
+        } elseif (! $record->watermark_id && $record->wasChanged('image_path')) {
+            // Image replaced on a non-watermarked item → refresh its thumbnail.
+            app(ImageThumbnailService::class)->refreshFor($record);
         }
     }
 }

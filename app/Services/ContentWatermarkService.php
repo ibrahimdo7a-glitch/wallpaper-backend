@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\ContentItem;
 use App\Models\Watermark;
+use App\Services\ImageThumbnailService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -68,6 +69,8 @@ class ContentWatermarkService
             Storage::disk($disk)->delete($previous);
         }
 
+        app(ImageThumbnailService::class)->refreshFor($item);
+
         return true;
     }
 
@@ -120,6 +123,8 @@ class ContentWatermarkService
         if ($previous && $previous !== $orig && str_contains($previous, self::DIR)) {
             Storage::disk($disk)->delete($previous);
         }
+
+        app(ImageThumbnailService::class)->refreshFor($item);
 
         return true;
     }
