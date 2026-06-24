@@ -22,8 +22,8 @@ class AppServiceProvider extends ServiceProvider
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
 
-        // TEMP DIAGNOSTIC: show full errors on admin pages only (auth-gated). Remove after.
-        if (request()->is('admin') || request()->is('admin/*')) {
+        // TEMP DIAGNOSTIC: show full errors on admin + livewire (admin AJAX) requests. Remove after.
+        if (request()->is('admin', 'admin/*', 'livewire', 'livewire/*')) {
             config(['app.debug' => true]);
         }
 
