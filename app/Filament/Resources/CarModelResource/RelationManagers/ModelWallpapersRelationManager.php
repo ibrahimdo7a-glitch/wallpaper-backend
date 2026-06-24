@@ -69,7 +69,7 @@ class ModelWallpapersRelationManager extends RelationManager
             Forms\Components\TextInput::make('title_ar')->label('العنوان (اختياري)')->maxLength(255),
             Forms\Components\Select::make('content_collection_id')->label('القسم الفرعي')
                 ->options(fn() => $this->collectionOptions())->searchable()->nullable()->placeholder('بدون قسم فرعي')
-                ->createOptionForm($this->collectionCreateForm())
+                ->createOptionForm(fn() => $this->collectionCreateForm())
                 ->createOptionUsing(fn(array $d) => $this->createCollection($d)),
             Forms\Components\FileUpload::make('image_path')->label('الصورة')
                 ->image()->directory('content-items/images')->required()->columnSpanFull(),
@@ -102,7 +102,7 @@ class ModelWallpapersRelationManager extends RelationManager
                     ->form([
                         Forms\Components\Select::make('content_collection_id')->label('القسم الفرعي')
                             ->options(fn() => $this->collectionOptions())->searchable()->nullable()->placeholder('بدون قسم فرعي')
-                            ->createOptionForm($this->collectionCreateForm())
+                            ->createOptionForm(fn() => $this->collectionCreateForm())
                             ->createOptionUsing(fn(array $d) => $this->createCollection($d)),
                         Forms\Components\FileUpload::make('images')->label('الصور')
                             ->image()->multiple()->reorderable()->directory('content-items/images')->required()
