@@ -22,11 +22,6 @@ class AppServiceProvider extends ServiceProvider
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
 
-        // TEMP DIAGNOSTIC: show full errors on admin + livewire (admin AJAX) requests. Remove after.
-        if (request()->is('admin', 'admin/*', 'livewire', 'livewire/*')) {
-            config(['app.debug' => true]);
-        }
-
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(60)->by($request->ip());
         });
