@@ -102,6 +102,12 @@ class CarModel extends Model
         return $this->hasMany(ContentCollection::class, 'car_model_id')->orderBy('sort_order');
     }
 
+    /** Sections this model chooses to show (empty = show all model-specific). */
+    public function visibleSections(): BelongsToMany
+    {
+        return $this->belongsToMany(BrandSection::class, 'car_model_section');
+    }
+
     public function newsArticles(): BelongsToMany
     {
         return $this->belongsToMany(NewsArticle::class, 'news_article_car_model');

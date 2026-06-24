@@ -77,6 +77,18 @@ class CarModelResource extends Resource
                         Forms\Components\Toggle::make('is_featured')->label('مميز')->inline(false),
                         Forms\Components\TextInput::make('sort_order')->label('الترتيب')->numeric()->default(0),
                     ]),
+                    Forms\Components\CheckboxList::make('visibleSections')
+                        ->label('الأقسام الظاهرة في صفحة الموديل')
+                        ->relationship('visibleSections', 'slug')
+                        ->options(fn ($record) => $record?->brand_id
+                            ? \App\Models\BrandSection::where('brand_id', $record->brand_id)
+                                ->where('is_model_specific', true)->where('is_enabled', true)
+                                ->with('sectionType')->orderBy('sort_order')->get()
+                                ->mapWithKeys(fn ($s) => [$s->id => $s->getIcon() . ' ' . $s->getNameAr()])
+                            : [])
+                        ->helperText('اختر الأقسام التي تظهر للزائر في صفحة هذا الموديل. اتركها فارغة = إظهار كل الأقسام. (يظهر بعد حفظ الموديل واختيار الماركة)')
+                        ->columns(2)
+                        ->bulkToggleable(),
                 ]),
 
                 Forms\Components\Tabs\Tab::make('SEO')->icon('heroicon-o-magnifying-glass')->schema([

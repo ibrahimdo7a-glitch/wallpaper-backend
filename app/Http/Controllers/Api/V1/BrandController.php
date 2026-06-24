@@ -159,10 +159,14 @@ class BrandController extends Controller
         $brand = Brand::active()->where('slug', $brandSlug)->firstOrFail();
         $model = $brand->carModels()->where('slug', $modelSlug)->where('is_active', true)->firstOrFail();
 
-        // Sections that are model-specific AND enabled for this brand
+        // Sections that are model-specific AND enabled for this brand.
+        // If the model picked specific sections, show only those; otherwise show all.
+        $visibleIds = $model->visibleSections()->pluck('brand_sections.id');
+
         $sections = BrandSection::where('brand_id', $brand->id)
             ->where('is_enabled', true)
             ->where('is_model_specific', true)
+            ->when($visibleIds->isNotEmpty(), fn($q) => $q->whereIn('id', $visibleIds))
             ->with('sectionType')
             ->orderBy('sort_order')
             ->get()
