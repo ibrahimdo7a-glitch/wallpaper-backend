@@ -16,6 +16,7 @@ use Filament\Tables\Table;
 
 class ContentItemResource extends Resource
 {
+    use \App\Filament\Concerns\HiddenFromCreatives;
     protected static ?string $model = ContentItem::class;
     protected static ?string $navigationIcon  = 'heroicon-o-document-text';
     protected static ?string $navigationGroup = 'أدوات متقدمة';

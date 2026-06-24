@@ -15,6 +15,7 @@ use Illuminate\Support\Str;
 
 class AndroidAppResource extends Resource
 {
+    use \App\Filament\Concerns\HiddenFromCreatives;
     protected static ?string $model = AndroidApp::class;
     protected static ?string $navigationIcon  = 'heroicon-o-device-phone-mobile';
     protected static ?string $navigationGroup = 'التطبيقات';

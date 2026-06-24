@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 
 class TutorialResource extends Resource
 {
+    use \App\Filament\Concerns\HiddenFromCreatives;
     protected static ?string $model = Tutorial::class;
     protected static ?string $navigationIcon  = 'heroicon-o-academic-cap';
     protected static ?string $navigationGroup = 'المحتوى';

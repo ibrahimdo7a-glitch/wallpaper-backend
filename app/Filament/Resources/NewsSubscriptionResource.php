@@ -12,6 +12,7 @@ use Filament\Tables\Table;
 
 class NewsSubscriptionResource extends Resource
 {
+    use \App\Filament\Concerns\HiddenFromCreatives;
     protected static ?string $model = NewsSubscription::class;
     protected static ?string $navigationIcon  = 'heroicon-o-envelope';
     protected static ?string $navigationGroup = 'الأخبار';

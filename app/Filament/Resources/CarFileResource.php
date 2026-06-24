@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 
 class CarFileResource extends Resource
 {
+    use \App\Filament\Concerns\HiddenFromCreatives;
     protected static ?string $model = CarFile::class;
     protected static ?string $navigationIcon  = 'heroicon-o-document-arrow-down';
     protected static ?string $navigationGroup = 'المحتوى';

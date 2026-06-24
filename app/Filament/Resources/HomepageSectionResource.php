@@ -12,6 +12,7 @@ use Filament\Tables\Table;
 
 class HomepageSectionResource extends Resource
 {
+    use \App\Filament\Concerns\HiddenFromCreatives;
     protected static ?string $model = HomepageSection::class;
     protected static ?string $navigationIcon  = 'heroicon-o-squares-2x2';
     protected static ?string $navigationLabel = 'Homepage Builder';

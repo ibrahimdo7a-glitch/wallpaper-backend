@@ -11,6 +11,7 @@ use Filament\Tables\Table;
 
 class ModelTutorialsRelationManager extends RelationManager
 {
+    use \App\Filament\Concerns\RelationHiddenFromCreatives;
     protected static string $relationship = 'tutorialContent';
     protected static ?string $title = 'الشروحات';
     protected static ?string $modelLabel = 'شرح';

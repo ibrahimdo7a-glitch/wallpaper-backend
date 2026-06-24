@@ -12,6 +12,7 @@ use Filament\Tables\Table;
 
 class SectionTypeResource extends Resource
 {
+    use \App\Filament\Concerns\HiddenFromCreatives;
     protected static ?string $model = SectionType::class;
     protected static ?string $navigationIcon  = 'heroicon-o-squares-plus';
     protected static ?string $navigationGroup = 'السيارات';

@@ -12,6 +12,7 @@ use Filament\Tables\Table;
 
 class HeroBannerResource extends Resource
 {
+    use \App\Filament\Concerns\HiddenFromCreatives;
     protected static ?string $model = HeroBanner::class;
     protected static ?string $navigationIcon  = 'heroicon-o-photo';
     protected static ?string $navigationLabel = 'Hero Banners';

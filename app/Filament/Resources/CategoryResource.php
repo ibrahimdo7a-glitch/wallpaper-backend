@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 
 class CategoryResource extends Resource
 {
+    use \App\Filament\Concerns\HiddenFromCreatives;
     protected static ?string $model = Category::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';

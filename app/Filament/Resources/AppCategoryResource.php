@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 
 class AppCategoryResource extends Resource
 {
+    use \App\Filament\Concerns\HiddenFromCreatives;
     protected static ?string $model = AppCategory::class;
 
     protected static ?string $navigationIcon  = 'heroicon-o-squares-2x2';

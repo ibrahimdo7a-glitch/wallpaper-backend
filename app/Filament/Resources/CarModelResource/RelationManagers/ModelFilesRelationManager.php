@@ -11,6 +11,7 @@ use Filament\Tables\Table;
 
 class ModelFilesRelationManager extends RelationManager
 {
+    use \App\Filament\Concerns\RelationHiddenFromCreatives;
     protected static string $relationship = 'fileContent';
     protected static ?string $title = 'الملفات';
     protected static ?string $modelLabel = 'ملف';

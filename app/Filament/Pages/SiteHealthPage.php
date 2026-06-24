@@ -27,7 +27,7 @@ class SiteHealthPage extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->check();
+        return auth()->check() && ! auth()->user()?->hasRole('مبدع');
     }
 
     public function mount(): void

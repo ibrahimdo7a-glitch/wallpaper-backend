@@ -16,6 +16,7 @@ use Illuminate\Support\Str;
 
 class NewsArticleResource extends Resource
 {
+    use \App\Filament\Concerns\HiddenFromCreatives;
     protected static ?string $model = NewsArticle::class;
     protected static ?string $navigationIcon  = 'heroicon-o-newspaper';
     protected static ?string $navigationGroup = 'الأخبار';

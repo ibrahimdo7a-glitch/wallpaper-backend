@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Auth;
 
 class WallpaperResource extends Resource
 {
+    use \App\Filament\Concerns\HiddenFromCreatives;
     protected static ?string $model = Wallpaper::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-photo';

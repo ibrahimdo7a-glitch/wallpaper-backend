@@ -12,6 +12,7 @@ use Filament\Tables\Table;
 
 class NavigationItemResource extends Resource
 {
+    use \App\Filament\Concerns\HiddenFromCreatives;
     protected static ?string $model = NavigationItem::class;
     protected static ?string $navigationIcon  = 'heroicon-o-bars-3';
     protected static ?string $navigationLabel = 'القائمة الرئيسية';

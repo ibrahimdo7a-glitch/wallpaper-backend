@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 
 class NewsCategoryResource extends Resource
 {
+    use \App\Filament\Concerns\HiddenFromCreatives;
     protected static ?string $model = NewsCategory::class;
     protected static ?string $navigationIcon  = 'heroicon-o-folder';
     protected static ?string $navigationGroup = 'الأخبار';
