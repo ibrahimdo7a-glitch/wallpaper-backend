@@ -39,8 +39,8 @@ class ModelTutorialsRelationManager extends RelationManager
         return $form->schema([
             Forms\Components\Grid::make(2)->schema([
                 Forms\Components\TextInput::make('title_ar')->label('عنوان الشرح')->required()->maxLength(255),
-                Forms\Components\Select::make('content_collection_id')->label('المجموعة')
-                    ->options(fn() => $this->collectionOptions())->searchable()->nullable()->placeholder('بدون مجموعة'),
+                Forms\Components\Select::make('content_collection_id')->label('القسم الفرعي')
+                    ->options(fn() => $this->collectionOptions())->searchable()->nullable()->placeholder('بدون قسم فرعي'),
             ]),
             Forms\Components\Textarea::make('description_ar')->label('الوصف')->rows(2),
             Forms\Components\FileUpload::make('image_path')->label('صورة الشرح / الغلاف')
@@ -61,11 +61,11 @@ class ModelTutorialsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('title_ar')->label('العنوان')->searchable()->limit(40),
                 Tables\Columns\IconColumn::make('video_url')->label('فيديو')->boolean()
                     ->trueIcon('heroicon-o-play-circle')->falseIcon('heroicon-o-photo'),
-                Tables\Columns\TextColumn::make('collection.name_ar')->label('المجموعة')->badge()->color('warning')->placeholder('—'),
+                Tables\Columns\TextColumn::make('collection.name_ar')->label('القسم الفرعي')->badge()->color('warning')->placeholder('—'),
                 Tables\Columns\BadgeColumn::make('status')->label('الحالة')->colors(['success' => 'published', 'gray' => 'draft']),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('content_collection_id')->label('المجموعة')->options(fn() => $this->collectionOptions()),
+                Tables\Filters\SelectFilter::make('content_collection_id')->label('القسم الفرعي')->options(fn() => $this->collectionOptions()),
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()->label('إضافة شرح')

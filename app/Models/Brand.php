@@ -65,7 +65,8 @@ class Brand extends Model
 
     public function collections(): HasMany
     {
-        return $this->hasMany(ContentCollection::class)->orderBy('sort_order');
+        // brand-level sub-sections only (model sub-sections are managed on the model)
+        return $this->hasMany(ContentCollection::class)->whereNull('car_model_id')->orderBy('sort_order');
     }
 
     // ─── Per-type content (used by brand admin tabs) ────────────────────────────

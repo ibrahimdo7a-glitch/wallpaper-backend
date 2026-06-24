@@ -12,9 +12,9 @@ use Filament\Tables\Table;
 class CollectionsRelationManager extends RelationManager
 {
     protected static string $relationship = 'collections';
-    protected static ?string $title = 'المجموعات (أقسام فرعية)';
-    protected static ?string $modelLabel = 'مجموعة';
-    protected static ?string $pluralModelLabel = 'المجموعات';
+    protected static ?string $title = 'الأقسام الفرعية';
+    protected static ?string $modelLabel = 'قسم فرعي';
+    protected static ?string $pluralModelLabel = 'الأقسام الفرعية';
     protected static ?string $icon = 'heroicon-o-folder';
 
     public function form(Form $form): Form

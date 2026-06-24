@@ -47,15 +47,15 @@ class ContentItemResource extends Resource
                         }),
                 ]),
                 Forms\Components\Grid::make(2)->schema([
-                    Forms\Components\Select::make('content_collection_id')->label('المجموعة (قسم فرعي)')
+                    Forms\Components\Select::make('content_collection_id')->label('القسم الفرعي')
                         ->options(fn(Forms\Get $get) => ContentCollection::where('brand_id', $get('brand_id'))
                             ->where('is_active', true)->orderBy('sort_order')
                             ->get()->mapWithKeys(fn($c) => [$c->id => ($c->icon ? $c->icon . ' ' : '') . $c->name_ar]))
-                        ->searchable()->nullable()->placeholder('بدون مجموعة')
+                        ->searchable()->nullable()->placeholder('بدون قسم فرعي')
                         ->helperText('مثل: ليوبارد 5 / خلفيات قطر')
                         ->createOptionForm([
-                            Forms\Components\TextInput::make('name_ar')->label('اسم المجموعة (عربي)')->required(),
-                            Forms\Components\TextInput::make('name_en')->label('اسم المجموعة (إنجليزي)'),
+                            Forms\Components\TextInput::make('name_ar')->label('اسم القسم الفرعي (عربي)')->required(),
+                            Forms\Components\TextInput::make('name_en')->label('اسم القسم الفرعي (إنجليزي)'),
                             Forms\Components\TextInput::make('icon')->label('أيقونة / علم')->placeholder('🇶🇦'),
                         ])
                         ->createOptionUsing(function (array $data, Forms\Get $get) {
@@ -129,7 +129,7 @@ class ContentItemResource extends Resource
                 Tables\Columns\TextColumn::make('title_ar')->label('العنوان')->searchable()->limit(35)->weight('bold'),
                 Tables\Columns\TextColumn::make('brand.name_ar')->label('الماركة')->badge()->color('primary')->searchable(),
                 Tables\Columns\TextColumn::make('brandSection.slug')->label('القسم')->badge()->color('success'),
-                Tables\Columns\TextColumn::make('collection.name_ar')->label('المجموعة')->badge()->color('warning')->placeholder('—'),
+                Tables\Columns\TextColumn::make('collection.name_ar')->label('القسم الفرعي')->badge()->color('warning')->placeholder('—'),
                 Tables\Columns\TextColumn::make('content_type')->label('النوع')->badge()->color('gray'),
                 Tables\Columns\TextColumn::make('carModel.name_ar')->label('الموديل')->placeholder('عام')->color('gray'),
                 Tables\Columns\BadgeColumn::make('status')->label('الحالة')

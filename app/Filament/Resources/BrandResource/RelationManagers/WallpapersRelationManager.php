@@ -39,9 +39,9 @@ class WallpapersRelationManager extends RelationManager
         return $form->schema([
             Forms\Components\TextInput::make('title_ar')->label('العنوان (اختياري)')
                 ->maxLength(255)->placeholder('يُترك فارغاً = بدون اسم'),
-            Forms\Components\Select::make('content_collection_id')->label('المجموعة')
+            Forms\Components\Select::make('content_collection_id')->label('القسم الفرعي')
                 ->options(fn() => $this->collectionOptions())
-                ->searchable()->nullable()->placeholder('بدون مجموعة'),
+                ->searchable()->nullable()->placeholder('بدون قسم فرعي'),
             Forms\Components\FileUpload::make('image_path')->label('الصورة')
                 ->image()->directory('content-items/images')->required()->columnSpanFull(),
             Forms\Components\Select::make('status')->label('الحالة')
@@ -58,14 +58,14 @@ class WallpapersRelationManager extends RelationManager
                 Tables\Columns\ImageColumn::make('image_path')->label('')
                     ->disk(config('filesystems.default', 'public'))->square()->size(56),
                 Tables\Columns\TextColumn::make('title_ar')->label('العنوان')->searchable()->placeholder('—')->limit(30),
-                Tables\Columns\TextColumn::make('collection.name_ar')->label('المجموعة')->badge()->color('warning')->placeholder('—'),
+                Tables\Columns\TextColumn::make('collection.name_ar')->label('القسم الفرعي')->badge()->color('warning')->placeholder('—'),
                 Tables\Columns\BadgeColumn::make('status')->label('الحالة')
                     ->colors(['success' => 'published', 'gray' => 'draft']),
                 Tables\Columns\TextColumn::make('downloads_count')->label('تحميلات')->sortable(),
                 Tables\Columns\TextColumn::make('likes_count')->label('إعجابات')->sortable(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('content_collection_id')->label('المجموعة')
+                Tables\Filters\SelectFilter::make('content_collection_id')->label('القسم الفرعي')
                     ->options(fn() => $this->collectionOptions()),
                 Tables\Filters\SelectFilter::make('status')->label('الحالة')
                     ->options(['published' => 'منشور', 'draft' => 'مسودة']),
@@ -79,10 +79,10 @@ class WallpapersRelationManager extends RelationManager
                     ->modalHeading('رفع عدة خلفيات دفعة واحدة')
                     ->modalSubmitActionLabel('رفع الكل')
                     ->form([
-                        Forms\Components\Select::make('content_collection_id')->label('المجموعة (لكل الصور)')
+                        Forms\Components\Select::make('content_collection_id')->label('القسم الفرعي (لكل الصور)')
                             ->options(fn() => $this->collectionOptions())
-                            ->searchable()->nullable()->placeholder('بدون مجموعة')
-                            ->helperText('أنشئ المجموعات من تبويب "المجموعات"'),
+                            ->searchable()->nullable()->placeholder('بدون قسم فرعي')
+                            ->helperText('أنشئ الأقسام الفرعية من تبويب "الأقسام الفرعية"'),
                         Forms\Components\FileUpload::make('images')->label('الصور')
                             ->image()->multiple()->reorderable()
                             ->directory('content-items/images')->required()
@@ -130,11 +130,11 @@ class WallpapersRelationManager extends RelationManager
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\BulkAction::make('moveCollection')->label('نقل لمجموعة')
+                    Tables\Actions\BulkAction::make('moveCollection')->label('نقل لقسم فرعي')
                         ->icon('heroicon-o-folder-arrow-down')
                         ->form([
-                            Forms\Components\Select::make('content_collection_id')->label('المجموعة')
-                                ->options(fn() => $this->collectionOptions())->nullable()->placeholder('بدون مجموعة'),
+                            Forms\Components\Select::make('content_collection_id')->label('القسم الفرعي')
+                                ->options(fn() => $this->collectionOptions())->nullable()->placeholder('بدون قسم فرعي'),
                         ])
                         ->action(fn($records, array $data) => $records->each->update(['content_collection_id' => $data['content_collection_id'] ?? null])),
                     Tables\Actions\DeleteBulkAction::make()->label('حذف المحدد'),

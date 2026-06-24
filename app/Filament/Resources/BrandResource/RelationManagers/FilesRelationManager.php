@@ -37,8 +37,8 @@ class FilesRelationManager extends RelationManager
         return $form->schema([
             Forms\Components\Grid::make(2)->schema([
                 Forms\Components\TextInput::make('title_ar')->label('اسم الملف')->required()->maxLength(255),
-                Forms\Components\Select::make('content_collection_id')->label('المجموعة')
-                    ->options(fn() => $this->collectionOptions())->searchable()->nullable()->placeholder('بدون مجموعة'),
+                Forms\Components\Select::make('content_collection_id')->label('القسم الفرعي')
+                    ->options(fn() => $this->collectionOptions())->searchable()->nullable()->placeholder('بدون قسم فرعي'),
             ]),
             Forms\Components\Textarea::make('description_ar')->label('الوصف')->rows(2),
             Forms\Components\FileUpload::make('file_path')->label('الملف')
@@ -55,12 +55,12 @@ class FilesRelationManager extends RelationManager
             ->defaultSort('created_at', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('title_ar')->label('الاسم')->searchable()->limit(45)->icon('heroicon-o-document'),
-                Tables\Columns\TextColumn::make('collection.name_ar')->label('المجموعة')->badge()->color('warning')->placeholder('—'),
+                Tables\Columns\TextColumn::make('collection.name_ar')->label('القسم الفرعي')->badge()->color('warning')->placeholder('—'),
                 Tables\Columns\TextColumn::make('downloads_count')->label('تحميلات')->sortable(),
                 Tables\Columns\BadgeColumn::make('status')->label('الحالة')->colors(['success' => 'published', 'gray' => 'draft']),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('content_collection_id')->label('المجموعة')->options(fn() => $this->collectionOptions()),
+                Tables\Filters\SelectFilter::make('content_collection_id')->label('القسم الفرعي')->options(fn() => $this->collectionOptions()),
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()->label('إضافة ملف')

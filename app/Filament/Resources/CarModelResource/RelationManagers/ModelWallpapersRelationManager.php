@@ -65,12 +65,12 @@ class ModelWallpapersRelationManager extends RelationManager
                 Tables\Columns\ImageColumn::make('image_path')->label('')
                     ->disk(config('filesystems.default', 'public'))->square()->size(56),
                 Tables\Columns\TextColumn::make('title_ar')->label('العنوان')->searchable()->placeholder('—')->limit(30),
-                Tables\Columns\TextColumn::make('collection.name_ar')->label('المجموعة')->badge()->color('warning')->placeholder('—'),
+                Tables\Columns\TextColumn::make('collection.name_ar')->label('القسم الفرعي')->badge()->color('warning')->placeholder('—'),
                 Tables\Columns\BadgeColumn::make('status')->label('الحالة')->colors(['success' => 'published', 'gray' => 'draft']),
                 Tables\Columns\TextColumn::make('downloads_count')->label('تحميلات')->sortable(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('content_collection_id')->label('المجموعة')->options(fn() => $this->collectionOptions()),
+                Tables\Filters\SelectFilter::make('content_collection_id')->label('القسم الفرعي')->options(fn() => $this->collectionOptions()),
             ])
             ->headerActions([
                 Tables\Actions\Action::make('bulkUpload')
@@ -124,6 +124,19 @@ class ModelWallpapersRelationManager extends RelationManager
                     }),
             ])
             ->actions([Tables\Actions\EditAction::make(), Tables\Actions\DeleteAction::make()])
-            ->bulkActions([Tables\Actions\BulkActionGroup::make([Tables\Actions\DeleteBulkAction::make()])]);
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('assignCollection')->label('تعيين لقسم فرعي')
+                        ->icon('heroicon-o-folder-arrow-down')->color('warning')
+                        ->modalHeading('تعيين الخلفيات المحددة لقسم فرعي')
+                        ->form([
+                            Forms\Components\Select::make('content_collection_id')->label('القسم الفرعي')
+                                ->options(fn() => $this->collectionOptions())->nullable()->placeholder('بدون قسم فرعي'),
+                        ])
+                        ->action(fn($records, array $data) => $records->each->update(['content_collection_id' => $data['content_collection_id'] ?? null]))
+                        ->deselectRecordsAfterCompletion(),
+                    Tables\Actions\DeleteBulkAction::make()->label('حذف المحدد'),
+                ]),
+            ]);
     }
 }
