@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\CarModelResource\RelationManagers;
 
 use App\Filament\Concerns\InteractsWithContentWatermark;
+use App\Models\CarModel;
 use App\Models\ContentCollection;
 use App\Models\ContentItem;
 use App\Models\Designer;
@@ -48,6 +49,36 @@ class ModelWallpapersRelationManager extends RelationManager
     protected function designerOptions(): array
     {
         return Designer::active()->pluck('name_ar', 'id')->toArray();
+    }
+
+    /** Other models (across all brands) to move/copy wallpapers into. */
+    protected function otherModelOptions(): array
+    {
+        return CarModel::with('brand')
+            ->where('is_active', true)
+            ->where('id', '!=', $this->getOwnerRecord()->id)
+            ->get()
+            ->sortBy(fn ($m) => ($m->brand?->name_ar ?? '') . ' ' . $m->name_ar)
+            ->mapWithKeys(fn ($m) => [
+                $m->id => ($m->brand?->name_ar ? $m->brand->name_ar . ' — ' : '') . $m->name_ar,
+            ])
+            ->toArray();
+    }
+
+    /** Resolve the target model + its enabled wallpapers section, or notify. */
+    protected function resolveTargetModel(int $modelId): ?array
+    {
+        $target = CarModel::with('brand')->find($modelId);
+        $sectionId = $target?->brand?->sectionByKey('wallpapers')?->id;
+
+        if (! $target || ! $sectionId) {
+            Notification::make()
+                ->title('فعّل قسم "الخلفيات" لماركة الموديل الهدف أولاً')
+                ->danger()->send();
+            return null;
+        }
+
+        return ['model' => $target, 'section_id' => $sectionId];
     }
 
     public function form(Form $form): Form
@@ -176,6 +207,52 @@ class ModelWallpapersRelationManager extends RelationManager
                         ])
                         ->action(fn($records, array $data) => $records->each->update(['content_collection_id' => $data['content_collection_id'] ?? null]))
                         ->deselectRecordsAfterCompletion(),
+
+                    Tables\Actions\BulkAction::make('moveToModel')->label('نقل لموديل آخر')
+                        ->icon('heroicon-o-arrows-right-left')->color('warning')
+                        ->modalHeading('نقل الخلفيات المحددة لموديل آخر')
+                        ->modalDescription('تنتقل الخلفيات للموديل الجديد (يُزال القسم الفرعي القديم لأنه خاص بالموديل الأصلي).')
+                        ->form([
+                            Forms\Components\Select::make('car_model_id')->label('الموديل الهدف')
+                                ->options(fn() => $this->otherModelOptions())->required()->searchable(),
+                        ])
+                        ->action(function ($records, array $data) {
+                            if (! $t = $this->resolveTargetModel((int) $data['car_model_id'])) return;
+                            foreach ($records as $r) {
+                                $r->update([
+                                    'car_model_id'          => $t['model']->id,
+                                    'brand_id'              => $t['model']->brand_id,
+                                    'brand_section_id'      => $t['section_id'],
+                                    'content_collection_id' => null,
+                                ]);
+                            }
+                            Notification::make()->title("تم نقل {$records->count()} خلفية إلى {$t['model']->name_ar}")->success()->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
+
+                    Tables\Actions\BulkAction::make('copyToModel')->label('نسخ لموديل آخر')
+                        ->icon('heroicon-o-document-duplicate')->color('info')
+                        ->modalHeading('نسخ الخلفيات المحددة لموديل آخر')
+                        ->modalDescription('تبقى الخلفيات في الموديل الحالي، وتُنشأ نسخة منها في الموديل الهدف.')
+                        ->form([
+                            Forms\Components\Select::make('car_model_id')->label('الموديل الهدف')
+                                ->options(fn() => $this->otherModelOptions())->required()->searchable(),
+                        ])
+                        ->action(function ($records, array $data) {
+                            if (! $t = $this->resolveTargetModel((int) $data['car_model_id'])) return;
+                            foreach ($records as $r) {
+                                $copy = $r->replicate(['slug']);
+                                $copy->car_model_id          = $t['model']->id;
+                                $copy->brand_id              = $t['model']->brand_id;
+                                $copy->brand_section_id      = $t['section_id'];
+                                $copy->content_collection_id = null;
+                                $copy->slug                  = null;
+                                $copy->save();
+                            }
+                            Notification::make()->title("تم نسخ {$records->count()} خلفية إلى {$t['model']->name_ar}")->success()->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
+
                     $this->applyWatermarkBulkAction(),
                     $this->removeWatermarkBulkAction(),
                     Tables\Actions\DeleteBulkAction::make()->label('حذف المحدد'),
