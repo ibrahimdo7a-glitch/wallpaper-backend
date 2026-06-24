@@ -27,9 +27,12 @@ return [
             'secret' => env('R2_SECRET_ACCESS_KEY'),
             'region' => 'auto',
             'bucket' => env('R2_BUCKET'),
-            // Public asset URL — set to the R2 custom domain (Cloudflare CDN cached)
-            // via the R2_PUBLIC_URL env var; falls back to the custom domain.
-            'url' => env('R2_PUBLIC_URL', 'https://cdn.qev.app'),
+            // Public asset URL via the R2 custom domain (Cloudflare CDN cached).
+            // Hardcoded because the R2_PUBLIC_URL env var still holds the slow
+            // pub-*.r2.dev value; ignore any r2.dev value and use the CDN domain.
+            'url' => str_contains((string) env('R2_PUBLIC_URL'), 'r2.dev')
+                ? 'https://cdn.qev.app'
+                : env('R2_PUBLIC_URL', 'https://cdn.qev.app'),
             'endpoint' => env('R2_ENDPOINT'),
             'use_path_style_endpoint' => true,
             'throw' => false,
