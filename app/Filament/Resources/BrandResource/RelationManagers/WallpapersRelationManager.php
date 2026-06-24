@@ -169,6 +169,7 @@ class WallpapersRelationManager extends RelationManager
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    $this->publishToTelegramBulkAction(),
                     Tables\Actions\BulkAction::make('moveCollection')->label('نقل لقسم فرعي')
                         ->icon('heroicon-o-folder-arrow-down')
                         ->form([

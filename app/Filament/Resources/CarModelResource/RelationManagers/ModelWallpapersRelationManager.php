@@ -199,6 +199,7 @@ class ModelWallpapersRelationManager extends RelationManager
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    $this->publishToTelegramBulkAction(),
                     Tables\Actions\BulkAction::make('assignCollection')->label('تعيين لقسم فرعي')
                         ->icon('heroicon-o-folder-arrow-down')->color('warning')
                         ->modalHeading('تعيين الخلفيات المحددة لقسم فرعي')

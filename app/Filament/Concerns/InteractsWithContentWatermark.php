@@ -115,6 +115,56 @@ trait InteractsWithContentWatermark
             });
     }
 
+    /**
+     * Bulk action: post each selected wallpaper as a SEPARATE Telegram post,
+     * 5 seconds apart. Runs synchronously (no queue worker on this host), so the
+     * batch is capped to keep the request from timing out / freezing the panel.
+     */
+    protected function publishToTelegramBulkAction(): Tables\Actions\BulkAction
+    {
+        $limit = 20;
+
+        return Tables\Actions\BulkAction::make('publishTelegramBulk')
+            ->label('نشر في تلجرام')
+            ->icon('heroicon-o-paper-airplane')
+            ->color('success')
+            ->visible(fn () => app(\App\Services\TelegramService::class)->isConfigured())
+            ->requiresConfirmation()
+            ->modalHeading('نشر الخلفيات المحددة في القناة')
+            ->modalDescription("كل خلفية تُنشر كبوست منفصل بفاصل ٥ ثوانٍ. لا تغلق الصفحة حتى تنتهي. (بحد أقصى {$limit} في المرة — للمزيد كرّر العملية)")
+            ->modalSubmitActionLabel('نشر')
+            ->action(function ($records) use ($limit) {
+                @set_time_limit(0);
+                $tg = app(\App\Services\TelegramService::class);
+
+                $batch = $records->take($limit);
+                $sent = 0;
+                $failed = 0;
+                $first = true;
+
+                foreach ($batch as $record) {
+                    if (! $record->image_url) {
+                        $failed++;
+                        continue;
+                    }
+                    if (! $first) {
+                        sleep(5);
+                    }
+                    $first = false;
+
+                    $res = $tg->sendPhoto($record->image_url, $record->title_ar ?: null);
+                    $res['ok'] ? $sent++ : $failed++;
+                }
+
+                $extra = $records->count() > $limit ? ' — تبقّى ' . ($records->count() - $limit) . ' حدّدها وكرّر' : '';
+                Notification::make()
+                    ->title("نُشرت {$sent} خلفية" . ($failed ? " — فشل {$failed}" : '') . $extra)
+                    ->{$failed ? 'warning' : 'success'}()
+                    ->send();
+            })
+            ->deselectRecordsAfterCompletion();
+    }
+
     /** Per-row action to apply or change a watermark on an existing image. */
     protected function applyWatermarkRowAction(): Tables\Actions\Action
     {
