@@ -56,7 +56,7 @@ class SiteSettingsPage extends Page
             'ilink_label_ar', 'ilink_label_en',
             'ilink_tooltip_ar', 'ilink_tooltip_en',
             'ilink_file_path',
-            'telegram_bot_token', 'telegram_channel_id',
+            'telegram_bot_token', 'telegram_channel_id', 'telegram_topic_id',
         ];
 
         $formData = [];
@@ -226,7 +226,12 @@ class SiteSettingsPage extends Page
                                     ->columnSpanFull(),
                                 Forms\Components\TextInput::make('telegram_channel_id')
                                     ->label('معرّف القناة')
-                                    ->helperText('مثال: ‎@qev_channel‎ أو ‎-1001234567890‎. لازم تضيف البوت كمشرف في القناة أولاً.')
+                                    ->helperText('مثال: ‎@Qatar_ev‎ أو ‎-1001234567890‎. لازم تضيف البوت كمشرف في القناة أولاً.')
+                                    ->columnSpanFull(),
+                                Forms\Components\TextInput::make('telegram_topic_id')
+                                    ->label('رقم القسم داخل القناة (Topic) — اختياري')
+                                    ->numeric()
+                                    ->helperText('لو قناتك فيها أقسام (Topics)، حط رقم قسم الخلفيات هنا عشان النشر يصير فيه فقط. اتركه فارغًا = النشر في الواجهة الرئيسية. (تحصل الرقم من رابط القسم: t.me/Qatar_ev/الرقم)')
                                     ->columnSpanFull(),
                             ]),
                     ])

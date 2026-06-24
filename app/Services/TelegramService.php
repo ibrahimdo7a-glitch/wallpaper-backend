@@ -21,6 +21,7 @@ class TelegramService
     {
         $token   = Setting::get('telegram_bot_token');
         $channel = Setting::get('telegram_channel_id');
+        $topicId = Setting::get('telegram_topic_id'); // optional forum topic (section)
 
         if (! $token || ! $channel) {
             return ['ok' => false, 'error' => 'لم يُضبط توكن البوت أو معرّف القناة في الإعدادات'];
@@ -28,10 +29,11 @@ class TelegramService
 
         try {
             $res = Http::timeout(25)->asJson()->post("https://api.telegram.org/bot{$token}/sendPhoto", array_filter([
-                'chat_id' => $channel,
-                'photo'   => $photoUrl,
-                'caption' => $caption ?: null,
-            ]));
+                'chat_id'           => $channel,
+                'message_thread_id' => filled($topicId) ? (int) $topicId : null,
+                'photo'             => $photoUrl,
+                'caption'           => $caption ?: null,
+            ], fn ($v) => $v !== null));
 
             $body = $res->json();
 
