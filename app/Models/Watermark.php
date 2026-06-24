@@ -35,6 +35,21 @@ class Watermark extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        // Changing a signature's look re-burns it onto every wallpaper using it,
+        // so edits show up everywhere without re-applying each image by hand.
+        static::saved(function (self $watermark) {
+            $looks = ['type', 'text_ar', 'text_en', 'image_file', 'font_family',
+                'font_size', 'font_color', 'opacity', 'position', 'margin_x',
+                'margin_y', 'rotation', 'scale'];
+
+            if ($watermark->wasChanged($looks)) {
+                app(\App\Services\ContentWatermarkService::class)->reapplyAll($watermark);
+            }
+        });
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

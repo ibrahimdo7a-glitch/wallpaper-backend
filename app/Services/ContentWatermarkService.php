@@ -57,6 +57,30 @@ class ContentWatermarkService
         return true;
     }
 
+    /**
+     * Re-burn a watermark onto every item already using it — called when the
+     * signature's look (position, size, opacity…) changes, so existing wallpapers
+     * update without the admin re-applying them one by one.
+     */
+    public function reapplyAll(Watermark $watermark): int
+    {
+        $count = 0;
+        ContentItem::where('watermark_id', $watermark->id)
+            ->chunkById(50, function ($items) use ($watermark, &$count) {
+                foreach ($items as $item) {
+                    try {
+                        if ($this->apply($item, $watermark)) {
+                            $count++;
+                        }
+                    } catch (\Throwable $e) {
+                        report($e);
+                    }
+                }
+            });
+
+        return $count;
+    }
+
     /** Revert to the clean original and drop the watermark. */
     public function remove(ContentItem $item): bool
     {
