@@ -226,6 +226,10 @@ class SiteSettingsPage extends Page
         $data = $this->form->getState();
 
         foreach ($data as $key => $value) {
+            // store toggles as explicit '1'/'0' so "off" isn't confused with "never set"
+            if (is_bool($value)) {
+                $value = $value ? '1' : '0';
+            }
             Setting::set($key, $value ?? '');
         }
 
