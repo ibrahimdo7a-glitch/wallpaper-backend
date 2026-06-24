@@ -374,8 +374,38 @@ class SiteHealthPage extends Page
         return [
             Action::make('revalidate')->label('تحديث الموقع الآن')
                 ->icon('heroicon-o-arrow-path')->color('success')->action('revalidateFrontend'),
+            Action::make('generate_thumbnails')->label('توليد مصغّرات الصور')
+                ->icon('heroicon-o-photo')->color('warning')
+                ->requiresConfirmation()
+                ->modalHeading('توليد مصغّرات الصور')
+                ->modalDescription('يولّد نسخًا مصغّرة خفيفة للصور القديمة لتسريع لوحة التحكم والموقع. قد ياخذ بضع ثوانٍ.')
+                ->action('generateThumbnails'),
             Action::make('refresh_checks')->label('إعادة الفحص')
                 ->icon('heroicon-o-magnifying-glass')->color('gray')->action('runChecks'),
         ];
+    }
+
+    public function generateThumbnails(): void
+    {
+        $svc  = app(\App\Services\ImageThumbnailService::class);
+        $done = 0;
+
+        ContentItem::whereNotNull('image_path')
+            ->where(fn ($q) => $q
+                ->whereNull('thumbnail_path')
+                ->orWhere('thumbnail_path', 'not like', '%content-items/thumbs%'))
+            ->orderBy('id')
+            ->limit(1000)
+            ->get()
+            ->each(function (ContentItem $item) use ($svc, &$done) {
+                if ($svc->refreshFor($item)) {
+                    $done++;
+                }
+            });
+
+        Notification::make()
+            ->title($done > 0 ? "تم توليد {$done} صورة مصغّرة" : 'كل الصور لها مصغّرات بالفعل')
+            ->success()
+            ->send();
     }
 }
