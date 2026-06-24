@@ -4,6 +4,7 @@ namespace App\Filament\Resources\BrandResource\RelationManagers;
 
 use App\Models\ContentCollection;
 use App\Models\ContentItem;
+use App\Models\Designer;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -34,6 +35,11 @@ class WallpapersRelationManager extends RelationManager
             ->toArray();
     }
 
+    protected function designerOptions(): array
+    {
+        return Designer::active()->pluck('name_ar', 'id')->toArray();
+    }
+
     public function form(Form $form): Form
     {
         return $form->schema([
@@ -42,6 +48,10 @@ class WallpapersRelationManager extends RelationManager
             Forms\Components\Select::make('content_collection_id')->label('القسم الفرعي')
                 ->options(fn() => $this->collectionOptions())
                 ->searchable()->nullable()->placeholder('بدون قسم فرعي'),
+            Forms\Components\Select::make('designer_id')->label('المصمّم')
+                ->options(fn() => $this->designerOptions())
+                ->searchable()->nullable()->placeholder('بدون مصمّم')
+                ->helperText('أضف المصممين من قسم "المصمّمون"'),
             Forms\Components\FileUpload::make('image_path')->label('الصورة')
                 ->image()->directory('content-items/images')->required()->columnSpanFull(),
             Forms\Components\Select::make('status')->label('الحالة')
@@ -60,7 +70,10 @@ class WallpapersRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('title_ar')->label('العنوان')->searchable()->placeholder('—')->limit(30),
                 Tables\Columns\SelectColumn::make('content_collection_id')->label('القسم الفرعي')
                     ->options(fn() => $this->collectionOptions())
-                    ->placeholder('بدون قسم فرعي')->width('180px'),
+                    ->placeholder('بدون قسم فرعي')->width('160px'),
+                Tables\Columns\SelectColumn::make('designer_id')->label('المصمّم')
+                    ->options(fn() => $this->designerOptions())
+                    ->placeholder('بدون مصمّم')->width('160px'),
                 Tables\Columns\BadgeColumn::make('status')->label('الحالة')
                     ->colors(['success' => 'published', 'gray' => 'draft']),
                 Tables\Columns\TextColumn::make('downloads_count')->label('تحميلات')->sortable(),

@@ -11,7 +11,7 @@ class ContentController extends Controller
     // ─── GET /api/v1/content/{id} ─────────────────────────────────────────────
     public function show(int $id): JsonResponse
     {
-        $item = ContentItem::with(['brand', 'brandSection.sectionType', 'collection', 'carModel'])
+        $item = ContentItem::with(['brand', 'brandSection.sectionType', 'collection', 'carModel', 'designer'])
             ->where('status', 'published')
             ->findOrFail($id);
 
@@ -65,6 +65,13 @@ class ContentController extends Controller
             'description_ar'  => $i->description_ar,
             'description_en'  => $i->description_en,
             'author_name'     => $i->author_name,
+            'designer'        => $i->designer ? [
+                'id'         => $i->designer->id,
+                'name_ar'    => $i->designer->name_ar,
+                'name_en'    => $i->designer->name_en,
+                'avatar_url' => $i->designer->avatar_url,
+                'telegram_url' => $i->designer->telegram_url,
+            ] : null,
             'image_url'       => $i->image_url,
             'thumbnail_url'   => $i->thumbnail_url,
             'file_url'        => $i->file_url,
