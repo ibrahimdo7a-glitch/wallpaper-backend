@@ -61,23 +61,40 @@ class WatermarkService
         $watermarkContent = \Illuminate\Support\Facades\Storage::disk(config('filesystems.default'))->get($watermark->image_file);
         $watermarkImage = $this->manager->read($watermarkContent);
 
-        // Scale watermark
-        $scale = $watermark->scale / 100;
-        $newWidth = (int) ($watermarkImage->width() * $scale);
-        $newHeight = (int) ($watermarkImage->height() * $scale);
-        $watermarkImage->scale($newWidth, $newHeight);
+        // Scale the signature relative to its own size (scale% of the original PNG).
+        $scale     = max(1, (int) $watermark->scale) / 100;
+        $newWidth  = max(1, (int) ($watermarkImage->width() * $scale));
+        $newHeight = max(1, (int) ($watermarkImage->height() * $scale));
+        $watermarkImage->resize($newWidth, $newHeight);
 
-        $position = $this->calculatePosition(
-            $image->width(),
-            $image->height(),
-            $watermark,
-            $watermarkImage->width(),
-            $watermarkImage->height()
+        // Anchor to the chosen edge/corner and inset by the margins. Letting
+        // Intervention handle the anchor keeps corners exact (no clipping).
+        $image->place(
+            $watermarkImage,
+            $this->interventionPosition($watermark->position),
+            (int) $watermark->margin_x,
+            (int) $watermark->margin_y,
+            (int) $watermark->opacity
         );
 
-        $image->place($watermarkImage, 'top-left', $position['x'], $position['y'], $watermark->opacity);
-
         return $image->toJpeg(90)->toString();
+    }
+
+    /** Map our 9 position keys to Intervention's place() anchor names. */
+    protected function interventionPosition(?string $position): string
+    {
+        return match ($position) {
+            'top-left'     => 'top-left',
+            'top-center'   => 'top',
+            'top-right'    => 'top-right',
+            'middle-left'  => 'left',
+            'center'       => 'center',
+            'middle-right' => 'right',
+            'bottom-left'  => 'bottom-left',
+            'bottom-center'=> 'bottom',
+            'bottom-right' => 'bottom-right',
+            default        => 'bottom-right',
+        };
     }
 
     protected function applyCombinedWatermark($image, Watermark $watermark): string
