@@ -98,8 +98,9 @@ trait InteractsWithContentWatermark
             ->modalSubmitActionLabel('نشر')
             ->form([
                 Forms\Components\Textarea::make('caption')
-                    ->label('نص البوست (اختياري)')
-                    ->rows(3)
+                    ->label('نص فوق البوست (اختياري)')
+                    ->rows(2)
+                    ->helperText('يُضاف تلقائيًا تحته: اسم المصمّم + رابط صفحة الخلفية + رابط الموقع.')
                     ->default(fn (ContentItem $record) => $record->title_ar ?: ''),
             ])
             ->action(function (ContentItem $record, array $data) {
@@ -108,7 +109,7 @@ trait InteractsWithContentWatermark
                     Notification::make()->title('لا توجد صورة لنشرها')->danger()->send();
                     return;
                 }
-                $res = app(\App\Services\TelegramService::class)->sendPhoto($url, $data['caption'] ?? null);
+                $res = app(\App\Services\TelegramService::class)->sendPhoto($url, $record->telegramCaption($data['caption'] ?? null));
                 $res['ok']
                     ? Notification::make()->title('تم النشر في القناة ✓')->success()->send()
                     : Notification::make()->title('فشل النشر في تلجرام')->body($res['error'] ?? '')->danger()->send();
@@ -152,7 +153,7 @@ trait InteractsWithContentWatermark
                     }
                     $first = false;
 
-                    $res = $tg->sendPhoto($record->image_url, $record->title_ar ?: null);
+                    $res = $tg->sendPhoto($record->image_url, $record->telegramCaption());
                     $res['ok'] ? $sent++ : $failed++;
                 }
 

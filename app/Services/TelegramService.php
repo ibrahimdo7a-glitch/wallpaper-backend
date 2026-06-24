@@ -29,10 +29,11 @@ class TelegramService
 
         try {
             $res = Http::timeout(25)->asJson()->post("https://api.telegram.org/bot{$token}/sendPhoto", array_filter([
-                'chat_id'           => $channel,
-                'message_thread_id' => filled($topicId) ? (int) $topicId : null,
-                'photo'             => $photoUrl,
-                'caption'           => $caption ?: null,
+                'chat_id'                  => $channel,
+                'message_thread_id'        => filled($topicId) ? (int) $topicId : null,
+                'photo'                    => $photoUrl,
+                'caption'                  => $caption ?: null,
+                'parse_mode'               => $caption ? 'HTML' : null,
             ], fn ($v) => $v !== null));
 
             $body = $res->json();

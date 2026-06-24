@@ -62,6 +62,40 @@ class ContentItem extends Model
     public function getThumbnailUrlAttribute(): ?string { return $this->storageUrl($this->thumbnail_path); }
     public function getFileUrlAttribute(): ?string      { return $this->storageUrl($this->file_path); }
 
+    /**
+     * Formatted caption for a Telegram post: optional intro, designer, a link to
+     * the wallpaper page, and a footer inviting people to the site. HTML mode.
+     */
+    public function telegramCaption(?string $intro = null): string
+    {
+        $front = rtrim(config('app.frontend_url', 'https://qev.app'), '/');
+        $esc   = fn ($s) => htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8');
+
+        $intro    = $intro ?: $this->title_ar;
+        $designer = $this->designer?->name_ar ?: $this->author_name;
+
+        $lines = [];
+
+        if (filled($intro)) {
+            $lines[] = $esc($intro);
+            $lines[] = '';
+        }
+
+        if (filled($designer)) {
+            $lines[] = '🎨 المصمّم: ' . $esc($designer);
+        }
+
+        if ($this->brand && $this->brandSection) {
+            $url = "{$front}/ar/brands/{$this->brand->slug}/{$this->brandSection->slug}/{$this->id}";
+            $lines[] = '🔗 <a href="' . $esc($url) . '">صفحة الخلفية على الموقع</a>';
+        }
+
+        $lines[] = '';
+        $lines[] = '📲 <a href="' . $esc($front . '/ar') . '">للمزيد من الخلفيات، زوروا الموقع</a>';
+
+        return implode("\n", $lines);
+    }
+
     public function getFileSizeLabelAttribute(): string
     {
         $size = $this->metadata['file_size'] ?? 0;
