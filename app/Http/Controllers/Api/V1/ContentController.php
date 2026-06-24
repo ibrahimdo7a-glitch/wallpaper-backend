@@ -104,6 +104,13 @@ class ContentController extends Controller
                 'slug'    => $i->collection->slug,
                 'icon'    => $i->collection->icon,
             ] : null,
+            // When the item belongs to a model, the frontend uses this to link
+            // back to the model's section page instead of the brand-level one.
+            'model'           => $i->carModel ? [
+                'name_ar' => $i->carModel->name_ar,
+                'name_en' => $i->carModel->name_en,
+                'slug'    => $i->carModel->slug,
+            ] : null,
         ];
     }
 
