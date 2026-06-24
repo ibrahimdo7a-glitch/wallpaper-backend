@@ -72,7 +72,7 @@ class WallpapersRelationManager extends RelationManager
             ->defaultPaginationPageOption(48)
             ->columns([
                 Tables\Columns\ImageColumn::make('thumbnail_path')->label('')
-                    ->disk(config('filesystems.default', 'public'))->square()->size(72)
+                    ->disk(config('filesystems.default', 'public'))->square()->size(100)
                     ->extraImgAttributes(fn ($record) => [
                         'style' => 'cursor: zoom-in;',
                         'loading' => 'lazy',
