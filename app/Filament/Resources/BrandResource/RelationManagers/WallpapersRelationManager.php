@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\BrandResource\RelationManagers;
 
+use App\Filament\Concerns\InteractsWithContentWatermark;
 use App\Models\ContentCollection;
 use App\Models\ContentItem;
 use App\Models\Designer;
@@ -14,6 +15,8 @@ use Filament\Tables\Table;
 
 class WallpapersRelationManager extends RelationManager
 {
+    use InteractsWithContentWatermark;
+
     protected static string $relationship = 'wallpaperContent';
     protected static ?string $title = 'الخلفيات';
     protected static ?string $modelLabel = 'خلفية';
@@ -54,6 +57,7 @@ class WallpapersRelationManager extends RelationManager
                 ->helperText('أضف المصممين من قسم "المصمّمون"'),
             Forms\Components\FileUpload::make('image_path')->label('الصورة')
                 ->image()->directory('content-items/images')->required()->columnSpanFull(),
+            $this->watermarkField(),
             Forms\Components\Select::make('status')->label('الحالة')
                 ->options(['published' => 'منشور', 'draft' => 'مسودة'])->default('published'),
         ]);
@@ -80,6 +84,10 @@ class WallpapersRelationManager extends RelationManager
                     ->placeholder('بدون مصمّم')->width('160px'),
                 Tables\Columns\BadgeColumn::make('status')->label('الحالة')
                     ->colors(['success' => 'published', 'gray' => 'draft']),
+                Tables\Columns\IconColumn::make('watermark_id')->label('موقّعة')
+                    ->trueIcon('heroicon-s-finger-print')->falseIcon('heroicon-o-minus')
+                    ->trueColor('info')->falseColor('gray')
+                    ->state(fn ($record) => (bool) $record->watermark_id),
                 Tables\Columns\TextColumn::make('downloads_count')->label('تحميلات')->sortable(),
                 Tables\Columns\TextColumn::make('likes_count')->label('إعجابات')->sortable(),
             ])
@@ -106,6 +114,7 @@ class WallpapersRelationManager extends RelationManager
                             ->image()->multiple()->reorderable()
                             ->directory('content-items/images')->required()
                             ->helperText('اسحب أو اختر عدة صور دفعة واحدة'),
+                        $this->watermarkField(),
                     ])
                     ->action(function (array $data) {
                         $sectionId = $this->sectionId();
@@ -114,9 +123,10 @@ class WallpapersRelationManager extends RelationManager
                             return;
                         }
                         $brandId = $this->getOwnerRecord()->id;
+                        $watermarkId = $data['watermark_id'] ?? null;
                         $count = 0;
                         foreach (($data['images'] ?? []) as $path) {
-                            ContentItem::create([
+                            $item = ContentItem::create([
                                 'brand_id'              => $brandId,
                                 'brand_section_id'      => $sectionId,
                                 'content_collection_id' => $data['content_collection_id'] ?? null,
@@ -127,9 +137,11 @@ class WallpapersRelationManager extends RelationManager
                                 'file_path'             => $path,
                                 'status'                => 'published',
                             ]);
+                            $this->applyWatermark($item, $watermarkId ? (int) $watermarkId : null);
                             $count++;
                         }
-                        Notification::make()->title("تم رفع {$count} خلفية")->success()->send();
+                        $suffix = $watermarkId ? ' مع التوقيع' : '';
+                        Notification::make()->title("تم رفع {$count} خلفية{$suffix}")->success()->send();
                     }),
 
                 Tables\Actions\CreateAction::make()->label('إضافة خلفية')
@@ -141,10 +153,13 @@ class WallpapersRelationManager extends RelationManager
                         $data['thumbnail_path']   = $data['thumbnail_path'] ?? $data['image_path'] ?? null;
                         $data['file_path']        = $data['image_path'] ?? null;
                         return $data;
-                    }),
+                    })
+                    ->after(fn (ContentItem $record) => $this->applyWatermark($record, $record->watermark_id)),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                $this->applyWatermarkRowAction(),
+                Tables\Actions\EditAction::make()
+                    ->after(fn (ContentItem $record) => $this->syncWatermarkAfterSave($record)),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
@@ -156,6 +171,8 @@ class WallpapersRelationManager extends RelationManager
                                 ->options(fn() => $this->collectionOptions())->nullable()->placeholder('بدون قسم فرعي'),
                         ])
                         ->action(fn($records, array $data) => $records->each->update(['content_collection_id' => $data['content_collection_id'] ?? null])),
+                    $this->applyWatermarkBulkAction(),
+                    $this->removeWatermarkBulkAction(),
                     Tables\Actions\DeleteBulkAction::make()->label('حذف المحدد'),
                 ]),
             ]);

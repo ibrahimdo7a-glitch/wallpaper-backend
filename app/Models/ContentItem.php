@@ -15,8 +15,8 @@ class ContentItem extends Model
     protected $fillable = [
         'brand_id', 'brand_section_id', 'content_collection_id', 'car_model_id', 'content_type',
         'title_ar', 'title_en', 'slug',
-        'description_ar', 'description_en', 'author_name', 'designer_id',
-        'image_path', 'thumbnail_path', 'file_path', 'video_url', 'external_url',
+        'description_ar', 'description_en', 'author_name', 'designer_id', 'watermark_id',
+        'image_path', 'original_image_path', 'thumbnail_path', 'file_path', 'video_url', 'external_url',
         'metadata', 'status', 'is_featured', 'is_pinned',
         'sort_order', 'views_count', 'downloads_count', 'likes_count', 'published_at',
     ];
@@ -48,6 +48,7 @@ class ContentItem extends Model
     public function collection(): BelongsTo   { return $this->belongsTo(ContentCollection::class, 'content_collection_id'); }
     public function designer(): BelongsTo      { return $this->belongsTo(Designer::class); }
     public function carModel(): BelongsTo     { return $this->belongsTo(CarModel::class); }
+    public function watermark(): BelongsTo    { return $this->belongsTo(Watermark::class); }
 
     // ─── URL Accessors ─────────────────────────────────────────────────────────
     private function storageUrl(?string $path): ?string
