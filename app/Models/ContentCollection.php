@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
 class ContentCollection extends Model
 {
     protected $fillable = [
-        'brand_id', 'brand_section_id', 'name_ar', 'name_en', 'slug',
+        'brand_id', 'brand_section_id', 'car_model_id', 'name_ar', 'name_en', 'slug',
         'description_ar', 'description_en', 'image_path', 'icon',
         'is_active', 'sort_order',
     ];
@@ -36,6 +36,7 @@ class ContentCollection extends Model
 
     public function brand(): BelongsTo        { return $this->belongsTo(Brand::class); }
     public function brandSection(): BelongsTo { return $this->belongsTo(BrandSection::class); }
+    public function carModel(): BelongsTo     { return $this->belongsTo(CarModel::class); }
     public function contentItems(): HasMany   { return $this->hasMany(ContentItem::class, 'content_collection_id'); }
 
     public function getImageUrlAttribute(): ?string

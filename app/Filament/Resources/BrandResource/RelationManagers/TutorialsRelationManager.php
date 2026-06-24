@@ -29,6 +29,7 @@ class TutorialsRelationManager extends RelationManager
     protected function collectionOptions(): array
     {
         return ContentCollection::where('brand_id', $this->getOwnerRecord()->id)
+            ->whereNull('car_model_id')
             ->where('is_active', true)->orderBy('sort_order')
             ->get()->mapWithKeys(fn($c) => [$c->id => ($c->icon ? $c->icon . ' ' : '') . $c->name_ar])
             ->toArray();

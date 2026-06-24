@@ -30,21 +30,47 @@ class ModelWallpapersRelationManager extends RelationManager
         return $this->brand()?->sectionByKey('wallpapers')?->id;
     }
 
+    /** Collections scoped to THIS model (per-model sub-sections). */
     protected function collectionOptions(): array
     {
-        $brandId = $this->getOwnerRecord()->brand_id;
-        return ContentCollection::where('brand_id', $brandId)
+        $model = $this->getOwnerRecord();
+        return ContentCollection::where('brand_id', $model->brand_id)
+            ->where('car_model_id', $model->id)
             ->where('is_active', true)->orderBy('sort_order')
             ->get()->mapWithKeys(fn($c) => [$c->id => ($c->icon ? $c->icon . ' ' : '') . $c->name_ar])
             ->toArray();
+    }
+
+    /** Create a sub-section (collection) tied to this model. */
+    protected function createCollection(array $d): int
+    {
+        $model = $this->getOwnerRecord();
+        return ContentCollection::create([
+            'brand_id'     => $model->brand_id,
+            'car_model_id' => $model->id,
+            'name_ar'      => $d['name_ar'],
+            'name_en'      => $d['name_en'] ?? null,
+            'icon'         => $d['icon'] ?? null,
+        ])->id;
+    }
+
+    protected function collectionCreateForm(): array
+    {
+        return [
+            Forms\Components\TextInput::make('name_ar')->label('اسم القسم الفرعي')->required()->placeholder('مثال: ليلية / رياضية / 4K'),
+            Forms\Components\TextInput::make('name_en')->label('بالإنجليزي (اختياري)'),
+            Forms\Components\TextInput::make('icon')->label('أيقونة')->placeholder('🌙'),
+        ];
     }
 
     public function form(Form $form): Form
     {
         return $form->schema([
             Forms\Components\TextInput::make('title_ar')->label('العنوان (اختياري)')->maxLength(255),
-            Forms\Components\Select::make('content_collection_id')->label('المجموعة')
-                ->options(fn() => $this->collectionOptions())->searchable()->nullable()->placeholder('بدون مجموعة'),
+            Forms\Components\Select::make('content_collection_id')->label('القسم الفرعي')
+                ->options(fn() => $this->collectionOptions())->searchable()->nullable()->placeholder('بدون قسم فرعي')
+                ->createOptionForm($this->collectionCreateForm())
+                ->createOptionUsing(fn(array $d) => $this->createCollection($d)),
             Forms\Components\FileUpload::make('image_path')->label('الصورة')
                 ->image()->directory('content-items/images')->required()->columnSpanFull(),
             Forms\Components\Select::make('status')->label('الحالة')
@@ -74,8 +100,10 @@ class ModelWallpapersRelationManager extends RelationManager
                     ->modalHeading('رفع عدة خلفيات لهذا الموديل')
                     ->modalSubmitActionLabel('رفع الكل')
                     ->form([
-                        Forms\Components\Select::make('content_collection_id')->label('المجموعة')
-                            ->options(fn() => $this->collectionOptions())->searchable()->nullable()->placeholder('بدون مجموعة'),
+                        Forms\Components\Select::make('content_collection_id')->label('القسم الفرعي')
+                            ->options(fn() => $this->collectionOptions())->searchable()->nullable()->placeholder('بدون قسم فرعي')
+                            ->createOptionForm($this->collectionCreateForm())
+                            ->createOptionUsing(fn(array $d) => $this->createCollection($d)),
                         Forms\Components\FileUpload::make('images')->label('الصور')
                             ->image()->multiple()->reorderable()->directory('content-items/images')->required()
                             ->helperText('اسحب عدة صور دفعة واحدة'),

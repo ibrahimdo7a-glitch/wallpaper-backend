@@ -87,8 +87,9 @@ class BrandController extends Controller
 
         $perPage = min((int)$request->get('per_page', 20), 100);
 
-        // Collections (sub-folders) available in this section
+        // Collections (sub-folders) available in this section — brand-level only
         $collections = ContentCollection::where('brand_id', $brand->id)
+            ->whereNull('car_model_id')
             ->where('is_active', true)
             ->where(fn($q) => $q->where('brand_section_id', $section->id)->orWhereNull('brand_section_id'))
             ->orderBy('sort_order')
@@ -190,19 +191,43 @@ class BrandController extends Controller
 
         $perPage = min((int)$request->get('per_page', 20), 100);
 
-        $items = ContentItem::where('brand_section_id', $section->id)
+        // Sub-sections (collections) for THIS model + section, only non-empty ones
+        $collections = ContentCollection::where('brand_id', $brand->id)
             ->where('car_model_id', $model->id)
-            ->where('status', 'published')
-            ->orderByDesc('is_pinned')
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->withCount(['contentItems' => fn($q) => $q->where('status', 'published')->where('brand_section_id', $section->id)])
+            ->get()
+            ->map(fn($c) => $this->collectionCard($c))
+            ->filter(fn($c) => $c['items_count'] > 0)
+            ->values();
+
+        $activeCollection = null;
+        $query = ContentItem::where('brand_section_id', $section->id)
+            ->where('car_model_id', $model->id)
+            ->where('status', 'published');
+
+        if ($collectionSlug = $request->get('collection')) {
+            $activeCollection = ContentCollection::where('brand_id', $brand->id)
+                ->where('car_model_id', $model->id)
+                ->where('slug', $collectionSlug)->first();
+            if ($activeCollection) {
+                $query->where('content_collection_id', $activeCollection->id);
+            }
+        }
+
+        $items = $query->orderByDesc('is_pinned')
             ->orderBy('sort_order')
             ->orderByDesc('published_at')
             ->paginate($perPage);
 
         return response()->json([
-            'section' => $this->sectionCard($section),
-            'brand'   => ['name_ar' => $brand->name_ar, 'slug' => $brand->slug],
-            'model'   => ['name_ar' => $model->name_ar, 'slug' => $model->slug],
-            'data'    => $items->map(fn($i) => $this->contentCard($i)),
+            'section'           => $this->sectionCard($section),
+            'brand'             => ['name_ar' => $brand->name_ar, 'slug' => $brand->slug],
+            'model'             => ['name_ar' => $model->name_ar, 'slug' => $model->slug],
+            'collections'       => $collections,
+            'active_collection' => $activeCollection ? $this->collectionCard($activeCollection) : null,
+            'data'              => $items->map(fn($i) => $this->contentCard($i)),
             'meta'    => [
                 'current_page' => $items->currentPage(),
                 'last_page'    => $items->lastPage(),

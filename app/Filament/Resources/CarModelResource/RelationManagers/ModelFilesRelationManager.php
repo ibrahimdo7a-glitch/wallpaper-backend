@@ -25,7 +25,9 @@ class ModelFilesRelationManager extends RelationManager
 
     protected function collectionOptions(): array
     {
-        return ContentCollection::where('brand_id', $this->getOwnerRecord()->brand_id)
+        $model = $this->getOwnerRecord();
+        return ContentCollection::where('brand_id', $model->brand_id)
+            ->where('car_model_id', $model->id)
             ->where('is_active', true)->orderBy('sort_order')
             ->get()->mapWithKeys(fn($c) => [$c->id => ($c->icon ? $c->icon . ' ' : '') . $c->name_ar])->toArray();
     }
