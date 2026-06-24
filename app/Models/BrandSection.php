@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class BrandSection extends Model
@@ -35,6 +36,21 @@ class BrandSection extends Model
                 $section->slug = $section->sectionType?->key ?? 'section-' . $section->section_type_id;
             }
         });
+
+        // Bust the brand caches so toggles (enable/nav/home) show up immediately.
+        static::saved(fn (self $section) => $section->flushBrandCache());
+        static::deleted(fn (self $section) => $section->flushBrandCache());
+    }
+
+    /** Forget all cached payloads that depend on this brand's sections. */
+    public function flushBrandCache(): void
+    {
+        $slug = $this->brand?->slug;
+        if (! $slug) return;
+
+        Cache::forget("brand.{$slug}");
+        Cache::forget("brand.{$slug}.sections");
+        Cache::forget("brand.{$slug}.models");
     }
 
     public function brand(): BelongsTo      { return $this->belongsTo(Brand::class); }
