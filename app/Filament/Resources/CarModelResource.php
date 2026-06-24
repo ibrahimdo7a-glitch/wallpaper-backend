@@ -140,6 +140,17 @@ class CarModelResource extends Resource
             ->bulkActions([Tables\Actions\BulkActionGroup::make([Tables\Actions\DeleteBulkAction::make()])]);
     }
 
+    /** The "مبدع" creative role can't delete whole models (only single wallpapers). */
+    public static function canDelete(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return ! auth()->user()?->hasRole('مبدع');
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return ! auth()->user()?->hasRole('مبدع');
+    }
+
     public static function getRelations(): array
     {
         return [

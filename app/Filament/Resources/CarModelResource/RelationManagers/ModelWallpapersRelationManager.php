@@ -255,7 +255,8 @@ class ModelWallpapersRelationManager extends RelationManager
 
                     $this->applyWatermarkBulkAction(),
                     $this->removeWatermarkBulkAction(),
-                    Tables\Actions\DeleteBulkAction::make()->label('حذف المحدد'),
+                    Tables\Actions\DeleteBulkAction::make()->label('حذف المحدد')
+                        ->visible(fn () => ! auth()->user()?->hasRole('مبدع')),
                 ]),
             ]);
     }

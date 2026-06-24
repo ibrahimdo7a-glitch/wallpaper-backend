@@ -6,7 +6,14 @@ use Filament\Resources\Pages\EditRecord;
 class EditCarModel extends EditRecord
 {
     protected static string $resource = CarModelResource::class;
-    protected function getHeaderActions(): array { return [Actions\DeleteAction::make()]; }
+    protected function getHeaderActions(): array
+    {
+        // The "مبدع" creative role can't delete whole models.
+        return [
+            Actions\DeleteAction::make()
+                ->visible(fn () => ! auth()->user()?->hasRole('مبدع')),
+        ];
+    }
 
     public function getTitle(): string
     {
