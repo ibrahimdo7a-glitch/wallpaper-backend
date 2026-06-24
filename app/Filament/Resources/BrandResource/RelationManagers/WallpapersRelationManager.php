@@ -67,17 +67,10 @@ class WallpapersRelationManager extends RelationManager
             ->columns([
                 Tables\Columns\ImageColumn::make('image_path')->label('')
                     ->disk(config('filesystems.default', 'public'))->square()->size(56)
-                    ->extraImgAttributes(['style' => 'cursor: zoom-in;'])
-                    ->action(
-                        Tables\Actions\Action::make('preview')
-                            ->modalHeading(fn ($record) => $record->title_ar ?: 'معاينة الخلفية')
-                            ->modalContent(fn ($record) => new \Illuminate\Support\HtmlString(
-                                '<img src="' . e($record->image_url) . '" alt="preview" style="width:100%;max-height:80vh;object-fit:contain;border-radius:10px;" />'
-                            ))
-                            ->modalSubmitAction(false)
-                            ->modalCancelActionLabel('إغلاق')
-                            ->modalWidth('5xl')
-                    ),
+                    ->extraImgAttributes(fn ($record) => [
+                        'style' => 'cursor: zoom-in;',
+                        'data-zoom-src' => $record->image_url,
+                    ]),
                 Tables\Columns\TextColumn::make('title_ar')->label('العنوان')->searchable()->placeholder('—')->limit(30),
                 Tables\Columns\SelectColumn::make('content_collection_id')->label('القسم الفرعي')
                     ->options(fn() => $this->collectionOptions())
