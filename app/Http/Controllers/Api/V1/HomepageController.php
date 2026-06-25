@@ -259,13 +259,14 @@ class HomepageController extends Controller
         $totalViews     = (int) ContentItem::sum('views_count') + (int) NewsArticle::sum('views_count') + (int) AndroidApp::sum('views_count');
         $visitors       = (int) (DB::table('settings')->where('key', 'site_visits')->value('value') ?? 0);
 
+        // Order matters — the bigger/headline stats first; visitors & likes drop to the last row.
         $defs = [
-            'visitors'   => ['icon' => '👁️', 'label_ar' => 'زائر',   'label_en' => 'Visitors',   'value' => $visitors],
             'downloads'  => ['icon' => '⬇️', 'label_ar' => 'تحميل',  'label_en' => 'Downloads',  'value' => $totalDownloads],
             'wallpapers' => ['icon' => '🖼️', 'label_ar' => 'خلفية',  'label_en' => 'Wallpapers', 'value' => ContentItem::where('content_type', 'wallpapers')->where('status', 'published')->count()],
             'apps'       => ['icon' => '📱', 'label_ar' => 'تطبيق',  'label_en' => 'Apps',       'value' => AndroidApp::where('status', 'published')->count()],
-            'likes'      => ['icon' => '❤️', 'label_ar' => 'إعجاب',  'label_en' => 'Likes',      'value' => $totalLikes],
             'views'      => ['icon' => '👀', 'label_ar' => 'مشاهدة', 'label_en' => 'Views',      'value' => $totalViews],
+            'visitors'   => ['icon' => '👁️', 'label_ar' => 'زائر',   'label_en' => 'Visitors',   'value' => $visitors],
+            'likes'      => ['icon' => '❤️', 'label_ar' => 'إعجاب',  'label_en' => 'Likes',      'value' => $totalLikes],
         ];
 
         $items = [];
