@@ -79,10 +79,12 @@ RUN mkdir -p /var/www/html/storage/logs \
     /var/www/html/bootstrap/cache \
     && chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Increase PHP upload limits
-RUN echo "upload_max_filesize=50M" >> /usr/local/etc/php/conf.d/uploads.ini \
-    && echo "post_max_size=55M" >> /usr/local/etc/php/conf.d/uploads.ini \
-    && echo "memory_limit=256M" >> /usr/local/etc/php/conf.d/uploads.ini
+# Increase PHP upload limits (large APKs up to ~500 MB)
+RUN echo "upload_max_filesize=550M" >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "post_max_size=560M" >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "memory_limit=512M" >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "max_execution_time=600" >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "max_input_time=600" >> /usr/local/etc/php/conf.d/uploads.ini
 
 # Nginx config: serves static files + proxies PHP to php-fpm (parallel workers).
 # Replaces the single-threaded `php artisan serve`.

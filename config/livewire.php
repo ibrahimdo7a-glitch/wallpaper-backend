@@ -11,7 +11,7 @@ return [
 
     'temporary_file_upload' => [
         'disk' => 'local',
-        'rules' => ['required', 'file', 'max:51200'],
+        'rules' => ['required', 'file', 'max:563200'], // 550 MB (APKs)
         'directory' => 'livewire-tmp',
         'middleware' => 'throttle:60,1',
         'preview_mimes' => [
@@ -19,7 +19,7 @@ return [
             'mov', 'avi', 'wmv', 'mp3', 'mpg', 'webp',
             'weba', 'ogv', 'oga', 'webm',
         ],
-        'max_upload_size' => 51200,
+        'max_upload_size' => 563200,
     ],
 
     'inject_assets' => true,
