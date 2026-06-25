@@ -65,6 +65,7 @@ class SiteSettingsPage extends Page
             'stat_likes_value', 'stat_views_value', 'stat_news_value',
             'stat_visitors_order', 'stat_downloads_order', 'stat_wallpapers_order', 'stat_apps_order',
             'stat_likes_order', 'stat_views_order', 'stat_news_order',
+            'ai_enabled', 'ai_api_key', 'ai_model', 'ai_translation_prompt', 'ai_summarize_prompt',
         ];
 
         $formData = [];
@@ -83,6 +84,15 @@ class SiteSettingsPage extends Page
                 ? true
                 : filter_var($formData[$sk], FILTER_VALIDATE_BOOLEAN);
         }
+
+        // AI: default enabled; show the default prompts so the admin can read/edit them
+        $ai = app(\App\Services\AiService::class);
+        $formData['ai_enabled'] = $formData['ai_enabled'] === ''
+            ? true
+            : filter_var($formData['ai_enabled'], FILTER_VALIDATE_BOOLEAN);
+        $formData['ai_model'] = $formData['ai_model'] ?: 'claude-haiku-4-5-20251001';
+        $formData['ai_translation_prompt'] = $formData['ai_translation_prompt'] ?: $ai->defaultTranslationPrompt();
+        $formData['ai_summarize_prompt']   = $formData['ai_summarize_prompt'] ?: $ai->defaultSummarizePrompt();
 
         $this->form->fill($formData);
     }
@@ -193,6 +203,37 @@ class SiteSettingsPage extends Page
                                     Forms\Components\TextInput::make('stat_news_order')->label('الترتيب')->numeric()->placeholder('مثل: 7'),
                                     Forms\Components\TextInput::make('stat_news_value')->label('رقم يدوي (اختياري)')->numeric()->placeholder('تلقائي'),
                                 ]),
+                            ]),
+
+                        Forms\Components\Tabs\Tab::make('الذكاء الاصطناعي')
+                            ->icon('heroicon-o-sparkles')
+                            ->schema([
+                                Forms\Components\Placeholder::make('ai_help')
+                                    ->label('')
+                                    ->content('يُشغّل زر "الترجمة التلقائية" وزر "توليد المقال من رابط" في الأخبار/التطبيقات. أنشئ مفتاحًا من console.anthropic.com وأضف رصيدًا بسيطًا (~٥$ تكفي شهورًا).'),
+
+                                Forms\Components\Toggle::make('ai_enabled')->label('تفعيل الذكاء الاصطناعي')->inline(false)->default(true),
+
+                                Forms\Components\TextInput::make('ai_api_key')->label('مفتاح Anthropic API')
+                                    ->password()->revealable()
+                                    ->placeholder('sk-ant-...')
+                                    ->helperText('يُحفظ بأمان ولا يظهر للزوّار إطلاقًا.')
+                                    ->columnSpanFull(),
+
+                                Forms\Components\Select::make('ai_model')->label('الموديل')
+                                    ->options([
+                                        'claude-haiku-4-5-20251001' => 'Claude Haiku — سريع ورخيص (موصى به)',
+                                        'claude-sonnet-4-6'         => 'Claude Sonnet — أذكى وأغلى',
+                                    ])
+                                    ->default('claude-haiku-4-5-20251001'),
+
+                                Forms\Components\Textarea::make('ai_translation_prompt')->label('✍️ تعليمات الترجمة')
+                                    ->rows(5)->columnSpanFull()
+                                    ->helperText('وجّه الذكاء كيف يترجم (الأسلوب، الاختصار…). عدّلها متى ما تبي.'),
+
+                                Forms\Components\Textarea::make('ai_summarize_prompt')->label('✍️ تعليمات تلخيص المقال من رابط')
+                                    ->rows(5)->columnSpanFull()
+                                    ->helperText('وجّه الذكاء كيف يستخرج المهم ويلخّص الخبر من الرابط.'),
                             ]),
 
                         Forms\Components\Tabs\Tab::make('الميزات')

@@ -31,6 +31,37 @@ class AndroidAppResource extends Resource
         $disk = config('filesystems.default', 'public');
 
         return $form->schema([
+            Forms\Components\Section::make('🤖 مساعد الذكاء الاصطناعي')
+                ->description('اكتب الوصف بالعربي واضغط الزر — يترجم ويملأ الإنجليزي تلقائيًا.')
+                ->collapsible()->collapsed()
+                ->schema([
+                    Forms\Components\Actions::make([
+                        Forms\Components\Actions\Action::make('ai_translate')
+                            ->label('✨ ترجم العربي → إنجليزي')
+                            ->icon('heroicon-o-language')->color('primary')
+                            ->action(function (Forms\Get $get, Forms\Set $set) {
+                                $ai = app(\App\Services\AiService::class);
+                                if (! $ai->isConfigured()) {
+                                    Notification::make()->title('فعّل الذكاء وأضف المفتاح في إعدادات الموقع أولًا')->danger()->send();
+                                    return;
+                                }
+                                $r = $ai->translate([
+                                    'title'             => $get('title_ar'),
+                                    'short_description' => $get('short_description_ar'),
+                                    'description'       => $get('description_ar'),
+                                ]);
+                                if (! $r) {
+                                    Notification::make()->title('تعذّرت الترجمة')->body($ai->lastError ?? '')->danger()->send();
+                                    return;
+                                }
+                                foreach (['title' => 'title_en', 'short_description' => 'short_description_en', 'description' => 'description_en'] as $src => $dst) {
+                                    if (filled($r[$src] ?? null)) $set($dst, $r[$src]);
+                                }
+                                Notification::make()->title('تمت الترجمة ✓')->success()->send();
+                            }),
+                    ]),
+                ]),
+
             Forms\Components\Tabs::make()->tabs([
 
                 // ─── معلومات أساسية ──────────────────────────────────────

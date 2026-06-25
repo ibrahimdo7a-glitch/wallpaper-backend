@@ -31,6 +31,68 @@ class NewsArticleResource extends Resource
         $disk = config('filesystems.default', 'public');
 
         return $form->schema([
+            Forms\Components\Section::make('🤖 مساعد الذكاء الاصطناعي')
+                ->description('ولّد المقال من رابط خبر، أو ترجم العربي للإنجليزي بضغطة.')
+                ->collapsible()
+                ->schema([
+                    Forms\Components\TextInput::make('import_url')->label('رابط خبر مصدر (أي لغة)')
+                        ->url()->dehydrated(false)->columnSpanFull()
+                        ->placeholder('https://...')
+                        ->helperText('الصق رابطًا واضغط "توليد المقال" — يستخرج المهم، يلخّص، يترجم، ويملأ الحقول. (الصور تضيفها يدويًا)'),
+                    Forms\Components\Actions::make([
+                        Forms\Components\Actions\Action::make('ai_generate')
+                            ->label('✨ توليد المقال من الرابط')
+                            ->icon('heroicon-o-sparkles')->color('primary')
+                            ->action(function (Forms\Get $get, Forms\Set $set) {
+                                $ai = app(\App\Services\AiService::class);
+                                if (! $ai->isConfigured()) {
+                                    \Filament\Notifications\Notification::make()->title('فعّل الذكاء وأضف المفتاح في إعدادات الموقع أولًا')->danger()->send();
+                                    return;
+                                }
+                                $url = trim((string) $get('import_url'));
+                                if (! $url) {
+                                    \Filament\Notifications\Notification::make()->title('الصق رابطًا أولًا')->warning()->send();
+                                    return;
+                                }
+                                $r = $ai->articleFromUrl($url);
+                                if (! $r) {
+                                    \Filament\Notifications\Notification::make()->title('تعذّر توليد المقال')->body($ai->lastError ?? '')->danger()->send();
+                                    return;
+                                }
+                                foreach (['title_ar', 'summary_ar', 'content_ar', 'title_en', 'summary_en', 'content_en'] as $f) {
+                                    if (filled($r[$f] ?? null)) $set($f, $r[$f]);
+                                }
+                                $set('source_url', $url);
+                                \Filament\Notifications\Notification::make()->title('تم توليد المقال — راجعه ثم انشر ✓')->success()->send();
+                            }),
+                        Forms\Components\Actions\Action::make('ai_translate')
+                            ->label('🔁 ترجم العربي → إنجليزي')
+                            ->icon('heroicon-o-language')->color('gray')
+                            ->action(function (Forms\Get $get, Forms\Set $set) {
+                                $ai = app(\App\Services\AiService::class);
+                                if (! $ai->isConfigured()) {
+                                    \Filament\Notifications\Notification::make()->title('فعّل الذكاء وأضف المفتاح في الإعدادات')->danger()->send();
+                                    return;
+                                }
+                                $r = $ai->translate([
+                                    'title'            => $get('title_ar'),
+                                    'summary'          => $get('summary_ar'),
+                                    'content'          => $get('content_ar'),
+                                    'meta_title'       => $get('meta_title_ar'),
+                                    'meta_description' => $get('meta_description_ar'),
+                                ]);
+                                if (! $r) {
+                                    \Filament\Notifications\Notification::make()->title('تعذّرت الترجمة')->body($ai->lastError ?? '')->danger()->send();
+                                    return;
+                                }
+                                foreach (['title' => 'title_en', 'summary' => 'summary_en', 'content' => 'content_en', 'meta_title' => 'meta_title_en', 'meta_description' => 'meta_description_en'] as $src => $dst) {
+                                    if (filled($r[$src] ?? null)) $set($dst, $r[$src]);
+                                }
+                                \Filament\Notifications\Notification::make()->title('تمت الترجمة ✓')->success()->send();
+                            }),
+                    ]),
+                ]),
+
             Forms\Components\Tabs::make()->tabs([
 
                 Forms\Components\Tabs\Tab::make('المحتوى')->icon('heroicon-o-document-text')->schema([
