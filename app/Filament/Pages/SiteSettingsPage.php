@@ -63,6 +63,8 @@ class SiteSettingsPage extends Page
             'stat_likes_enabled', 'stat_views_enabled',
             'stat_visitors_value', 'stat_downloads_value', 'stat_wallpapers_value', 'stat_apps_value',
             'stat_likes_value', 'stat_views_value',
+            'stat_visitors_order', 'stat_downloads_order', 'stat_wallpapers_order', 'stat_apps_order',
+            'stat_likes_order', 'stat_views_order',
         ];
 
         $formData = [];
@@ -154,30 +156,36 @@ class SiteSettingsPage extends Page
                             ->schema([
                                 Forms\Components\Placeholder::make('stats_help')
                                     ->label('')
-                                    ->content('فعّل أو ألغِ كل إحصائية تظهر في الصفحة الرئيسية (٦ كحد أقصى، بشكل ٣×٢ بجانب الماركات). اترك خانة الرقم فارغة = العدد الحقيقي تلقائيًا، أو اكتب رقمًا لعرضه يدويًا.'),
+                                    ->content('فعّل أو ألغِ كل إحصائية (٦ كحد أقصى، ٣×٢ بجانب الماركات). خانة "الترتيب": اكتب ١ للي تبيه أول، ٢ للي بعده… (فاضية = الترتيب الافتراضي). خانة "رقم يدوي": فاضية = العدد الحقيقي تلقائيًا.'),
 
-                                Forms\Components\Grid::make(2)->schema([
+                                Forms\Components\Grid::make(3)->schema([
                                     Forms\Components\Toggle::make('stat_visitors_enabled')->label('👁️ عدد الزوار')->inline(false)->default(true),
+                                    Forms\Components\TextInput::make('stat_visitors_order')->label('الترتيب')->numeric()->placeholder('مثل: 1'),
                                     Forms\Components\TextInput::make('stat_visitors_value')->label('رقم يدوي (اختياري)')->numeric()->placeholder('تلقائي'),
                                 ]),
-                                Forms\Components\Grid::make(2)->schema([
+                                Forms\Components\Grid::make(3)->schema([
                                     Forms\Components\Toggle::make('stat_downloads_enabled')->label('⬇️ إجمالي التحميلات')->inline(false)->default(true),
+                                    Forms\Components\TextInput::make('stat_downloads_order')->label('الترتيب')->numeric()->placeholder('مثل: 2'),
                                     Forms\Components\TextInput::make('stat_downloads_value')->label('رقم يدوي (اختياري)')->numeric()->placeholder('تلقائي'),
                                 ]),
-                                Forms\Components\Grid::make(2)->schema([
+                                Forms\Components\Grid::make(3)->schema([
                                     Forms\Components\Toggle::make('stat_wallpapers_enabled')->label('🖼️ عدد الخلفيات')->inline(false)->default(true),
+                                    Forms\Components\TextInput::make('stat_wallpapers_order')->label('الترتيب')->numeric()->placeholder('مثل: 1'),
                                     Forms\Components\TextInput::make('stat_wallpapers_value')->label('رقم يدوي (اختياري)')->numeric()->placeholder('تلقائي'),
                                 ]),
-                                Forms\Components\Grid::make(2)->schema([
+                                Forms\Components\Grid::make(3)->schema([
                                     Forms\Components\Toggle::make('stat_apps_enabled')->label('📱 عدد التطبيقات')->inline(false)->default(true),
+                                    Forms\Components\TextInput::make('stat_apps_order')->label('الترتيب')->numeric()->placeholder('مثل: 3'),
                                     Forms\Components\TextInput::make('stat_apps_value')->label('رقم يدوي (اختياري)')->numeric()->placeholder('تلقائي'),
                                 ]),
-                                Forms\Components\Grid::make(2)->schema([
+                                Forms\Components\Grid::make(3)->schema([
                                     Forms\Components\Toggle::make('stat_likes_enabled')->label('❤️ عدد الإعجابات')->inline(false)->default(true),
+                                    Forms\Components\TextInput::make('stat_likes_order')->label('الترتيب')->numeric()->placeholder('مثل: 6'),
                                     Forms\Components\TextInput::make('stat_likes_value')->label('رقم يدوي (اختياري)')->numeric()->placeholder('تلقائي'),
                                 ]),
-                                Forms\Components\Grid::make(2)->schema([
+                                Forms\Components\Grid::make(3)->schema([
                                     Forms\Components\Toggle::make('stat_views_enabled')->label('👀 عدد المشاهدات')->inline(false)->default(true),
+                                    Forms\Components\TextInput::make('stat_views_order')->label('الترتيب')->numeric()->placeholder('مثل: 4'),
                                     Forms\Components\TextInput::make('stat_views_value')->label('رقم يدوي (اختياري)')->numeric()->placeholder('تلقائي'),
                                 ]),
                             ]),

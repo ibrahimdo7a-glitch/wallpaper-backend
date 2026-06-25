@@ -270,12 +270,16 @@ class HomepageController extends Controller
         ];
 
         $items = [];
+        $seq   = 0;
         foreach ($defs as $key => $d) {
+            $seq++;
             if (! filter_var(Setting::get("stat_{$key}_enabled", true), FILTER_VALIDATE_BOOLEAN)) {
                 continue; // stat disabled from admin
             }
             $override = Setting::get("stat_{$key}_value", '');
             $value    = ($override !== '' && $override !== null && is_numeric($override)) ? (int) $override : $d['value'];
+            $orderRaw = Setting::get("stat_{$key}_order", '');
+            $order    = ($orderRaw !== '' && $orderRaw !== null && is_numeric($orderRaw)) ? (int) $orderRaw : $seq;
 
             $items[] = [
                 'key'      => $key,
@@ -284,11 +288,20 @@ class HomepageController extends Controller
                 'label_en' => $d['label_en'],
                 'value'    => $value,
                 'prefix'   => '+',
+                '_order'   => $order,
+                '_seq'     => $seq,
             ];
-            if (count($items) >= 6) break; // never more than 6
         }
 
-        return ['items' => $items];
+        // Sort by the admin-set order (default sequence breaks ties), keep top 6.
+        usort($items, fn ($a, $b) => ($a['_order'] <=> $b['_order']) ?: ($a['_seq'] <=> $b['_seq']));
+        $items = array_slice($items, 0, 6);
+        foreach ($items as &$it) {
+            unset($it['_order'], $it['_seq']);
+        }
+        unset($it);
+
+        return ['items' => array_values($items)];
     }
 
     /** Increment the site visitor counter (called once per browser session). */
