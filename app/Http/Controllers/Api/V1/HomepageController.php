@@ -147,13 +147,15 @@ class HomepageController extends Controller
     private function brandsData(HomepageSection $s): array
     {
         $limit = $s->settings['limit'] ?? 20;
-        return ['items' => Brand::active()->orderBy('sort_order')->limit($limit)->get()->map(fn($b) => $this->brandCard($b))->values()];
+        return ['items' => Brand::active()->withCount(['enabledSections as sections_count'])
+            ->orderBy('sort_order')->limit($limit)->get()->map(fn($b) => $this->brandCard($b))->values()];
     }
 
     private function featuredBrandsData(HomepageSection $s): array
     {
         $limit = $s->settings['limit'] ?? 8;
-        return ['items' => Brand::active()->where('is_featured', true)->orderBy('sort_order')->limit($limit)->get()->map(fn($b) => $this->brandCard($b))->values()];
+        return ['items' => Brand::active()->where('is_featured', true)->withCount(['enabledSections as sections_count'])
+            ->orderBy('sort_order')->limit($limit)->get()->map(fn($b) => $this->brandCard($b))->values()];
     }
 
     private function latestWallpapersData(HomepageSection $s): array
@@ -303,6 +305,7 @@ class HomepageController extends Controller
             'logo_url'      => $b->logo_url,
             'primary_color' => $b->primary_color,
             'models_count'  => $b->models_count,
+            'sections_count'=> $b->sections_count ?? $b->enabledSections()->count(),
             'is_featured'   => $b->is_featured,
         ];
     }
