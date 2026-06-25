@@ -87,7 +87,6 @@ class HomepageSectionResource extends Resource
                             trim(($state['icon'] ?? '') . ' ' . ($state['title_ar'] ?? '')) ?: 'ميزة جديدة')
                         ->collapsible()
                         ->collapsed()
-                        ->reorderable()
                         ->cloneable()
                         ->defaultItems(0)
                         ->addActionLabel('➕ إضافة ميزة')
