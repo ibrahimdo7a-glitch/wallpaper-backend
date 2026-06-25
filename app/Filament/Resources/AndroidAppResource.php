@@ -17,6 +17,7 @@ class AndroidAppResource extends Resource
 {
     use \App\Filament\Concerns\HiddenFromCreatives;
     protected static ?string $model = AndroidApp::class;
+    protected static ?string $slug = 'apps';
     protected static ?string $navigationIcon  = 'heroicon-o-device-phone-mobile';
     protected static ?string $navigationGroup = 'التطبيقات';
     protected static ?int    $navigationSort  = 21;

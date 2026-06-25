@@ -74,6 +74,12 @@ class AndroidApp extends Model
         return $this->belongsTo(AppCategory::class, 'app_category_id');
     }
 
+    /** Alias used by the admin table/filters and the public API. */
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(AppCategory::class, 'app_category_id');
+    }
+
     public function brand(): BelongsTo
     {
         return $this->belongsTo(Brand::class);
