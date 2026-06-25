@@ -60,11 +60,11 @@ class SiteSettingsPage extends Page
             'telegram_bot_token', 'telegram_channel_id',
             'telegram_topic_id', 'telegram_topic_id_apps', 'telegram_topic_id_news',
             'stat_visitors_enabled', 'stat_downloads_enabled', 'stat_wallpapers_enabled', 'stat_apps_enabled',
-            'stat_likes_enabled', 'stat_views_enabled',
+            'stat_likes_enabled', 'stat_views_enabled', 'stat_news_enabled',
             'stat_visitors_value', 'stat_downloads_value', 'stat_wallpapers_value', 'stat_apps_value',
-            'stat_likes_value', 'stat_views_value',
+            'stat_likes_value', 'stat_views_value', 'stat_news_value',
             'stat_visitors_order', 'stat_downloads_order', 'stat_wallpapers_order', 'stat_apps_order',
-            'stat_likes_order', 'stat_views_order',
+            'stat_likes_order', 'stat_views_order', 'stat_news_order',
         ];
 
         $formData = [];
@@ -78,7 +78,7 @@ class SiteSettingsPage extends Page
             : filter_var($formData['search_enabled'], FILTER_VALIDATE_BOOLEAN);
 
         // statistics toggles default to ON until explicitly turned off
-        foreach (['stat_visitors_enabled', 'stat_downloads_enabled', 'stat_wallpapers_enabled', 'stat_apps_enabled', 'stat_likes_enabled', 'stat_views_enabled'] as $sk) {
+        foreach (['stat_visitors_enabled', 'stat_downloads_enabled', 'stat_wallpapers_enabled', 'stat_apps_enabled', 'stat_likes_enabled', 'stat_views_enabled', 'stat_news_enabled'] as $sk) {
             $formData[$sk] = $formData[$sk] === ''
                 ? true
                 : filter_var($formData[$sk], FILTER_VALIDATE_BOOLEAN);
@@ -187,6 +187,11 @@ class SiteSettingsPage extends Page
                                     Forms\Components\Toggle::make('stat_views_enabled')->label('👀 عدد المشاهدات')->inline(false)->default(true),
                                     Forms\Components\TextInput::make('stat_views_order')->label('الترتيب')->numeric()->placeholder('مثل: 4'),
                                     Forms\Components\TextInput::make('stat_views_value')->label('رقم يدوي (اختياري)')->numeric()->placeholder('تلقائي'),
+                                ]),
+                                Forms\Components\Grid::make(3)->schema([
+                                    Forms\Components\Toggle::make('stat_news_enabled')->label('📰 عدد الأخبار')->inline(false)->default(true),
+                                    Forms\Components\TextInput::make('stat_news_order')->label('الترتيب')->numeric()->placeholder('مثل: 7'),
+                                    Forms\Components\TextInput::make('stat_news_value')->label('رقم يدوي (اختياري)')->numeric()->placeholder('تلقائي'),
                                 ]),
                             ]),
 

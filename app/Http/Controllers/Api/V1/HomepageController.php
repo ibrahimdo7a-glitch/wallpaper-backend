@@ -256,7 +256,7 @@ class HomepageController extends Controller
         // Real wallpapers/content live in content_items; the old Wallpaper table is legacy.
         $totalDownloads = (int) ContentItem::sum('downloads_count') + (int) AndroidApp::sum('downloads_count');
         $totalLikes     = (int) ContentItem::sum('likes_count') + (int) NewsArticle::sum('likes_count');
-        $totalViews     = (int) ContentItem::sum('views_count') + (int) NewsArticle::sum('views_count') + (int) AndroidApp::sum('views_count');
+        $totalViews     = (int) ContentItem::sum('views_count'); // real wallpaper views (counted client-side only)
         $visitors       = (int) (DB::table('settings')->where('key', 'site_visits')->value('value') ?? 0);
 
         // Order matters — the bigger/headline stats first; visitors & likes drop to the last row.
@@ -264,6 +264,7 @@ class HomepageController extends Controller
             'downloads'  => ['icon' => '⬇️', 'label_ar' => 'تحميل',  'label_en' => 'Downloads',  'value' => $totalDownloads],
             'wallpapers' => ['icon' => '🖼️', 'label_ar' => 'خلفية',  'label_en' => 'Wallpapers', 'value' => ContentItem::where('content_type', 'wallpapers')->where('status', 'published')->count()],
             'apps'       => ['icon' => '📱', 'label_ar' => 'تطبيق',  'label_en' => 'Apps',       'value' => AndroidApp::where('status', 'published')->count()],
+            'news'       => ['icon' => '📰', 'label_ar' => 'خبر',    'label_en' => 'News',       'value' => NewsArticle::where('status', 'published')->count()],
             'views'      => ['icon' => '👀', 'label_ar' => 'مشاهدة', 'label_en' => 'Views',      'value' => $totalViews],
             'visitors'   => ['icon' => '👁️', 'label_ar' => 'زائر',   'label_en' => 'Visitors',   'value' => $visitors],
             'likes'      => ['icon' => '❤️', 'label_ar' => 'إعجاب',  'label_en' => 'Likes',      'value' => $totalLikes],
@@ -296,7 +297,7 @@ class HomepageController extends Controller
 
         // Sort by the admin-set order (default sequence breaks ties), keep top 6.
         usort($items, fn ($a, $b) => ($a['_order'] <=> $b['_order']) ?: ($a['_seq'] <=> $b['_seq']));
-        $items = array_slice($items, 0, 6);
+        $items = array_slice($items, 0, 8);
         foreach ($items as &$it) {
             unset($it['_order'], $it['_seq']);
         }

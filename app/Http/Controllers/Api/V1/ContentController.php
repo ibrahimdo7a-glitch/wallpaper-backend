@@ -15,8 +15,8 @@ class ContentController extends Controller
             ->where('status', 'published')
             ->findOrFail($id);
 
-        // increment view (fire & forget)
-        $item->increment('views_count');
+        // NOTE: views are counted client-side via POST /content/{id}/view (real human views only).
+        // Incrementing here inflated the count on every server render / ISR revalidation.
 
         $related = ContentItem::where('brand_section_id', $item->brand_section_id)
             ->where('status', 'published')
@@ -31,6 +31,14 @@ class ContentController extends Controller
             'data'    => $this->detail($item),
             'related' => $related,
         ]);
+    }
+
+    // ─── POST /api/v1/content/{id}/view ───────────────────────────────────────
+    public function view(int $id): JsonResponse
+    {
+        ContentItem::where('id', $id)->where('status', 'published')->increment('views_count');
+
+        return response()->json(['ok' => true]);
     }
 
     // ─── POST /api/v1/content/{id}/like ───────────────────────────────────────

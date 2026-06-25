@@ -38,6 +38,7 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
 
     // Content item detail + actions
     Route::get('/content/{id}', [\App\Http\Controllers\Api\V1\ContentController::class, 'show']);
+    Route::post('/content/{id}/view', [\App\Http\Controllers\Api\V1\ContentController::class, 'view'])->middleware('throttle:60,1');
     Route::post('/content/{id}/like', [\App\Http\Controllers\Api\V1\ContentController::class, 'like'])->middleware('throttle:30,1');
     Route::post('/content/{id}/download', [\App\Http\Controllers\Api\V1\ContentController::class, 'download'])->middleware('throttle:20,1');
 
