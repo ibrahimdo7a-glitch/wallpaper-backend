@@ -61,6 +61,10 @@ class AndroidApp extends Model
             if (empty($app->published_at) && $app->status === 'published') {
                 $app->published_at = now();
             }
+            // Column is NOT NULL on the live DB; the form doesn't set it.
+            if (empty($app->language)) {
+                $app->language = 'ar';
+            }
         });
 
         static::saved(function (self $app) {
