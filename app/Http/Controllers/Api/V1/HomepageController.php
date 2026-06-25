@@ -278,8 +278,9 @@ class HomepageController extends Controller
             }
             $override = Setting::get("stat_{$key}_value", '');
             $value    = ($override !== '' && $override !== null && is_numeric($override)) ? (int) $override : $d['value'];
+            // Numbered stats (1,2,3…) come first; un-numbered ones fall in after, keeping their default order.
             $orderRaw = Setting::get("stat_{$key}_order", '');
-            $order    = ($orderRaw !== '' && $orderRaw !== null && is_numeric($orderRaw)) ? (int) $orderRaw : $seq;
+            $order    = ($orderRaw !== '' && $orderRaw !== null && is_numeric($orderRaw)) ? (int) $orderRaw : (100 + $seq);
 
             $items[] = [
                 'key'      => $key,
