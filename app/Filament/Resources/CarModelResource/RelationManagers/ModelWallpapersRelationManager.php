@@ -24,6 +24,10 @@ class ModelWallpapersRelationManager extends RelationManager
     protected static ?string $pluralModelLabel = 'الخلفيات';
     protected static ?string $icon = 'heroicon-o-photo';
 
+    // Per-request memo so the inline SelectColumns don't re-query options for every row (was ~96 queries/page).
+    protected ?array $collectionOptionsCache = null;
+    protected ?array $designerOptionsCache = null;
+
     protected function brand()
     {
         return $this->getOwnerRecord()->brand;
@@ -35,20 +39,24 @@ class ModelWallpapersRelationManager extends RelationManager
         return $this->brand()?->sectionByKey('wallpapers')?->id;
     }
 
-    /** Collections scoped to THIS model (per-model sub-sections). */
+    /** Collections scoped to THIS model (per-model sub-sections). Memoized per request. */
     protected function collectionOptions(): array
     {
+        if ($this->collectionOptionsCache !== null) {
+            return $this->collectionOptionsCache;
+        }
         $model = $this->getOwnerRecord();
-        return ContentCollection::where('brand_id', $model->brand_id)
+        return $this->collectionOptionsCache = ContentCollection::where('brand_id', $model->brand_id)
             ->where('car_model_id', $model->id)
             ->where('is_active', true)->orderBy('sort_order')
             ->get()->mapWithKeys(fn($c) => [$c->id => ($c->icon ? $c->icon . ' ' : '') . $c->name_ar])
             ->toArray();
     }
 
+    /** Memoized per request (was re-queried for every table row). */
     protected function designerOptions(): array
     {
-        return Designer::active()->pluck('name_ar', 'id')->toArray();
+        return $this->designerOptionsCache ??= Designer::active()->pluck('name_ar', 'id')->toArray();
     }
 
     /** Other models (across all brands) to move/copy wallpapers into. */
