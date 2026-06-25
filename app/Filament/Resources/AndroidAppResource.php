@@ -168,7 +168,14 @@ class AndroidAppResource extends Resource
                             ->image()->disk($disk)->directory('apps/covers')->visibility('private')->maxSize(5120),
                         Forms\Components\FileUpload::make('apk_file')->label('ملف APK')
                             ->disk($disk)->directory('apps/apk')->visibility('private')
-                            ->acceptedFileTypes(['application/vnd.android.package-archive', 'application/octet-stream'])
+                            // APKs are ZIP archives, so they get sniffed as zip/java-archive/octet-stream.
+                            ->acceptedFileTypes([
+                                'application/vnd.android.package-archive',
+                                'application/octet-stream',
+                                'application/zip',
+                                'application/java-archive',
+                                'application/x-zip-compressed',
+                            ])
                             ->maxSize(512000)->helperText('الحد الأقصى 500 MB'),
                         Forms\Components\TextInput::make('external_url')->label('رابط خارجي (Play Store أو موقع)')
                             ->url()->placeholder('https://play.google.com/store/apps/...')
