@@ -4,6 +4,7 @@ FROM php:8.4-fpm-alpine
 RUN apk add --no-cache \
     git \
     curl \
+    nginx \
     libpng-dev \
     libjpeg-turbo-dev \
     freetype-dev \
@@ -83,6 +84,22 @@ RUN echo "upload_max_filesize=50M" >> /usr/local/etc/php/conf.d/uploads.ini \
     && echo "post_max_size=55M" >> /usr/local/etc/php/conf.d/uploads.ini \
     && echo "memory_limit=256M" >> /usr/local/etc/php/conf.d/uploads.ini
 
+# Nginx config: serves static files + proxies PHP to php-fpm (parallel workers).
+# Replaces the single-threaded `php artisan serve`.
+COPY docker/nginx.conf /etc/nginx/http.d/app.conf.template
+RUN rm -f /etc/nginx/http.d/default.conf
+
 EXPOSE 8080
 
-CMD mkdir -p storage/app/public/livewire-tmp storage/app/private/livewire-tmp storage/app/livewire-tmp && chmod -R 777 storage && php artisan config:clear || true && php artisan cache:clear || true && php artisan migrate --force && php artisan package:discover --ansi && php artisan filament:assets && php artisan db:seed --class=DefaultCategoriesSeeder --force && php artisan storage:link --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
+CMD mkdir -p storage/app/public/livewire-tmp storage/app/private/livewire-tmp storage/app/livewire-tmp /run/nginx \
+    && chmod -R 777 storage \
+    && php artisan config:clear || true \
+    && php artisan cache:clear || true \
+    && php artisan migrate --force \
+    && php artisan package:discover --ansi \
+    && php artisan filament:assets \
+    && php artisan db:seed --class=DefaultCategoriesSeeder --force \
+    && php artisan storage:link --force \
+    && sed "s/__PORT__/${PORT:-8080}/g" /etc/nginx/http.d/app.conf.template > /etc/nginx/http.d/app.conf \
+    && php-fpm -D \
+    && nginx -g 'daemon off;'
