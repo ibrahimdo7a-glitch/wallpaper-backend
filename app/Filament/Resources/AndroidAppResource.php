@@ -61,6 +61,15 @@ class AndroidAppResource extends Resource
                             Forms\Components\Textarea::make('short_description_ar')->label('وصف قصير (عربي)')->rows(2),
                             Forms\Components\Textarea::make('short_description_en')->label('وصف قصير (إنجليزي)')->rows(2),
                         ]),
+                        Forms\Components\Grid::make(2)->schema([
+                            Forms\Components\TextInput::make('badge_text_ar')->label('🏷️ نص الشارة (عربي)')
+                                ->maxLength(40)
+                                ->placeholder('مثال: يعمل على شاشة السيارة')
+                                ->helperText('علامة صغيرة تظهر على كرت التطبيق وفي بوست تلجرام. اكتب أي نص تبيه — اتركه فارغًا لإخفائها.'),
+                            Forms\Components\TextInput::make('badge_text_en')->label('🏷️ نص الشارة (إنجليزي)')
+                                ->maxLength(40)
+                                ->placeholder('e.g. Works on car screen'),
+                        ]),
                     ]),
 
                 // ─── الربط بالسيارات ─────────────────────────────────────

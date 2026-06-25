@@ -215,6 +215,9 @@ class HomepageController extends Controller
                 'slug'            => $a->slug,
                 'icon_url'        => $a->icon_url,
                 'version'         => $a->version,
+                'badge_text_ar'   => $a->badge_text_ar,
+                'badge_text_en'   => $a->badge_text_en,
+                'is_free'         => $a->is_free,
                 'downloads_count' => $a->downloads_count,
                 'type'            => 'app',
             ]);

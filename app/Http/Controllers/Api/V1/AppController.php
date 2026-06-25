@@ -26,7 +26,9 @@ class AppController extends Controller
             ->with('category:id,name_ar,name_en,slug,icon')
             ->select([
                 'id', 'app_category_id', 'title_ar', 'title_en', 'slug',
-                'icon_file', 'version', 'developer', 'min_android',
+                'short_description_ar', 'short_description_en',
+                'badge_text_ar', 'badge_text_en', 'works_on_car_screen',
+                'icon_file', 'cover_image', 'version', 'developer', 'min_android',
                 'file_size', 'is_free', 'is_featured',
                 'downloads_count', 'published_at',
             ]);
@@ -129,7 +131,13 @@ class AppController extends Controller
             'title_ar'       => $app->title_ar,
             'title_en'       => $app->title_en,
             'slug'           => $app->slug,
+            'short_description_ar' => $app->short_description_ar,
+            'short_description_en' => $app->short_description_en,
+            'badge_text_ar'  => $app->badge_text_ar,
+            'badge_text_en'  => $app->badge_text_en,
+            'works_on_car_screen' => (bool) $app->works_on_car_screen,
             'icon_url'       => $app->icon_file ? Storage::disk($this->disk)->url($app->icon_file) : null,
+            'cover_image_url'=> $app->cover_image ? Storage::disk($this->disk)->url($app->cover_image) : null,
             'version'        => $app->version,
             'developer'      => $app->developer,
             'min_android'    => $app->min_android,

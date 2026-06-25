@@ -20,6 +20,7 @@ class AndroidApp extends Model
         'app_category_id', 'brand_id', 'car_model_id',
         'title_ar', 'title_en', 'slug',
         'short_description_ar', 'short_description_en',
+        'badge_text_ar', 'badge_text_en',
         'description_ar', 'description_en',
         'icon_file', 'cover_image', 'apk_file', 'apk_sha256',
         'external_url', 'play_store_url', 'official_website_url',
@@ -144,8 +145,9 @@ class AndroidApp extends Model
         }
 
         $lines[] = '';
-        if ($this->works_on_car_screen) {
-            $lines[] = '✅ يعمل على شاشة السيارة';
+        $badge = $this->badge_text_ar ?: ($this->works_on_car_screen ? 'يعمل على شاشة السيارة' : null);
+        if (filled($badge)) {
+            $lines[] = '✅ ' . $esc($badge);
         }
         $lines[] = '⬇️ <a href="' . $esc("{$front}/ar/apps/{$this->slug}") . '">تفاصيل وتحميل التطبيق</a>';
         $lines[] = '📲 <a href="' . $esc("{$front}/ar/apps") . '">المزيد من البرامج</a>';
