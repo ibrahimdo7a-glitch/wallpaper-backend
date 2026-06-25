@@ -77,6 +77,26 @@ class NewsArticle extends Model
         return Storage::disk(config('filesystems.default', 'public'))->url($this->cover_image);
     }
 
+    /** Formatted caption for a Telegram news post (HTML). */
+    public function telegramCaption(): string
+    {
+        $front = rtrim(config('app.frontend_url', 'https://qev.app'), '/');
+        $esc   = fn ($s) => htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8');
+
+        $lines = ['<b>' . $esc($this->title_ar) . '</b>'];
+
+        if (filled($this->summary_ar)) {
+            $lines[] = '';
+            $lines[] = $esc(Str::limit($this->summary_ar, 320));
+        }
+
+        $lines[] = '';
+        $lines[] = '📰 <a href="' . $esc("{$front}/ar/news/{$this->slug}") . '">اقرأ الخبر كاملًا</a>';
+        $lines[] = '📲 <a href="' . $esc("{$front}/ar/news") . '">المزيد من الأخبار</a>';
+
+        return implode("\n", $lines);
+    }
+
     public function scopePublished($query)
     {
         return $query->where('status', 'published');

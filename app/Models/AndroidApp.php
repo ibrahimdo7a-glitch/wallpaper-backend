@@ -129,6 +129,35 @@ class AndroidApp extends Model
         return $this->play_store_url ?? $this->external_url;
     }
 
+    /** Formatted caption for a Telegram app post (HTML). */
+    public function telegramCaption(): string
+    {
+        $front = rtrim(config('app.frontend_url', 'https://qev.app'), '/');
+        $esc   = fn ($s) => htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8');
+
+        $lines = ['<b>' . $esc($this->title_ar) . '</b>'];
+
+        $desc = $this->short_description_ar ?: $this->description_ar;
+        if (filled($desc)) {
+            $lines[] = '';
+            $lines[] = $esc(\Illuminate\Support\Str::limit(strip_tags($desc), 350));
+        }
+
+        $lines[] = '';
+        if ($this->works_on_car_screen) {
+            $lines[] = '✅ يعمل على شاشة السيارة';
+        }
+        $lines[] = '⬇️ <a href="' . $esc("{$front}/ar/apps/{$this->slug}") . '">تفاصيل وتحميل التطبيق</a>';
+        $lines[] = '📲 <a href="' . $esc("{$front}/ar/apps") . '">المزيد من البرامج</a>';
+
+        return implode("\n", $lines);
+    }
+
+    public function getTelegramPhotoAttribute(): ?string
+    {
+        return $this->cover_image_url ?: $this->icon_url;
+    }
+
     public function getFileSizeLabelAttribute(): string
     {
         if (! $this->file_size) return '—';

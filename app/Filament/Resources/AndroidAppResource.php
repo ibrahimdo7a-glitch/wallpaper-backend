@@ -278,6 +278,26 @@ class AndroidAppResource extends Resource
                         ]);
                         Notification::make()->title('تم تحديث الحالة')->success()->send();
                     }),
+                Tables\Actions\Action::make('publishTelegram')->label('نشر في تلجرام')
+                    ->icon('heroicon-o-paper-airplane')->color('info')
+                    ->visible(fn () => app(\App\Services\TelegramService::class)->isConfigured())
+                    ->requiresConfirmation()
+                    ->modalHeading('نشر التطبيق في قناة تلجرام')
+                    ->modalDescription('يُنشر في قسم البرامج بالقناة.')
+                    ->action(function (AndroidApp $record) {
+                        if (! $photo = $record->telegram_photo) {
+                            Notification::make()->title('أضف صورة غلاف أو أيقونة للتطبيق أولاً')->danger()->send();
+                            return;
+                        }
+                        $res = app(\App\Services\TelegramService::class)->sendPhoto(
+                            $photo,
+                            $record->telegramCaption(),
+                            \App\Models\Setting::get('telegram_topic_id_apps')
+                        );
+                        $res['ok']
+                            ? Notification::make()->title('تم النشر في قسم البرامج ✓')->success()->send()
+                            : Notification::make()->title('فشل النشر')->body($res['error'] ?? '')->danger()->send();
+                    }),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])

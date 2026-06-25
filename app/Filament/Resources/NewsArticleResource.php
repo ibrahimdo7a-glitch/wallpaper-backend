@@ -141,6 +141,26 @@ class NewsArticleResource extends Resource
                 Tables\Filters\TernaryFilter::make('is_breaking')->label('عاجل'),
             ])
             ->actions([
+                Tables\Actions\Action::make('publishTelegram')->label('نشر في تلجرام')
+                    ->icon('heroicon-o-paper-airplane')->color('success')
+                    ->visible(fn () => app(\App\Services\TelegramService::class)->isConfigured())
+                    ->requiresConfirmation()
+                    ->modalHeading('نشر الخبر في قناة تلجرام')
+                    ->modalDescription('يُنشر في قسم الأخبار بالقناة.')
+                    ->action(function (NewsArticle $record) {
+                        if (! $record->cover_image_url) {
+                            \Filament\Notifications\Notification::make()->title('أضف صورة غلاف للخبر أولاً')->danger()->send();
+                            return;
+                        }
+                        $res = app(\App\Services\TelegramService::class)->sendPhoto(
+                            $record->cover_image_url,
+                            $record->telegramCaption(),
+                            \App\Models\Setting::get('telegram_topic_id_news')
+                        );
+                        $res['ok']
+                            ? \Filament\Notifications\Notification::make()->title('تم النشر في قسم الأخبار ✓')->success()->send()
+                            : \Filament\Notifications\Notification::make()->title('فشل النشر')->body($res['error'] ?? '')->danger()->send();
+                    }),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
