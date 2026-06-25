@@ -22,7 +22,11 @@ class NewsController extends Controller
             ->when($request->get('search'), fn($q, $v) => $q->where(fn($q2) =>
                 $q2->where('title_ar', 'like', "%$v%")->orWhere('title_en', 'like', "%$v%")
             ))
-            ->orderByDesc('published_at')
+            ->when(
+                $request->get('sort') === 'likes',
+                fn($q) => $q->orderByDesc('likes_count')->orderByDesc('published_at'),
+                fn($q) => $q->orderByDesc('published_at')
+            )
             ->paginate($request->get('per_page', 12));
 
         return response()->json([
@@ -59,6 +63,7 @@ class NewsController extends Controller
                 'author_name'     => $article->author_name,
                 'is_breaking'     => $article->is_breaking,
                 'views_count'     => $article->views_count,
+                'likes_count'     => $article->likes_count,
                 'published_at'    => $article->published_at,
                 'meta_title'      => $article->meta_title,
                 'meta_description' => $article->meta_description,
@@ -67,6 +72,14 @@ class NewsController extends Controller
                 'car_models'      => $article->carModels->map(fn($m) => ['name_ar' => $m->name_ar, 'slug' => $m->slug]),
             ],
         ]);
+    }
+
+    public function like(int $id)
+    {
+        $article = NewsArticle::published()->findOrFail($id);
+        $article->increment('likes_count');
+
+        return response()->json(['likes_count' => $article->likes_count]);
     }
 
     public function categories()
@@ -148,6 +161,7 @@ class NewsController extends Controller
             'is_breaking'     => $a->is_breaking,
             'is_featured'     => $a->is_featured,
             'views_count'     => $a->views_count,
+            'likes_count'     => $a->likes_count,
             'published_at'    => $a->published_at,
             'category'        => $a->category ? ['name_ar' => $a->category->name_ar, 'slug' => $a->category->slug, 'color' => $a->category->color] : null,
             'brands'          => $a->brands->map(fn($b) => ['name_ar' => $b->name_ar, 'slug' => $b->slug]),

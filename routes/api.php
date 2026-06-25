@@ -53,6 +53,7 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
     Route::get('/news', [NewsController::class, 'index']);
     Route::get('/news/categories', [NewsController::class, 'categories']);
     Route::get('/news/{slug}', [NewsController::class, 'show']);
+    Route::post('/news/{id}/like', [NewsController::class, 'like'])->middleware('throttle:30,1');
     Route::post('/news/subscribe', [NewsController::class, 'subscribe'])->middleware('throttle:5,1');
     Route::get('/news/unsubscribe/{token}', [NewsController::class, 'unsubscribe']);
 

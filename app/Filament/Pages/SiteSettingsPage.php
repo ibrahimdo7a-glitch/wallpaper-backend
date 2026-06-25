@@ -56,7 +56,8 @@ class SiteSettingsPage extends Page
             'ilink_label_ar', 'ilink_label_en',
             'ilink_tooltip_ar', 'ilink_tooltip_en',
             'ilink_file_path',
-            'telegram_bot_token', 'telegram_channel_id', 'telegram_topic_id',
+            'telegram_bot_token', 'telegram_channel_id',
+            'telegram_topic_id', 'telegram_topic_id_apps', 'telegram_topic_id_news',
         ];
 
         $formData = [];
@@ -228,11 +229,23 @@ class SiteSettingsPage extends Page
                                     ->label('معرّف القناة')
                                     ->helperText('مثال: ‎@Qatar_ev‎ أو ‎-1001234567890‎. لازم تضيف البوت كمشرف في القناة أولاً.')
                                     ->columnSpanFull(),
-                                Forms\Components\TextInput::make('telegram_topic_id')
-                                    ->label('رقم القسم داخل القناة (Topic) — اختياري')
-                                    ->numeric()
-                                    ->helperText('لو قناتك فيها أقسام (Topics)، حط رقم قسم الخلفيات هنا عشان النشر يصير فيه فقط. اتركه فارغًا = النشر في الواجهة الرئيسية. (تحصل الرقم من رابط القسم: t.me/Qatar_ev/الرقم)')
-                                    ->columnSpanFull(),
+                                Forms\Components\Grid::make(3)->schema([
+                                    Forms\Components\TextInput::make('telegram_topic_id')
+                                        ->label('رقم قسم الخلفيات (Topic)')
+                                        ->numeric()
+                                        ->helperText('قسم "خلفيات الشاشة".'),
+                                    Forms\Components\TextInput::make('telegram_topic_id_apps')
+                                        ->label('رقم قسم البرامج (Topic)')
+                                        ->numeric()
+                                        ->helperText('قسم البرامج/التطبيقات.'),
+                                    Forms\Components\TextInput::make('telegram_topic_id_news')
+                                        ->label('رقم قسم الأخبار (Topic)')
+                                        ->numeric()
+                                        ->helperText('قسم الأخبار.'),
+                                ]),
+                                Forms\Components\Placeholder::make('telegram_topic_help')
+                                    ->label('')
+                                    ->content('تحصل رقم كل قسم من رابط أي رسالة فيه: t.me/Qatar_ev/الرقم/... — اتركه فارغًا = النشر في الواجهة الرئيسية.'),
                             ]),
                     ])
                     ->columnSpanFull(),

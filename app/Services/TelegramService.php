@@ -16,12 +16,16 @@ class TelegramService
         return filled(Setting::get('telegram_bot_token')) && filled(Setting::get('telegram_channel_id'));
     }
 
-    /** @return array{ok: bool, error?: string} */
-    public function sendPhoto(string $photoUrl, ?string $caption = null): array
+    /**
+     * @param  string|null  $topicId  Explicit forum topic (section). Falls back to
+     *                                the default wallpapers topic when null.
+     * @return array{ok: bool, error?: string}
+     */
+    public function sendPhoto(string $photoUrl, ?string $caption = null, ?string $topicId = null): array
     {
         $token   = Setting::get('telegram_bot_token');
         $channel = Setting::get('telegram_channel_id');
-        $topicId = Setting::get('telegram_topic_id'); // optional forum topic (section)
+        $topicId = $topicId ?: Setting::get('telegram_topic_id'); // explicit section or wallpapers default
 
         if (! $token || ! $channel) {
             return ['ok' => false, 'error' => 'لم يُضبط توكن البوت أو معرّف القناة في الإعدادات'];

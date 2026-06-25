@@ -52,10 +52,15 @@ class NewsArticleResource extends Resource
                         Forms\Components\Textarea::make('summary_en')->label('ملخص (إنجليزي)')->rows(3),
                     ]),
 
-                    Forms\Components\Tabs\Tab::make('المحتوى الكامل')->schema([
-                        Forms\Components\Textarea::make('content_ar')->label('المحتوى الكامل (عربي)')->rows(15),
-                        Forms\Components\Textarea::make('content_en')->label('المحتوى الكامل (إنجليزي)')->rows(15),
-                    ]),
+                    Forms\Components\RichEditor::make('content_ar')->label('المحتوى الكامل (عربي)')
+                        ->toolbarButtons(['bold', 'italic', 'strike', 'link', 'h2', 'h3', 'bulletList', 'orderedList', 'blockquote', 'codeBlock', 'attachFiles', 'undo', 'redo'])
+                        ->fileAttachmentsDisk($disk)->fileAttachmentsDirectory('news/content')->fileAttachmentsVisibility('private')
+                        ->helperText('استخدم شريط الأدوات: عناوين، روابط، قوائم، اقتباس، و📷 لإضافة صور بين الفقرات. الإيموجي اكتبها مباشرة.')
+                        ->columnSpanFull(),
+                    Forms\Components\RichEditor::make('content_en')->label('المحتوى الكامل (إنجليزي)')
+                        ->toolbarButtons(['bold', 'italic', 'strike', 'link', 'h2', 'h3', 'bulletList', 'orderedList', 'blockquote', 'codeBlock', 'attachFiles', 'undo', 'redo'])
+                        ->fileAttachmentsDisk($disk)->fileAttachmentsDirectory('news/content')->fileAttachmentsVisibility('private')
+                        ->columnSpanFull(),
                 ]),
 
                 Forms\Components\Tabs\Tab::make('التصنيف والربط')->icon('heroicon-o-tag')->schema([
