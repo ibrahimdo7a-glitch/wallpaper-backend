@@ -1,0 +1,58 @@
+name: Deploy Backend → Railway
+
+# Auto-deploys the Laravel API + admin panel to Railway on every push to master.
+#
+# One-time setup — GitHub → repo → Settings → Secrets and variables → Actions:
+#   Secret  RAILWAY_TOKEN    – a PROJECT token from Railway → Project → Settings → Tokens
+#   Variable RAILWAY_SERVICE – (optional) the service name; only needed if the project
+#                              has more than one service. Leave unset for a single service.
+#
+# Until RAILWAY_TOKEN exists, the deploy job is skipped (no failures).
+# NOTE: Railway's native GitHub integration also auto-deploys on push — disable auto-deploy
+# in Railway → Service → Settings once this workflow is live, to avoid double deploys.
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: railway-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.guard.outputs.ready }}
+    steps:
+      - id: guard
+        run: |
+          if [ -n "${{ secrets.RAILWAY_TOKEN }}" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Setup needed::Add the RAILWAY_TOKEN secret in repo Settings → Secrets to enable auto-deploy."
+          fi
+
+  deploy:
+    needs: check
+    if: needs.check.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      RAILWAY_SERVICE: ${{ vars.RAILWAY_SERVICE }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install --global @railway/cli
+
+      - name: Deploy (Railway builds the Docker image)
+        run: |
+          if [ -n "$RAILWAY_SERVICE" ]; then
+            railway up --service "$RAILWAY_SERVICE" --ci
+          else
+            railway up --ci
+          fi
