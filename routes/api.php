@@ -34,6 +34,7 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
     Route::get('/homepage', [HomepageController::class, 'index']);
     Route::get('/navigation', [HomepageController::class, 'navigation']);
     Route::get('/search', [HomepageController::class, 'search']);
+    Route::post('/track/visit', [HomepageController::class, 'trackVisit'])->middleware('throttle:60,1');
 
     // Content item detail + actions
     Route::get('/content/{id}', [\App\Http\Controllers\Api\V1\ContentController::class, 'show']);

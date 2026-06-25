@@ -8,6 +8,7 @@ use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 class SiteSettingsPage extends Page
@@ -58,6 +59,8 @@ class SiteSettingsPage extends Page
             'ilink_file_path',
             'telegram_bot_token', 'telegram_channel_id',
             'telegram_topic_id', 'telegram_topic_id_apps', 'telegram_topic_id_news',
+            'stat_visitors_enabled', 'stat_downloads_enabled', 'stat_wallpapers_enabled', 'stat_apps_enabled',
+            'stat_visitors_value', 'stat_downloads_value', 'stat_wallpapers_value', 'stat_apps_value',
         ];
 
         $formData = [];
@@ -69,6 +72,13 @@ class SiteSettingsPage extends Page
         $formData['search_enabled'] = $formData['search_enabled'] === ''
             ? true
             : filter_var($formData['search_enabled'], FILTER_VALIDATE_BOOLEAN);
+
+        // statistics toggles default to ON until explicitly turned off
+        foreach (['stat_visitors_enabled', 'stat_downloads_enabled', 'stat_wallpapers_enabled', 'stat_apps_enabled'] as $sk) {
+            $formData[$sk] = $formData[$sk] === ''
+                ? true
+                : filter_var($formData[$sk], FILTER_VALIDATE_BOOLEAN);
+        }
 
         $this->form->fill($formData);
     }
@@ -134,6 +144,31 @@ class SiteSettingsPage extends Page
                                         ->label('الوسوم الشائعة (إنجليزي)')
                                         ->helperText('Comma-separated, e.g.: 4K, Night, Desert, Leopard 5')
                                         ->placeholder('4K, Night, Desert, Leopard 5, Leopard 8'),
+                                ]),
+                            ]),
+
+                        Forms\Components\Tabs\Tab::make('الإحصائيات')
+                            ->icon('heroicon-o-chart-bar')
+                            ->schema([
+                                Forms\Components\Placeholder::make('stats_help')
+                                    ->label('')
+                                    ->content('فعّل أو ألغِ كل إحصائية تظهر في الصفحة الرئيسية (٤ كحد أقصى، بشكل ٢×٢ بجانب الماركات). اترك خانة الرقم فارغة = العدد الحقيقي تلقائيًا، أو اكتب رقمًا لعرضه يدويًا.'),
+
+                                Forms\Components\Grid::make(2)->schema([
+                                    Forms\Components\Toggle::make('stat_visitors_enabled')->label('👁️ عدد الزوار')->inline(false)->default(true),
+                                    Forms\Components\TextInput::make('stat_visitors_value')->label('رقم يدوي (اختياري)')->numeric()->placeholder('تلقائي'),
+                                ]),
+                                Forms\Components\Grid::make(2)->schema([
+                                    Forms\Components\Toggle::make('stat_downloads_enabled')->label('⬇️ إجمالي التحميلات')->inline(false)->default(true),
+                                    Forms\Components\TextInput::make('stat_downloads_value')->label('رقم يدوي (اختياري)')->numeric()->placeholder('تلقائي'),
+                                ]),
+                                Forms\Components\Grid::make(2)->schema([
+                                    Forms\Components\Toggle::make('stat_wallpapers_enabled')->label('🖼️ عدد الخلفيات')->inline(false)->default(true),
+                                    Forms\Components\TextInput::make('stat_wallpapers_value')->label('رقم يدوي (اختياري)')->numeric()->placeholder('تلقائي'),
+                                ]),
+                                Forms\Components\Grid::make(2)->schema([
+                                    Forms\Components\Toggle::make('stat_apps_enabled')->label('📱 عدد التطبيقات')->inline(false)->default(true),
+                                    Forms\Components\TextInput::make('stat_apps_value')->label('رقم يدوي (اختياري)')->numeric()->placeholder('تلقائي'),
                                 ]),
                             ]),
 
@@ -263,6 +298,11 @@ class SiteSettingsPage extends Page
                 $value = $value ? '1' : '0';
             }
             Setting::set($key, $value ?? '');
+        }
+
+        // Refresh cached homepage payloads so statistics/settings changes show immediately.
+        foreach (['ar', 'en'] as $locale) {
+            Cache::forget("homepage.data.{$locale}");
         }
 
         $this->revalidateFrontend();

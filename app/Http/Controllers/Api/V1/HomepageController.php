@@ -11,10 +11,12 @@ use App\Models\HeroBanner;
 use App\Models\HomepageSection;
 use App\Models\NavigationItem;
 use App\Models\NewsArticle;
+use App\Models\Setting;
 use App\Models\Wallpaper;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class HomepageController extends Controller
 {
@@ -249,14 +251,46 @@ class HomepageController extends Controller
 
     private function statisticsData(HomepageSection $s): array
     {
-        $ov = $s->settings ?? [];
-        return ['items' => [
-            ['key' => 'downloads', 'icon' => '⬇️', 'label_ar' => 'تحميل',  'label_en' => 'Downloads',  'value' => $ov['override_downloads']  ?? Wallpaper::sum('downloads_count'), 'prefix' => '+'],
-            ['key' => 'apps',      'icon' => '📱', 'label_ar' => 'تطبيق',  'label_en' => 'Apps',       'value' => $ov['override_apps']       ?? AndroidApp::where('status', 'published')->count(), 'prefix' => '+'],
-            ['key' => 'wallpapers','icon' => '🖼️', 'label_ar' => 'خلفية',  'label_en' => 'Wallpapers', 'value' => $ov['override_wallpapers']  ?? Wallpaper::where('status', 'published')->count(), 'prefix' => '+'],
-            ['key' => 'models',    'icon' => '🚗', 'label_ar' => 'موديل',  'label_en' => 'Models',     'value' => $ov['override_models']      ?? CarModel::where('is_active', true)->count(), 'prefix' => '+'],
-            ['key' => 'brands',    'icon' => '🏭', 'label_ar' => 'ماركة',  'label_en' => 'Brands',     'value' => $ov['override_brands']      ?? Brand::where('is_active', true)->count(), 'prefix' => '+'],
-        ]];
+        // Real downloads = wallpapers + apps; visitors counter is a fresh DB read (not cached).
+        $totalDownloads = (int) Wallpaper::sum('downloads_count') + (int) AndroidApp::sum('downloads_count');
+        $visitors       = (int) (DB::table('settings')->where('key', 'site_visits')->value('value') ?? 0);
+
+        $defs = [
+            'visitors'   => ['icon' => '👁️', 'label_ar' => 'زائر',  'label_en' => 'Visitors',   'value' => $visitors],
+            'downloads'  => ['icon' => '⬇️', 'label_ar' => 'تحميل', 'label_en' => 'Downloads',  'value' => $totalDownloads],
+            'wallpapers' => ['icon' => '🖼️', 'label_ar' => 'خلفية', 'label_en' => 'Wallpapers', 'value' => Wallpaper::where('status', 'published')->count()],
+            'apps'       => ['icon' => '📱', 'label_ar' => 'تطبيق', 'label_en' => 'Apps',       'value' => AndroidApp::where('status', 'published')->count()],
+        ];
+
+        $items = [];
+        foreach ($defs as $key => $d) {
+            if (! filter_var(Setting::get("stat_{$key}_enabled", true), FILTER_VALIDATE_BOOLEAN)) {
+                continue; // stat disabled from admin
+            }
+            $override = Setting::get("stat_{$key}_value", '');
+            $value    = ($override !== '' && $override !== null && is_numeric($override)) ? (int) $override : $d['value'];
+
+            $items[] = [
+                'key'      => $key,
+                'icon'     => $d['icon'],
+                'label_ar' => $d['label_ar'],
+                'label_en' => $d['label_en'],
+                'value'    => $value,
+                'prefix'   => '+',
+            ];
+            if (count($items) >= 4) break; // never more than 4
+        }
+
+        return ['items' => $items];
+    }
+
+    /** Increment the site visitor counter (called once per browser session). */
+    public function trackVisit(): JsonResponse
+    {
+        DB::table('settings')->where('key', 'site_visits')
+            ->update(['value' => DB::raw('(CAST(value AS BIGINT) + 1)')]);
+
+        return response()->json(['ok' => true]);
     }
 
     private function brandCard(Brand $b): array
