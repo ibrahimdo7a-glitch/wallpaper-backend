@@ -148,18 +148,33 @@ class AndroidApp extends Model
 
         $lines = ['<b>' . $esc($this->title_ar) . '</b>'];
 
+        // The explanation the admin wrote — keep line breaks so bullet points stay as separate lines.
         $desc = $this->short_description_ar ?: $this->description_ar;
         if (filled($desc)) {
             $lines[] = '';
-            $lines[] = $esc(\Illuminate\Support\Str::limit(strip_tags($desc), 350));
+            $lines[] = $esc(\Illuminate\Support\Str::limit(trim(strip_tags($desc)), 500));
         }
 
-        $lines[] = '';
+        // Auto feature points (badge → free/paid → version → size → developer).
+        $points = [];
         $badge = $this->badge_text_ar ?: ($this->works_on_car_screen ? 'يعمل على شاشة السيارة' : null);
-        if (filled($badge)) {
-            $lines[] = '✅ ' . $esc($badge);
+        if (filled($badge))         { $points[] = '✅ ' . $esc($badge); }
+        $points[] = $this->is_free ? '💰 مجاني' : '💰 مدفوع';
+        if (filled($this->version)) { $points[] = '📦 الإصدار ' . $esc($this->version); }
+        if ($this->file_size)       { $points[] = '💾 الحجم ' . $esc($this->file_size_label); }
+        $dev = $this->developer ?: $this->developer_name;
+        if (filled($dev))           { $points[] = '👨‍💻 ' . $esc($dev); }
+        if (! empty($points)) {
+            $lines[] = '';
+            $lines = array_merge($lines, array_slice($points, 0, 5));
         }
-        $lines[] = '⬇️ <a href="' . $esc("{$front}/ar/apps/{$this->slug}") . '">تفاصيل وتحميل التطبيق</a>';
+
+        // Direct download + page links.
+        $lines[] = '';
+        if (filled($this->download_url)) {
+            $lines[] = '⬇️ <b>تحميل مباشر:</b> <a href="' . $esc($this->download_url) . '">اضغط هنا</a>';
+        }
+        $lines[] = '📄 <a href="' . $esc("{$front}/ar/apps/{$this->slug}") . '">التفاصيل ولقطات الشاشة</a>';
         $lines[] = '📲 <a href="' . $esc("{$front}/ar/apps") . '">المزيد من البرامج</a>';
 
         return implode("\n", $lines);
