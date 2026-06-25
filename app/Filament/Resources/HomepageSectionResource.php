@@ -64,9 +64,42 @@ class HomepageSectionResource extends Resource
             Forms\Components\Section::make('إعدادات خاصة بالنوع')
                 ->description('تحكم في عدد العناصر وخيارات أخرى حسب نوع القسم')
                 ->schema([
+                    // ─── Features editor — only for "custom_content" sections ───
+                    Forms\Components\Repeater::make('settings.items')
+                        ->label('الميزات')
+                        ->visible(fn (Forms\Get $get) => $get('type') === 'custom_content')
+                        ->dehydrated(fn (Forms\Get $get) => $get('type') === 'custom_content')
+                        ->schema([
+                            Forms\Components\Grid::make(3)->schema([
+                                Forms\Components\TextInput::make('icon')->label('الأيقونة (إيموجي)')
+                                    ->placeholder('✅')->maxLength(8),
+                                Forms\Components\TextInput::make('title_ar')->label('العنوان (عربي)')
+                                    ->required()->maxLength(60),
+                                Forms\Components\TextInput::make('title_en')->label('العنوان (إنجليزي)')
+                                    ->maxLength(60),
+                            ]),
+                            Forms\Components\Grid::make(2)->schema([
+                                Forms\Components\TextInput::make('subtitle_ar')->label('الوصف (عربي)')->maxLength(120),
+                                Forms\Components\TextInput::make('subtitle_en')->label('الوصف (إنجليزي)')->maxLength(120),
+                            ]),
+                        ])
+                        ->itemLabel(fn (array $state): ?string =>
+                            trim(($state['icon'] ?? '') . ' ' . ($state['title_ar'] ?? '')) ?: 'ميزة جديدة')
+                        ->collapsible()
+                        ->collapsed()
+                        ->reorderable()
+                        ->cloneable()
+                        ->defaultItems(0)
+                        ->addActionLabel('➕ إضافة ميزة')
+                        ->helperText('كل صف = ميزة في الشريط. اسحب لإعادة الترتيب، واكتب الإيموجي مباشرة في خانة الأيقونة.')
+                        ->columnSpanFull(),
+
+                    // ─── Generic key→value settings — for all other section types ───
                     Forms\Components\KeyValue::make('settings')
                         ->label('الإعدادات (Key → Value)')
                         ->helperText('مثال: limit = 8 | featured_only = true | override_downloads = 320000')
+                        ->visible(fn (Forms\Get $get) => $get('type') !== 'custom_content')
+                        ->dehydrated(fn (Forms\Get $get) => $get('type') !== 'custom_content')
                         ->columnSpanFull(),
                 ]),
         ]);

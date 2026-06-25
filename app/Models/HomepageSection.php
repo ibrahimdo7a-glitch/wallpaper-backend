@@ -16,6 +16,19 @@ class HomepageSection extends Model
         'settings'  => 'array',
     ];
 
+    protected static function booted(): void
+    {
+        static::saved(fn () => static::flushHomepageCache());
+        static::deleted(fn () => static::flushHomepageCache());
+    }
+
+    public static function flushHomepageCache(): void
+    {
+        foreach (['ar', 'en'] as $locale) {
+            \Illuminate\Support\Facades\Cache::forget("homepage.data.{$locale}");
+        }
+    }
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true)->orderBy('sort_order');
