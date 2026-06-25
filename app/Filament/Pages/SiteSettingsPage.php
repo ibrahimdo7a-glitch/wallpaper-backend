@@ -60,7 +60,9 @@ class SiteSettingsPage extends Page
             'telegram_bot_token', 'telegram_channel_id',
             'telegram_topic_id', 'telegram_topic_id_apps', 'telegram_topic_id_news',
             'stat_visitors_enabled', 'stat_downloads_enabled', 'stat_wallpapers_enabled', 'stat_apps_enabled',
+            'stat_likes_enabled', 'stat_views_enabled',
             'stat_visitors_value', 'stat_downloads_value', 'stat_wallpapers_value', 'stat_apps_value',
+            'stat_likes_value', 'stat_views_value',
         ];
 
         $formData = [];
@@ -74,7 +76,7 @@ class SiteSettingsPage extends Page
             : filter_var($formData['search_enabled'], FILTER_VALIDATE_BOOLEAN);
 
         // statistics toggles default to ON until explicitly turned off
-        foreach (['stat_visitors_enabled', 'stat_downloads_enabled', 'stat_wallpapers_enabled', 'stat_apps_enabled'] as $sk) {
+        foreach (['stat_visitors_enabled', 'stat_downloads_enabled', 'stat_wallpapers_enabled', 'stat_apps_enabled', 'stat_likes_enabled', 'stat_views_enabled'] as $sk) {
             $formData[$sk] = $formData[$sk] === ''
                 ? true
                 : filter_var($formData[$sk], FILTER_VALIDATE_BOOLEAN);
@@ -152,7 +154,7 @@ class SiteSettingsPage extends Page
                             ->schema([
                                 Forms\Components\Placeholder::make('stats_help')
                                     ->label('')
-                                    ->content('فعّل أو ألغِ كل إحصائية تظهر في الصفحة الرئيسية (٤ كحد أقصى، بشكل ٢×٢ بجانب الماركات). اترك خانة الرقم فارغة = العدد الحقيقي تلقائيًا، أو اكتب رقمًا لعرضه يدويًا.'),
+                                    ->content('فعّل أو ألغِ كل إحصائية تظهر في الصفحة الرئيسية (٦ كحد أقصى، بشكل ٣×٢ بجانب الماركات). اترك خانة الرقم فارغة = العدد الحقيقي تلقائيًا، أو اكتب رقمًا لعرضه يدويًا.'),
 
                                 Forms\Components\Grid::make(2)->schema([
                                     Forms\Components\Toggle::make('stat_visitors_enabled')->label('👁️ عدد الزوار')->inline(false)->default(true),
@@ -169,6 +171,14 @@ class SiteSettingsPage extends Page
                                 Forms\Components\Grid::make(2)->schema([
                                     Forms\Components\Toggle::make('stat_apps_enabled')->label('📱 عدد التطبيقات')->inline(false)->default(true),
                                     Forms\Components\TextInput::make('stat_apps_value')->label('رقم يدوي (اختياري)')->numeric()->placeholder('تلقائي'),
+                                ]),
+                                Forms\Components\Grid::make(2)->schema([
+                                    Forms\Components\Toggle::make('stat_likes_enabled')->label('❤️ عدد الإعجابات')->inline(false)->default(true),
+                                    Forms\Components\TextInput::make('stat_likes_value')->label('رقم يدوي (اختياري)')->numeric()->placeholder('تلقائي'),
+                                ]),
+                                Forms\Components\Grid::make(2)->schema([
+                                    Forms\Components\Toggle::make('stat_views_enabled')->label('👀 عدد المشاهدات')->inline(false)->default(true),
+                                    Forms\Components\TextInput::make('stat_views_value')->label('رقم يدوي (اختياري)')->numeric()->placeholder('تلقائي'),
                                 ]),
                             ]),
 

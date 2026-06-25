@@ -253,15 +253,19 @@ class HomepageController extends Controller
 
     private function statisticsData(HomepageSection $s): array
     {
-        // Real downloads = wallpapers + apps; visitors counter is a fresh DB read (not cached).
-        $totalDownloads = (int) Wallpaper::sum('downloads_count') + (int) AndroidApp::sum('downloads_count');
+        // Real wallpapers/content live in content_items; the old Wallpaper table is legacy.
+        $totalDownloads = (int) ContentItem::sum('downloads_count') + (int) AndroidApp::sum('downloads_count');
+        $totalLikes     = (int) ContentItem::sum('likes_count') + (int) NewsArticle::sum('likes_count');
+        $totalViews     = (int) ContentItem::sum('views_count') + (int) NewsArticle::sum('views_count') + (int) AndroidApp::sum('views_count');
         $visitors       = (int) (DB::table('settings')->where('key', 'site_visits')->value('value') ?? 0);
 
         $defs = [
-            'visitors'   => ['icon' => '👁️', 'label_ar' => 'زائر',  'label_en' => 'Visitors',   'value' => $visitors],
-            'downloads'  => ['icon' => '⬇️', 'label_ar' => 'تحميل', 'label_en' => 'Downloads',  'value' => $totalDownloads],
-            'wallpapers' => ['icon' => '🖼️', 'label_ar' => 'خلفية', 'label_en' => 'Wallpapers', 'value' => Wallpaper::where('status', 'published')->count()],
-            'apps'       => ['icon' => '📱', 'label_ar' => 'تطبيق', 'label_en' => 'Apps',       'value' => AndroidApp::where('status', 'published')->count()],
+            'visitors'   => ['icon' => '👁️', 'label_ar' => 'زائر',   'label_en' => 'Visitors',   'value' => $visitors],
+            'downloads'  => ['icon' => '⬇️', 'label_ar' => 'تحميل',  'label_en' => 'Downloads',  'value' => $totalDownloads],
+            'wallpapers' => ['icon' => '🖼️', 'label_ar' => 'خلفية',  'label_en' => 'Wallpapers', 'value' => ContentItem::where('content_type', 'wallpapers')->where('status', 'published')->count()],
+            'apps'       => ['icon' => '📱', 'label_ar' => 'تطبيق',  'label_en' => 'Apps',       'value' => AndroidApp::where('status', 'published')->count()],
+            'likes'      => ['icon' => '❤️', 'label_ar' => 'إعجاب',  'label_en' => 'Likes',      'value' => $totalLikes],
+            'views'      => ['icon' => '👀', 'label_ar' => 'مشاهدة', 'label_en' => 'Views',      'value' => $totalViews],
         ];
 
         $items = [];
@@ -280,7 +284,7 @@ class HomepageController extends Controller
                 'value'    => $value,
                 'prefix'   => '+',
             ];
-            if (count($items) >= 4) break; // never more than 4
+            if (count($items) >= 6) break; // never more than 6
         }
 
         return ['items' => $items];
