@@ -169,6 +169,13 @@ class MarketController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    // GET /v1/market/{id}/phone  (revealed only after the human check; throttled)
+    public function phone(int $id): JsonResponse
+    {
+        $phone = MarketListing::published()->where('id', $id)->value('contact_phone');
+        return response()->json(['phone' => $phone]);
+    }
+
     // GET /v1/market-categories
     public function categories(): JsonResponse
     {
@@ -211,10 +218,12 @@ class MarketController extends Controller
             'category'       => $l->category?->name_ar,
             'views_count'    => $l->views_count,
             'contact'        => [
-                'name'     => $l->contact_name,
-                'phone'    => $l->contact_phone,
-                'whatsapp' => $l->contact_whatsapp,
-                'telegram' => $l->contact_telegram,
+                'name'      => $l->contact_name,
+                // Raw phone is never sent in the page payload — revealed only via
+                // /market/{id}/phone after the human check (anti-scraping).
+                'has_phone' => filled($l->contact_phone),
+                'whatsapp'  => $l->contact_whatsapp,
+                'telegram'  => $l->contact_telegram,
             ],
         ]);
     }
