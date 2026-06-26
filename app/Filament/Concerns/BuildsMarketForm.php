@@ -246,6 +246,7 @@ trait BuildsMarketForm
                 Tables\Columns\TextColumn::make('status')->label('الحالة')->badge()
                     ->colors(['success' => 'published', 'warning' => 'pending', 'gray' => 'sold', 'danger' => 'hidden'])
                     ->formatStateUsing(fn ($state) => match ($state) { 'published' => 'منشور', 'pending' => 'مراجعة', 'sold' => 'مُباع', 'hidden' => 'مخفي', default => $state }),
+                Tables\Columns\TextColumn::make('member.name')->label('المُعلِن')->placeholder('الإدارة')->toggleable(),
                 Tables\Columns\TextColumn::make('views_count')->label('👁')->sortable(),
                 Tables\Columns\TextColumn::make('created_at')->label('التاريخ')->dateTime('d/m/Y')->sortable(),
             ])
@@ -256,6 +257,10 @@ trait BuildsMarketForm
                 Tables\Filters\TernaryFilter::make('is_paid_listing')->label('مدفوع'),
             ])
             ->actions([
+                Tables\Actions\Action::make('approve')
+                    ->label('نشر')->icon('heroicon-o-check')->color('success')
+                    ->visible(fn (MarketListing $r) => $r->status === 'pending')
+                    ->action(fn (MarketListing $r) => $r->update(['status' => 'published', 'published_at' => $r->published_at ?? now()])),
                 Tables\Actions\Action::make('mark_sold')
                     ->label('مُباع')->icon('heroicon-o-check-badge')->color('gray')
                     ->visible(fn (MarketListing $r) => $r->status !== 'sold')

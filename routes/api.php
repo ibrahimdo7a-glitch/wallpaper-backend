@@ -25,6 +25,10 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
     Route::get('/member/me', [TelegramAuthController::class, 'me'])->middleware('auth:member');
     Route::post('/member/logout', [TelegramAuthController::class, 'logout'])->middleware('auth:member');
 
+    // Member listings (submit + own list)
+    Route::get('/member/listings', [\App\Http\Controllers\Api\V1\MemberListingController::class, 'mine'])->middleware('auth:member');
+    Route::post('/member/listings', [\App\Http\Controllers\Api\V1\MemberListingController::class, 'store'])->middleware(['auth:member', 'throttle:10,1']);
+
     // Public wallpapers
     Route::get('/wallpapers', [WallpaperController::class, 'index']);
     Route::get('/wallpapers/search', [WallpaperController::class, 'search']);

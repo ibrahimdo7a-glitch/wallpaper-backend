@@ -60,6 +60,7 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make('التطبيقات')->icon('heroicon-o-device-phone-mobile'),
                 NavigationGroup::make('سوق السيارات')->icon('heroicon-o-shopping-bag'),
                 NavigationGroup::make('سوق القطع والاكسسوارات')->icon('heroicon-o-wrench'),
+                NavigationGroup::make('الأعضاء')->icon('heroicon-o-user-group'),
                 NavigationGroup::make('الإدارة')->icon('heroicon-o-users'),
                 NavigationGroup::make('الإعدادات والمظهر')->icon('heroicon-o-cog-6-tooth'),
             ])
