@@ -109,8 +109,12 @@ class TelegramAuthController extends Controller
         $from    = $message['from'] ?? null;
         $text    = trim((string) ($message['text'] ?? ''));
 
+        $debug = ['at' => now()->toDateTimeString(), 'text' => $text, 'from_id' => $from['id'] ?? null, 'username' => $from['username'] ?? null];
+        $record = fn (string $result) => Setting::set('telegram_last_update', json_encode($debug + ['result' => $result], JSON_UNESCAPED_UNICODE));
+
         if (! $from || ! Str::startsWith($text, '/start')) {
-            return response()->json(['ok' => true]); // ignore everything else for now
+            $record('تجاهل (ليست /start)');
+            return response()->json(['ok' => true]);
         }
 
         $member = Member::updateOrCreate(
@@ -123,19 +127,29 @@ class TelegramAuthController extends Controller
         );
 
         if ($member->isBanned()) {
+            $record('محظور');
             $this->telegram->sendMessage((string) $from['id'], '🚫 حسابك محظور. تواصل مع الإدارة.');
             return response()->json(['ok' => true]);
         }
 
         // /start <token>
         $loginToken = trim(Str::after($text, '/start'));
+        $debug['token_param'] = $loginToken;
+
         if ($loginToken !== '') {
             $login = MemberLoginToken::where('token', $loginToken)->where('status', 'pending')->first();
-            if ($login && ! $login->isExpired()) {
+            if (! $login) {
+                $record('الرمز غير موجود');
+            } elseif ($login->isExpired()) {
+                $record('الرمز منتهي');
+            } else {
                 $login->update(['status' => 'verified', 'member_id' => $member->id, 'telegram_id' => $member->telegram_id]);
+                $record('تم التحقق ✓');
                 $this->telegram->sendMessage((string) $from['id'], '✅ تم تسجيل دخولك في <b>qev.app</b> — ارجع للصفحة.');
                 return response()->json(['ok' => true]);
             }
+        } else {
+            $record('بدون رمز (start فارغ)');
         }
 
         $this->telegram->sendMessage((string) $from['id'], '👋 أهلًا بك في <b>qev.app</b>. ارجع للموقع واضغط "تسجيل الدخول" لإكمال الدخول.');

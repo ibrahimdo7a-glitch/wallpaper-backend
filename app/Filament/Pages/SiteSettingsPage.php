@@ -442,6 +442,16 @@ class SiteSettingsPage extends Page
                         . "\nآخر خطأ: " . $lastErr . ' (' . $lastDate . ')';
                     Notification::make()->title('حالة الـWebhook')->body($body)->warning()->persistent()->send();
                 }),
+
+            \Filament\Actions\Action::make('last_update')
+                ->label('آخر رسالة وصلت للبوت')
+                ->icon('heroicon-o-inbox-arrow-down')->color('info')
+                ->action(function () {
+                    $raw = \App\Models\Setting::get('telegram_last_update');
+                    Notification::make()->title('آخر رسالة للبوت')
+                        ->body($raw ?: 'لم تصل أي رسالة بعد — جرّب الدخول أولًا.')
+                        ->info()->persistent()->send();
+                }),
         ];
     }
 }
