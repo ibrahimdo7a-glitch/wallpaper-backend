@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Storage;
 class SiteHealthPage extends Page
 {
     protected static ?string $navigationIcon  = 'heroicon-o-wrench-screwdriver';
-    protected static ?string $navigationGroup = 'الإعدادات';
+    protected static ?string $navigationGroup = 'الإعدادات والمظهر';
     protected static ?string $title           = 'فحص الموقع';
     protected static ?int    $navigationSort   = 20;
     protected static string  $view            = 'filament.pages.site-health';

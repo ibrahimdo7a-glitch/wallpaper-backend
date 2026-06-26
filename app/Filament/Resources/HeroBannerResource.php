@@ -16,7 +16,7 @@ class HeroBannerResource extends Resource
     protected static ?string $model = HeroBanner::class;
     protected static ?string $navigationIcon  = 'heroicon-o-photo';
     protected static ?string $navigationLabel = 'Hero Banners';
-    protected static ?string $navigationGroup = 'الإعدادات';
+    protected static ?string $navigationGroup = 'الإعدادات والمظهر';
     protected static ?int    $navigationSort  = 2;
     protected static ?string $modelLabel      = 'Hero Banner';
 

@@ -15,15 +15,15 @@ class AdsResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-megaphone';
 
-    protected static ?string $navigationGroup = 'الإعدادات';
+    protected static ?string $navigationGroup = 'الإعدادات والمظهر';
 
     protected static ?int $navigationSort = 5;
 
-    public static function getNavigationLabel(): string { return 'الإعلانات'; }
+    public static function getNavigationLabel(): string { return 'إعلانات الموقع'; }
 
     public static function getModelLabel(): string { return 'إعلان'; }
 
-    public static function getPluralModelLabel(): string { return 'الإعلانات'; }
+    public static function getPluralModelLabel(): string { return 'إعلانات الموقع'; }
 
     public static function canAccess(): bool
     {

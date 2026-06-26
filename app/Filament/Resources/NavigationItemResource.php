@@ -16,7 +16,7 @@ class NavigationItemResource extends Resource
     protected static ?string $model = NavigationItem::class;
     protected static ?string $navigationIcon  = 'heroicon-o-bars-3';
     protected static ?string $navigationLabel = 'القائمة الرئيسية';
-    protected static ?string $navigationGroup = 'الإعدادات';
+    protected static ?string $navigationGroup = 'الإعدادات والمظهر';
     protected static ?int    $navigationSort  = 3;
     protected static ?string $modelLabel      = 'رابط';
 

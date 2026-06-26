@@ -19,7 +19,7 @@ class ContentItemResource extends Resource
     use \App\Filament\Concerns\HiddenFromCreatives;
     protected static ?string $model = ContentItem::class;
     protected static ?string $navigationIcon  = 'heroicon-o-document-text';
-    protected static ?string $navigationGroup = 'أدوات متقدمة';
+    protected static ?string $navigationGroup = 'المحتوى';
     protected static ?int    $navigationSort  = 92;
 
     public static function getNavigationLabel(): string  { return 'كل المحتوى (عام)'; }

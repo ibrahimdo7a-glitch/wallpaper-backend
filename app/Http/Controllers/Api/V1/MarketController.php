@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\MarketCategory;
+use App\Models\MarketField;
 use App\Models\MarketListing;
 use App\Models\Setting;
 use Illuminate\Http\JsonResponse;
@@ -26,18 +27,73 @@ class MarketController extends Controller
     // GET /v1/market/config
     public function config(): JsonResponse
     {
+        $carFields = MarketField::where('scope', 'cars')->where('is_enabled', true)
+            ->orderBy('sort_order')->get()->map(fn ($f) => $this->fieldDef($f))->values();
+
+        $sections = MarketCategory::active()->get()->map(fn ($c) => [
+            'id'       => $c->id,
+            'slug'     => $c->slug,
+            'name_ar'  => $c->name_ar,
+            'name_en'  => $c->name_en,
+            'icon'     => $c->icon,
+        ])->values();
+
         return response()->json([
             'cars' => [
                 'enabled'  => $this->sectionEnabled('cars'),
                 'label_ar' => Setting::get('cars_label_ar') ?: 'سوق السيارات',
                 'label_en' => Setting::get('cars_label_en') ?: 'Cars',
+                'fields'   => $carFields,
             ],
             'parts' => [
                 'enabled'  => $this->sectionEnabled('parts'),
                 'label_ar' => Setting::get('parts_label_ar') ?: 'قطع وأكسسوارات',
                 'label_en' => Setting::get('parts_label_en') ?: 'Parts & Accessories',
+                'sections' => $sections,
             ],
         ]);
+    }
+
+    private function fieldDef(MarketField $f): array
+    {
+        return [
+            'key'           => $f->key,
+            'label_ar'      => $f->label_ar,
+            'label_en'      => $f->label_en,
+            'type'          => $f->type,
+            'unit'          => $f->unit,
+            'options'       => $f->options,
+            'is_filterable' => (bool) $f->is_filterable,
+        ];
+    }
+
+    /** Resolve a listing's enabled fields into a labelled, ordered list for display. */
+    private function resolveSpecFields(MarketListing $l): array
+    {
+        $scope = in_array($l->listing_type, ['car_sale', 'car_request'], true) ? 'cars' : 'parts';
+        $fields = MarketField::forContext($scope, $scope === 'parts' ? $l->market_category_id : null)
+            ->where('is_enabled', true)->get();
+
+        $out = [];
+        foreach ($fields as $f) {
+            $value = $f->isColumn() ? ($l->{$f->column_name} ?? null) : ($l->specs[$f->key] ?? null);
+            if ($value === null || $value === '') {
+                continue;
+            }
+            if ($f->type === 'select') {
+                $value = $f->optionsMap()[$value] ?? $value;
+            } elseif ($f->type === 'boolean') {
+                $value = filter_var($value, FILTER_VALIDATE_BOOLEAN) ? 'نعم' : 'لا';
+            }
+            $out[] = [
+                'key'   => $f->key,
+                'label' => $f->label_ar,
+                'unit'  => $f->unit,
+                'type'  => $f->type,
+                'value' => $value,
+            ];
+        }
+        return $out;
     }
 
     // GET /v1/market?section=cars|parts
@@ -149,6 +205,7 @@ class MarketController extends Controller
             'year'           => $l->year,
             'mileage'        => $l->mileage,
             'specs'          => $l->specs,
+            'spec_fields'    => $this->resolveSpecFields($l),
             'brand'          => $l->brand ? ['name_ar' => $l->brand->name_ar, 'slug' => $l->brand->slug] : null,
             'car_model'      => $l->carModel?->name_ar,
             'category'       => $l->category?->name_ar,

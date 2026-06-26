@@ -16,7 +16,7 @@ class ManageSettings extends Page
 
     protected static ?string $navigationIcon = 'heroicon-o-cog-8-tooth';
 
-    protected static ?string $navigationGroup = 'الإعدادات';
+    protected static ?string $navigationGroup = 'الإعدادات والمظهر';
 
     protected static ?string $title = 'إعدادات متقدمة';
 

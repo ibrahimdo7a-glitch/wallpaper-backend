@@ -27,7 +27,7 @@ class WallpaperResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-photo';
 
-    protected static ?string $navigationGroup = 'أدوات متقدمة';
+    protected static ?string $navigationGroup = 'المحتوى';
 
     protected static ?int $navigationSort = 91;
 

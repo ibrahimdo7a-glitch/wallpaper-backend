@@ -17,7 +17,7 @@ class BrandResource extends Resource
     use \App\Filament\Concerns\HiddenFromCreatives;
     protected static ?string $model = Brand::class;
     protected static ?string $navigationIcon  = 'heroicon-o-truck';
-    protected static ?string $navigationGroup = 'السيارات';
+    protected static ?string $navigationGroup = 'السيارات والماركات';
     protected static ?int    $navigationSort  = 1;
 
     public static function getNavigationLabel(): string  { return 'الماركات'; }

@@ -17,7 +17,7 @@ class CarModelResource extends Resource
 {
     protected static ?string $model = CarModel::class;
     protected static ?string $navigationIcon  = 'heroicon-o-truck';
-    protected static ?string $navigationGroup = 'السيارات';
+    protected static ?string $navigationGroup = 'السيارات والماركات';
     protected static ?int    $navigationSort  = 2;
 
     public static function getNavigationLabel(): string  { return 'الموديلات'; }

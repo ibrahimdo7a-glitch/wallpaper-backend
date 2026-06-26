@@ -15,7 +15,7 @@ class TranslationResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-language';
 
-    protected static ?string $navigationGroup = 'الإعدادات';
+    protected static ?string $navigationGroup = 'الإعدادات والمظهر';
 
     protected static ?int $navigationSort = 3;
 

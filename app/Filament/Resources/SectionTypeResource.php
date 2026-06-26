@@ -15,7 +15,7 @@ class SectionTypeResource extends Resource
     use \App\Filament\Concerns\HiddenFromCreatives;
     protected static ?string $model = SectionType::class;
     protected static ?string $navigationIcon  = 'heroicon-o-squares-plus';
-    protected static ?string $navigationGroup = 'السيارات';
+    protected static ?string $navigationGroup = 'السيارات والماركات';
     protected static ?int    $navigationSort  = 5;
 
     public static function getNavigationLabel(): string  { return 'أنواع الأقسام'; }

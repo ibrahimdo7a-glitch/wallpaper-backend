@@ -16,7 +16,7 @@ class HomepageSectionResource extends Resource
     protected static ?string $model = HomepageSection::class;
     protected static ?string $navigationIcon  = 'heroicon-o-squares-2x2';
     protected static ?string $navigationLabel = 'Homepage Builder';
-    protected static ?string $navigationGroup = 'الإعدادات';
+    protected static ?string $navigationGroup = 'الإعدادات والمظهر';
     protected static ?int    $navigationSort  = 1;
     protected static ?string $modelLabel      = 'قسم الصفحة الرئيسية';
     protected static ?string $pluralModelLabel = 'Homepage Builder';

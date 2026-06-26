@@ -17,7 +17,7 @@ class WatermarkResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-paint-brush';
 
-    protected static ?string $navigationGroup = 'الإعدادات';
+    protected static ?string $navigationGroup = 'الإعدادات والمظهر';
 
     protected static ?int $navigationSort = 1;
 

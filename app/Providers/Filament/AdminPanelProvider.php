@@ -53,13 +53,15 @@ class AdminPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->navigationGroups([
-                NavigationGroup::make('السيارات')->icon('heroicon-o-truck'),
+                NavigationGroup::make('التحليلات')->icon('heroicon-o-chart-bar'),
+                NavigationGroup::make('السيارات والماركات')->icon('heroicon-o-truck'),
                 NavigationGroup::make('المحتوى')->icon('heroicon-o-squares-2x2'),
                 NavigationGroup::make('الأخبار')->icon('heroicon-o-newspaper'),
                 NavigationGroup::make('التطبيقات')->icon('heroicon-o-device-phone-mobile'),
-                NavigationGroup::make('الإدارة')->icon('heroicon-o-cog'),
-                NavigationGroup::make('الإعدادات')->icon('heroicon-o-wrench-screwdriver'),
-                NavigationGroup::make('التحليلات')->icon('heroicon-o-chart-bar'),
+                NavigationGroup::make('سوق السيارات')->icon('heroicon-o-shopping-bag'),
+                NavigationGroup::make('سوق القطع والاكسسوارات')->icon('heroicon-o-wrench'),
+                NavigationGroup::make('الإدارة')->icon('heroicon-o-users'),
+                NavigationGroup::make('الإعدادات والمظهر')->icon('heroicon-o-cog-6-tooth'),
             ])
             ->middleware([
                 EncryptCookies::class,

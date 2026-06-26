@@ -17,7 +17,7 @@ class SiteSettingsPage extends Page
 
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
 
-    protected static ?string $navigationGroup = 'الإعدادات';
+    protected static ?string $navigationGroup = 'الإعدادات والمظهر';
 
     protected static ?int $navigationSort = 1;
 
@@ -66,8 +66,6 @@ class SiteSettingsPage extends Page
             'stat_visitors_order', 'stat_downloads_order', 'stat_wallpapers_order', 'stat_apps_order',
             'stat_likes_order', 'stat_views_order', 'stat_news_order',
             'ai_enabled', 'ai_api_key', 'ai_model', 'ai_translation_prompt', 'ai_summarize_prompt',
-            'cars_enabled', 'cars_label_ar', 'cars_label_en',
-            'parts_enabled', 'parts_label_ar', 'parts_label_en',
         ];
 
         $formData = [];
@@ -95,10 +93,6 @@ class SiteSettingsPage extends Page
         $formData['ai_model'] = $formData['ai_model'] ?: 'claude-haiku-4-5-20251001';
         $formData['ai_translation_prompt'] = $formData['ai_translation_prompt'] ?: $ai->defaultTranslationPrompt();
         $formData['ai_summarize_prompt']   = $formData['ai_summarize_prompt'] ?: $ai->defaultSummarizePrompt();
-
-        // Both marketplace sections default OFF (turn on when ready).
-        $formData['cars_enabled']  = filter_var($formData['cars_enabled'] ?: '0', FILTER_VALIDATE_BOOLEAN);
-        $formData['parts_enabled'] = filter_var($formData['parts_enabled'] ?: '0', FILTER_VALIDATE_BOOLEAN);
 
         $this->form->fill($formData);
     }
@@ -240,32 +234,6 @@ class SiteSettingsPage extends Page
                                 Forms\Components\Textarea::make('ai_summarize_prompt')->label('✍️ تعليمات تلخيص المقال من رابط')
                                     ->rows(5)->columnSpanFull()
                                     ->helperText('وجّه الذكاء كيف يستخرج المهم ويلخّص الخبر من الرابط.'),
-                            ]),
-
-                        Forms\Components\Tabs\Tab::make('السوق')
-                            ->icon('heroicon-o-shopping-bag')
-                            ->schema([
-                                Forms\Components\Placeholder::make('market_help')
-                                    ->label('')
-                                    ->content('قسمان منفصلان، لكل واحد زر تشغيل واسم خاص. الإعلانات تضيفها من: السوق ← الإعلانات (تختار النوع لكل إعلان).'),
-
-                                Forms\Components\Section::make('🚗 سوق السيارات')->schema([
-                                    Forms\Components\Toggle::make('cars_enabled')->label('تفعيل سوق السيارات')->inline(false)
-                                        ->helperText('سيارات للبيع + طلبات سيارات.'),
-                                    Forms\Components\Grid::make(2)->schema([
-                                        Forms\Components\TextInput::make('cars_label_ar')->label('اسم القسم (عربي)')->placeholder('سوق السيارات'),
-                                        Forms\Components\TextInput::make('cars_label_en')->label('اسم القسم (إنجليزي)')->placeholder('Cars'),
-                                    ]),
-                                ]),
-
-                                Forms\Components\Section::make('🔧 قطع غيار واكسسوارات')->schema([
-                                    Forms\Components\Toggle::make('parts_enabled')->label('تفعيل قسم القطع والاكسسوارات')->inline(false)
-                                        ->helperText('قطع غيار + اكسسوارات + خدمات.'),
-                                    Forms\Components\Grid::make(2)->schema([
-                                        Forms\Components\TextInput::make('parts_label_ar')->label('اسم القسم (عربي)')->placeholder('قطع وأكسسوارات'),
-                                        Forms\Components\TextInput::make('parts_label_en')->label('اسم القسم (إنجليزي)')->placeholder('Parts & Accessories'),
-                                    ]),
-                                ]),
                             ]),
 
                         Forms\Components\Tabs\Tab::make('الميزات')

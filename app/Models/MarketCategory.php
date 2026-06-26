@@ -19,4 +19,9 @@ class MarketCategory extends Model
     {
         return $this->hasMany(MarketListing::class);
     }
+
+    public function fields()
+    {
+        return $this->hasMany(MarketField::class)->orderBy('sort_order');
+    }
 }
