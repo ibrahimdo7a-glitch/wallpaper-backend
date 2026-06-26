@@ -76,7 +76,8 @@ class MarketListingResource extends Resource
                     Forms\Components\Select::make('market_category_id')->label('التصنيف')
                         ->options(fn (Forms\Get $get) => MarketCategory::active()
                             ->where('listing_type', $get('listing_type'))->pluck('name_ar', 'id'))
-                        ->searchable()->preload()->nullable(),
+                        ->searchable()->preload()->nullable()
+                        ->helperText('اختياري — تصنيف فرعي (مثل: بطاريات، شواحن). تضيف التصنيفات من السوق ← التصنيفات.'),
                 ]),
                 Forms\Components\Grid::make(2)->schema([
                     Forms\Components\TextInput::make('title_ar')->label('العنوان (عربي)')->required()->maxLength(200)
