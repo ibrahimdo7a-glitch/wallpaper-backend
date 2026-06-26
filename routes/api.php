@@ -20,7 +20,7 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
     Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
     // Member auth (Telegram login)
-    Route::post('/auth/telegram/start', [TelegramAuthController::class, 'start'])->middleware('throttle:20,1');
+    Route::post('/auth/telegram/start', [TelegramAuthController::class, 'start'])->middleware('throttle:60,1');
     Route::get('/auth/telegram/status', [TelegramAuthController::class, 'status'])->middleware('throttle:240,1');
     Route::get('/member/me', [TelegramAuthController::class, 'me'])->middleware('auth:member');
     Route::post('/member/logout', [TelegramAuthController::class, 'logout'])->middleware('auth:member');
