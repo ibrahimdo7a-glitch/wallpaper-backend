@@ -33,15 +33,10 @@ class MarketCategoryResource extends Resource
                 ->description('القسم = تبويب في سوق القطع (مثلاً: ادبترات، فلاتر، دواليب، كشافات، خدمات). بعد إنشاء القسم افتحه (تعديل) لإضافة حقوله الخاصة من جدول «الحقول».')
                 ->schema([
                     Forms\Components\Grid::make(2)->schema([
-                        Forms\Components\TextInput::make('name_ar')->label('اسم القسم (عربي)')
-                            ->required()->maxLength(120)->live(onBlur: true)
-                            ->afterStateUpdated(fn ($state, Forms\Set $set, $context) => $context === 'create'
-                                ? $set('slug', Str::slug(transliterator_transliterate('Any-Latin; Latin-ASCII', (string) $state)))
-                                : null),
+                        Forms\Components\TextInput::make('name_ar')->label('اسم القسم (عربي)')->required()->maxLength(120),
                         Forms\Components\TextInput::make('name_en')->label('اسم القسم (إنجليزي)')->maxLength(120),
                     ]),
-                    Forms\Components\Grid::make(3)->schema([
-                        Forms\Components\TextInput::make('slug')->label('Slug')->required()->maxLength(140)->unique(ignoreRecord: true),
+                    Forms\Components\Grid::make(2)->schema([
                         Forms\Components\TextInput::make('icon')->label('أيقونة (إيموجي)')->maxLength(8)->placeholder('🔧'),
                         Forms\Components\TextInput::make('sort_order')->label('الترتيب')->numeric()->default(0),
                     ]),

@@ -87,15 +87,9 @@ trait BuildsMarketForm
         }
 
         $schema[] = Forms\Components\Grid::make(2)->schema([
-            Forms\Components\TextInput::make('title_ar')->label('العنوان (عربي)')->required()->maxLength(200)
-                ->live(onBlur: true)
-                ->afterStateUpdated(fn ($state, Forms\Set $set, $context) =>
-                    $context === 'create'
-                        ? $set('slug', Str::slug(transliterator_transliterate('Any-Latin; Latin-ASCII', (string) $state)) . '-' . Str::random(4))
-                        : null),
+            Forms\Components\TextInput::make('title_ar')->label('العنوان (عربي)')->required()->maxLength(200),
             Forms\Components\TextInput::make('title_en')->label('العنوان (إنجليزي)')->maxLength(200),
         ]);
-        $schema[] = Forms\Components\TextInput::make('slug')->label('Slug')->required()->unique(ignoreRecord: true)->maxLength(200);
         $schema[] = Forms\Components\Grid::make(2)->schema([
             Forms\Components\Textarea::make('description_ar')->label('الوصف (عربي)')->rows(4),
             Forms\Components\Textarea::make('description_en')->label('الوصف (إنجليزي)')->rows(4),
