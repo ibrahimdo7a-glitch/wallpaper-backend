@@ -53,6 +53,32 @@ class NewsArticle extends Model
                         ->where('status', 'published')->count(),
                 ]);
             }
+
+            // DM subscribed members in Telegram — once, on first publish.
+            if ($article->status === 'published' && ! $article->member_notified) {
+                \Illuminate\Support\Facades\DB::table('news_articles')->where('id', $article->id)->update(['member_notified' => true]);
+                $id = $article->id;
+                dispatch(function () use ($id) {
+                    try {
+                        $a = static::find($id);
+                        if (! $a) {
+                            return;
+                        }
+                        $caption = $a->telegramCaption();
+                        $tg = app(\App\Services\TelegramService::class);
+                        \App\Models\Member::where('news_telegram', true)->where('status', 'active')
+                            ->whereNotNull('telegram_id')
+                            ->select('telegram_id')->chunk(50, function ($members) use ($tg, $caption) {
+                                foreach ($members as $m) {
+                                    $tg->sendMessage((string) $m->telegram_id, $caption);
+                                    usleep(40000); // ~25/sec, under Telegram limits
+                                }
+                            });
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::error('news member notify failed: ' . $e->getMessage());
+                    }
+                })->afterResponse();
+            }
         });
     }
 
