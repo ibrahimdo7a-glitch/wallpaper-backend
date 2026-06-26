@@ -429,6 +429,19 @@ class SiteSettingsPage extends Page
                             ->danger()->persistent()->send();
                     }
                 }),
+
+            \Filament\Actions\Action::make('webhook_info')
+                ->label('فحص الـWebhook (تشخيص)')
+                ->icon('heroicon-o-magnifying-glass')->color('warning')
+                ->action(function () {
+                    $info = app(\App\Services\TelegramService::class)->getWebhookInfo();
+                    $lastErr  = $info['last_error_message'] ?? 'لا يوجد';
+                    $lastDate = isset($info['last_error_date']) ? date('Y-m-d H:i', $info['last_error_date']) : '—';
+                    $body = 'الرابط: ' . ($info['url'] ?? '—')
+                        . "\nطلبات معلّقة: " . ($info['pending_update_count'] ?? 0)
+                        . "\nآخر خطأ: " . $lastErr . ' (' . $lastDate . ')';
+                    Notification::make()->title('حالة الـWebhook')->body($body)->warning()->persistent()->send();
+                }),
         ];
     }
 }
