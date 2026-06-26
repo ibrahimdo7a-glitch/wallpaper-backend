@@ -25,20 +25,6 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
     Route::get('/member/me', [TelegramAuthController::class, 'me'])->middleware('auth:member');
     Route::post('/member/logout', [TelegramAuthController::class, 'logout'])->middleware('auth:member');
 
-    // TEMP debug — remove after login is working
-    Route::get('/_debug/tg', function () {
-        return response()->json([
-            'last_update' => json_decode((string) \App\Models\Setting::get('telegram_last_update'), true),
-            'webhook'     => app(\App\Services\TelegramService::class)->getWebhookInfo(),
-        ]);
-    });
-    Route::get('/_debug/set-webhook', function () {
-        $tg  = app(\App\Services\TelegramService::class);
-        $url = \App\Http\Controllers\Api\V1\TelegramAuthController::webhookUrl('https://api.qev.app');
-        $res = $tg->setWebhook($url);
-        return response()->json(['set' => $res, 'url' => $url, 'info' => $tg->getWebhookInfo()]);
-    });
-
     // Public wallpapers
     Route::get('/wallpapers', [WallpaperController::class, 'index']);
     Route::get('/wallpapers/search', [WallpaperController::class, 'search']);

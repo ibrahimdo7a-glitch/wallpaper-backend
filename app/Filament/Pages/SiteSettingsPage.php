@@ -400,57 +400,31 @@ class SiteSettingsPage extends Page
                 ->label('حفظ الإعدادات')
                 ->icon('heroicon-o-check')
                 ->action('save'),
+        ];
+    }
 
+    // Header actions (Filament executes their closures reliably here, unlike form actions).
+    protected function getHeaderActions(): array
+    {
+        return [
             \Filament\Actions\Action::make('set_webhook')
-                ->label('ربط بوت دخول الأعضاء (Webhook)')
+                ->label('ربط بوت دخول الأعضاء')
                 ->icon('heroicon-o-bolt')->color('gray')
+                ->requiresConfirmation()
+                ->modalDescription('يربط بوت تلجرام لاستقبال تسجيل دخول الأعضاء. اضغط بعد ضبط توكن البوت في تبويب «تلجرام».')
                 ->action(function () {
                     $tg = app(\App\Services\TelegramService::class);
-
                     if (! $tg->hasBot()) {
-                        Notification::make()->title('أضف توكن البوت أولًا')
-                            ->body('من تبويب «تلجرام» في نفس الصفحة، ثم احفظ، ثم اضغط هذا الزر.')
-                            ->warning()->persistent()->send();
+                        Notification::make()->title('أضف توكن البوت أولًا')->warning()->persistent()->send();
                         return;
                     }
-
-                    $base = request()->getSchemeAndHttpHost();   // reliable: same host as the panel
-                    $url  = \App\Http\Controllers\Api\V1\TelegramAuthController::webhookUrl($base);
-                    $res  = $tg->setWebhook($url);
-                    $info = $tg->getWebhookInfo();
-
+                    $url = \App\Http\Controllers\Api\V1\TelegramAuthController::webhookUrl(request()->getSchemeAndHttpHost());
+                    $res = $tg->setWebhook($url);
                     if ($res['ok']) {
-                        Notification::make()->title('تم ربط البوت ✓')
-                            ->body('الرابط المسجّل: ' . ($info['url'] ?? $url))
-                            ->success()->persistent()->send();
+                        Notification::make()->title('تم ربط البوت ✓')->body($tg->getWebhookInfo()['url'] ?? $url)->success()->persistent()->send();
                     } else {
-                        Notification::make()->title('فشل الربط')
-                            ->body(($res['error'] ?? 'خطأ') . ' — الرابط: ' . $url)
-                            ->danger()->persistent()->send();
+                        Notification::make()->title('فشل الربط')->body(($res['error'] ?? 'خطأ') . ' — ' . $url)->danger()->persistent()->send();
                     }
-                }),
-
-            \Filament\Actions\Action::make('webhook_info')
-                ->label('فحص الـWebhook (تشخيص)')
-                ->icon('heroicon-o-magnifying-glass')->color('warning')
-                ->action(function () {
-                    $info = app(\App\Services\TelegramService::class)->getWebhookInfo();
-                    $lastErr  = $info['last_error_message'] ?? 'لا يوجد';
-                    $lastDate = isset($info['last_error_date']) ? date('Y-m-d H:i', $info['last_error_date']) : '—';
-                    $body = 'الرابط: ' . ($info['url'] ?? '—')
-                        . "\nطلبات معلّقة: " . ($info['pending_update_count'] ?? 0)
-                        . "\nآخر خطأ: " . $lastErr . ' (' . $lastDate . ')';
-                    Notification::make()->title('حالة الـWebhook')->body($body)->warning()->persistent()->send();
-                }),
-
-            \Filament\Actions\Action::make('last_update')
-                ->label('آخر رسالة وصلت للبوت')
-                ->icon('heroicon-o-inbox-arrow-down')->color('info')
-                ->action(function () {
-                    $raw = \App\Models\Setting::get('telegram_last_update');
-                    Notification::make()->title('آخر رسالة للبوت')
-                        ->body($raw ?: 'لم تصل أي رسالة بعد — جرّب الدخول أولًا.')
-                        ->info()->persistent()->send();
                 }),
         ];
     }
