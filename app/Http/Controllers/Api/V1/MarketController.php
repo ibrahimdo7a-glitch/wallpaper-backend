@@ -172,8 +172,23 @@ class MarketController extends Controller
     // GET /v1/market/{id}/phone  (revealed only after the human check; throttled)
     public function phone(int $id): JsonResponse
     {
-        $phone = MarketListing::published()->where('id', $id)->value('contact_phone');
-        return response()->json(['phone' => $phone]);
+        $l = MarketListing::published()->where('id', $id)->first(['contact_phone', 'country']);
+        if (! $l || ! $l->contact_phone) {
+            return response()->json(['number' => null]);
+        }
+
+        $codes = ['قطر' => '974', 'السعودية' => '966', 'الإمارات' => '971', 'الكويت' => '965', 'البحرين' => '973', 'عُمان' => '968'];
+        $code  = $codes[$l->country] ?? '974';
+        $local = preg_replace('/\D/', '', $l->contact_phone);
+        if (str_starts_with($local, $code)) {
+            $local = substr($local, strlen($code));   // admin already typed the code
+        }
+
+        return response()->json([
+            'dial_code' => '+' . $code,
+            'number'    => $local,
+            'tel'       => '+' . $code . $local,
+        ]);
     }
 
     // GET /v1/market-categories
