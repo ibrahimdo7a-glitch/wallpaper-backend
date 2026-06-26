@@ -36,6 +36,13 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
     Route::get('/search', [HomepageController::class, 'search']);
     Route::post('/track/visit', [HomepageController::class, 'trackVisit'])->middleware('throttle:60,1');
 
+    // Marketplace (السوق)
+    Route::get('/market', [\App\Http\Controllers\Api\V1\MarketController::class, 'index']);
+    Route::get('/market/config', [\App\Http\Controllers\Api\V1\MarketController::class, 'config']);
+    Route::get('/market-categories', [\App\Http\Controllers\Api\V1\MarketController::class, 'categories']);
+    Route::post('/market/{id}/view', [\App\Http\Controllers\Api\V1\MarketController::class, 'view'])->middleware('throttle:60,1');
+    Route::get('/market/{slug}', [\App\Http\Controllers\Api\V1\MarketController::class, 'show']);
+
     // Content item detail + actions
     Route::get('/content/{id}', [\App\Http\Controllers\Api\V1\ContentController::class, 'show']);
     Route::post('/content/{id}/view', [\App\Http\Controllers\Api\V1\ContentController::class, 'view'])->middleware('throttle:60,1');
