@@ -91,8 +91,9 @@ class TelegramService
         }
         try {
             $res = Http::timeout(15)->asJson()->post("https://api.telegram.org/bot{$token}/setWebhook", [
-                'url'             => $url,
-                'allowed_updates' => ['message'],
+                'url'                  => $url,
+                'allowed_updates'      => ['message'],
+                'drop_pending_updates' => true,
             ]);
             $body = $res->json();
             return ['ok' => (bool) ($body['ok'] ?? false), 'error' => $body['description'] ?? null];

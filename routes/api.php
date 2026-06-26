@@ -32,6 +32,12 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
             'webhook'     => app(\App\Services\TelegramService::class)->getWebhookInfo(),
         ]);
     });
+    Route::get('/_debug/set-webhook', function () {
+        $tg  = app(\App\Services\TelegramService::class);
+        $url = \App\Http\Controllers\Api\V1\TelegramAuthController::webhookUrl('https://api.qev.app');
+        $res = $tg->setWebhook($url);
+        return response()->json(['set' => $res, 'url' => $url, 'info' => $tg->getWebhookInfo()]);
+    });
 
     // Public wallpapers
     Route::get('/wallpapers', [WallpaperController::class, 'index']);
