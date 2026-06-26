@@ -25,6 +25,16 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
     Route::get('/member/me', [TelegramAuthController::class, 'me'])->middleware('auth:member');
     Route::post('/member/logout', [TelegramAuthController::class, 'logout'])->middleware('auth:member');
 
+    // TEMP debug — roles (to set up the admin role safely)
+    Route::get('/_debug/roles', function () {
+        return response()->json(
+            \App\Models\User::with('roles:id,name')->get(['id', 'email'])->map(fn ($u) => [
+                'email' => $u->email,
+                'roles' => $u->roles->pluck('name'),
+            ])
+        );
+    });
+
     // TEMP debug — members page 500
     Route::get('/_debug/members', function () {
         try {
