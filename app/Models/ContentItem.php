@@ -18,6 +18,7 @@ class ContentItem extends Model
         'description_ar', 'description_en', 'author_name', 'designer_id', 'watermark_id', 'watermark_position',
         'image_path', 'original_image_path', 'thumbnail_path', 'file_path', 'video_url', 'external_url',
         'metadata', 'status', 'is_featured', 'is_pinned',
+        'is_paid', 'price', 'currency',
         'sort_order', 'views_count', 'downloads_count', 'likes_count', 'published_at',
     ];
 
@@ -25,6 +26,7 @@ class ContentItem extends Model
         'metadata'     => 'array',
         'is_featured'  => 'boolean',
         'is_pinned'    => 'boolean',
+        'is_paid'      => 'boolean',
         'published_at' => 'datetime',
         'views_count'  => 'integer',
         'downloads_count' => 'integer',

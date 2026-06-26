@@ -66,9 +66,8 @@ class SiteSettingsPage extends Page
             'stat_visitors_order', 'stat_downloads_order', 'stat_wallpapers_order', 'stat_apps_order',
             'stat_likes_order', 'stat_views_order', 'stat_news_order',
             'ai_enabled', 'ai_api_key', 'ai_model', 'ai_translation_prompt', 'ai_summarize_prompt',
-            'market_enabled', 'market_label_ar', 'market_label_en',
-            'market_type_part_enabled', 'market_type_accessory_enabled', 'market_type_car_sale_enabled',
-            'market_type_car_request_enabled', 'market_type_service_enabled',
+            'cars_enabled', 'cars_label_ar', 'cars_label_en',
+            'parts_enabled', 'parts_label_ar', 'parts_label_en',
         ];
 
         $formData = [];
@@ -97,11 +96,9 @@ class SiteSettingsPage extends Page
         $formData['ai_translation_prompt'] = $formData['ai_translation_prompt'] ?: $ai->defaultTranslationPrompt();
         $formData['ai_summarize_prompt']   = $formData['ai_summarize_prompt'] ?: $ai->defaultSummarizePrompt();
 
-        // Market: master toggle defaults OFF (turn on when ready); each type defaults ON.
-        $formData['market_enabled'] = filter_var($formData['market_enabled'] ?: '0', FILTER_VALIDATE_BOOLEAN);
-        foreach (['market_type_part_enabled', 'market_type_accessory_enabled', 'market_type_car_sale_enabled', 'market_type_car_request_enabled', 'market_type_service_enabled'] as $mk) {
-            $formData[$mk] = $formData[$mk] === '' ? true : filter_var($formData[$mk], FILTER_VALIDATE_BOOLEAN);
-        }
+        // Both marketplace sections default OFF (turn on when ready).
+        $formData['cars_enabled']  = filter_var($formData['cars_enabled'] ?: '0', FILTER_VALIDATE_BOOLEAN);
+        $formData['parts_enabled'] = filter_var($formData['parts_enabled'] ?: '0', FILTER_VALIDATE_BOOLEAN);
 
         $this->form->fill($formData);
     }
@@ -250,23 +247,23 @@ class SiteSettingsPage extends Page
                             ->schema([
                                 Forms\Components\Placeholder::make('market_help')
                                     ->label('')
-                                    ->content('تحكم كامل بالسوق: الزر الرئيسي يُظهر/يُخفي القسم كله من الموقع والقائمة، وكل نوع له زر خاص. الإعلانات تضيفها من: السوق ← الإعلانات.'),
+                                    ->content('قسمان منفصلان، لكل واحد زر تشغيل واسم خاص. الإعلانات تضيفها من: السوق ← الإعلانات (تختار النوع لكل إعلان).'),
 
-                                Forms\Components\Toggle::make('market_enabled')->label('🛒 تفعيل قسم السوق (رئيسي)')->inline(false)
-                                    ->helperText('عند الإطفاء يختفي السوق كاملًا من الموقع.'),
-
-                                Forms\Components\Grid::make(2)->schema([
-                                    Forms\Components\TextInput::make('market_label_ar')->label('اسم القسم (عربي)')->placeholder('السوق'),
-                                    Forms\Components\TextInput::make('market_label_en')->label('اسم القسم (إنجليزي)')->placeholder('Marketplace'),
+                                Forms\Components\Section::make('🚗 سوق السيارات')->schema([
+                                    Forms\Components\Toggle::make('cars_enabled')->label('تفعيل سوق السيارات')->inline(false)
+                                        ->helperText('سيارات للبيع + طلبات سيارات.'),
+                                    Forms\Components\Grid::make(2)->schema([
+                                        Forms\Components\TextInput::make('cars_label_ar')->label('اسم القسم (عربي)')->placeholder('سوق السيارات'),
+                                        Forms\Components\TextInput::make('cars_label_en')->label('اسم القسم (إنجليزي)')->placeholder('Cars'),
+                                    ]),
                                 ]),
 
-                                Forms\Components\Section::make('أنواع الإعلانات — كل نوع تشغّله/تطفيه')->schema([
+                                Forms\Components\Section::make('🔧 قطع غيار واكسسوارات')->schema([
+                                    Forms\Components\Toggle::make('parts_enabled')->label('تفعيل قسم القطع والاكسسوارات')->inline(false)
+                                        ->helperText('قطع غيار + اكسسوارات + خدمات.'),
                                     Forms\Components\Grid::make(2)->schema([
-                                        Forms\Components\Toggle::make('market_type_car_sale_enabled')->label('🚗 سيارات للبيع')->inline(false),
-                                        Forms\Components\Toggle::make('market_type_car_request_enabled')->label('🔎 طلبات سيارات')->inline(false),
-                                        Forms\Components\Toggle::make('market_type_part_enabled')->label('🔧 قطع غيار')->inline(false),
-                                        Forms\Components\Toggle::make('market_type_accessory_enabled')->label('🎁 اكسسوارات')->inline(false),
-                                        Forms\Components\Toggle::make('market_type_service_enabled')->label('🛠️ خدمات')->inline(false),
+                                        Forms\Components\TextInput::make('parts_label_ar')->label('اسم القسم (عربي)')->placeholder('قطع وأكسسوارات'),
+                                        Forms\Components\TextInput::make('parts_label_en')->label('اسم القسم (إنجليزي)')->placeholder('Parts & Accessories'),
                                     ]),
                                 ]),
                             ]),

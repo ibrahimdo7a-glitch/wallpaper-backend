@@ -12,42 +12,46 @@ use Illuminate\Http\Request;
 
 class MarketController extends Controller
 {
-    private const ALL_TYPES = ['car_sale', 'car_request', 'part', 'accessory', 'service'];
+    // Two separate sections, each with its own types + toggle.
+    private const SECTION_TYPES = [
+        'cars'  => ['car_sale', 'car_request'],
+        'parts' => ['part', 'accessory', 'service'],
+    ];
 
-    private function marketEnabled(): bool
+    private function sectionEnabled(string $section): bool
     {
-        return filter_var(Setting::get('market_enabled', false), FILTER_VALIDATE_BOOLEAN);
-    }
-
-    /** Listing types currently switched on by the admin. */
-    private function enabledTypes(): array
-    {
-        return array_values(array_filter(self::ALL_TYPES, fn ($t) =>
-            filter_var(Setting::get("market_type_{$t}_enabled", true), FILTER_VALIDATE_BOOLEAN)));
+        return filter_var(Setting::get($section === 'cars' ? 'cars_enabled' : 'parts_enabled', false), FILTER_VALIDATE_BOOLEAN);
     }
 
     // GET /v1/market/config
     public function config(): JsonResponse
     {
         return response()->json([
-            'enabled'  => $this->marketEnabled(),
-            'types'    => $this->enabledTypes(),
-            'label_ar' => Setting::get('market_label_ar') ?: 'السوق',
-            'label_en' => Setting::get('market_label_en') ?: 'Marketplace',
+            'cars' => [
+                'enabled'  => $this->sectionEnabled('cars'),
+                'label_ar' => Setting::get('cars_label_ar') ?: 'سوق السيارات',
+                'label_en' => Setting::get('cars_label_en') ?: 'Cars',
+            ],
+            'parts' => [
+                'enabled'  => $this->sectionEnabled('parts'),
+                'label_ar' => Setting::get('parts_label_ar') ?: 'قطع وأكسسوارات',
+                'label_en' => Setting::get('parts_label_en') ?: 'Parts & Accessories',
+            ],
         ]);
     }
 
-    // GET /v1/market
+    // GET /v1/market?section=cars|parts
     public function index(Request $request): JsonResponse
     {
-        if (! $this->marketEnabled()) {
-            return response()->json(['data' => [], 'meta' => ['enabled' => false, 'types' => []]]);
+        $section = $request->section === 'parts' ? 'parts' : 'cars';
+        if (! $this->sectionEnabled($section)) {
+            return response()->json(['data' => [], 'meta' => ['enabled' => false]]);
         }
 
-        $enabledTypes = $this->enabledTypes();
-        $query = MarketListing::published()->whereIn('listing_type', $enabledTypes);
+        $sectionTypes = self::SECTION_TYPES[$section];
+        $query = MarketListing::published()->whereIn('listing_type', $sectionTypes);
 
-        if ($request->type && in_array($request->type, $enabledTypes, true)) {
+        if ($request->type && in_array($request->type, $sectionTypes, true)) {
             $query->where('listing_type', $request->type);
         }
         if ($request->category) {
@@ -83,7 +87,8 @@ class MarketController extends Controller
             'data' => collect($items->items())->map(fn ($l) => $this->card($l))->values(),
             'meta' => [
                 'enabled'      => true,
-                'types'        => $enabledTypes,
+                'section'      => $section,
+                'types'        => $sectionTypes,
                 'current_page' => $items->currentPage(),
                 'last_page'    => $items->lastPage(),
                 'total'        => $items->total(),

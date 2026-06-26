@@ -106,6 +106,18 @@ class ModelWallpapersRelationManager extends RelationManager
             ...$this->watermarkFields(),
             Forms\Components\Select::make('status')->label('الحالة')
                 ->options(['published' => 'منشور', 'draft' => 'مسودة'])->default('published'),
+
+            Forms\Components\Grid::make(3)->schema([
+                Forms\Components\Toggle::make('is_paid')->label('💰 خلفية مدفوعة')->inline(false)->live()
+                    ->helperText('فعّلها لبيع الخلفية بسعر'),
+                Forms\Components\TextInput::make('price')->label('السعر')->numeric()
+                    ->visible(fn (Forms\Get $get) => $get('is_paid'))
+                    ->required(fn (Forms\Get $get) => $get('is_paid')),
+                Forms\Components\Select::make('currency')->label('العملة')
+                    ->options(['QAR' => 'ريال قطري', 'SAR' => 'ريال سعودي', 'AED' => 'درهم', 'KWD' => 'دينار كويتي', 'USD' => 'دولار'])
+                    ->default('QAR')
+                    ->visible(fn (Forms\Get $get) => $get('is_paid')),
+            ]),
         ]);
     }
 
