@@ -14,6 +14,16 @@ trait HiddenFromCreatives
     {
         $user = auth()->user();
 
-        return $user !== null && ! $user->hasRole('مبدع');
+        if ($user === null) {
+            return false;
+        }
+
+        // Admins & super admins always have access — even if they also hold the
+        // creative role. Only *pure* creatives are limited to wallpapers.
+        if ($user->hasAnyRole(['admin', 'super_admin'])) {
+            return true;
+        }
+
+        return ! $user->hasRole('مبدع');
     }
 }

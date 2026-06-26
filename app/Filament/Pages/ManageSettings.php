@@ -28,7 +28,7 @@ class ManageSettings extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->user()?->hasPermissionTo('can_manage_settings');
+        return auth()->user()?->hasRole('super_admin') ?? false;
     }
 
     public function mount(): void

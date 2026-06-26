@@ -37,7 +37,8 @@ class SiteSettingsPage extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->check() && ! auth()->user()?->hasRole('مبدع');
+        // Holds the Telegram bot token + AI key — super admin only.
+        return auth()->user()?->hasRole('super_admin') ?? false;
     }
 
     public function mount(): void
