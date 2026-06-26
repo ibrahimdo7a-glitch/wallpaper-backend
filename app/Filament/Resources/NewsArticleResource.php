@@ -97,17 +97,9 @@ class NewsArticleResource extends Resource
 
                 Forms\Components\Tabs\Tab::make('المحتوى')->icon('heroicon-o-document-text')->schema([
                     Forms\Components\Grid::make(2)->schema([
-                        Forms\Components\TextInput::make('title_ar')->label('العنوان (عربي)')->required()->maxLength(300)
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(fn($state, Forms\Set $set, $context) =>
-                                $context === 'create'
-                                    ? $set('slug', Str::slug(transliterator_transliterate('Any-Latin; Latin-ASCII', $state)) . '-' . Str::random(4))
-                                    : null
-                            ),
+                        Forms\Components\TextInput::make('title_ar')->label('العنوان (عربي)')->required()->maxLength(300),
                         Forms\Components\TextInput::make('title_en')->label('العنوان (إنجليزي)')->maxLength(300),
                     ]),
-
-                    Forms\Components\TextInput::make('slug')->label('Slug')->required()->unique(ignoreRecord: true),
 
                     Forms\Components\Grid::make(2)->schema([
                         Forms\Components\Textarea::make('summary_ar')->label('ملخص (عربي)')->rows(3),

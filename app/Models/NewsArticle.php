@@ -38,8 +38,9 @@ class NewsArticle extends Model
     {
         static::creating(function (self $article) {
             if (empty($article->slug)) {
-                $base = $article->title_en ?? $article->title_ar ?? 'news';
-                $article->slug = Str::slug($base) . '-' . Str::random(6);
+                $base  = $article->title_en ?? $article->title_ar ?? 'news';
+                $latin = Str::slug(transliterator_transliterate('Any-Latin; Latin-ASCII', (string) $base));
+                $article->slug = ($latin ?: 'news') . '-' . Str::random(6);
             }
             if (empty($article->published_at) && $article->status === 'published') {
                 $article->published_at = now();
