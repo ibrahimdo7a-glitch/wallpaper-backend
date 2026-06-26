@@ -25,6 +25,19 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
     Route::get('/member/me', [TelegramAuthController::class, 'me'])->middleware('auth:member');
     Route::post('/member/logout', [TelegramAuthController::class, 'logout'])->middleware('auth:member');
 
+    // TEMP debug — members page 500
+    Route::get('/_debug/members', function () {
+        try {
+            return response()->json([
+                'has_member_id' => \Illuminate\Support\Facades\Schema::hasColumn('market_listings', 'member_id'),
+                'members_count' => \App\Models\Member::count(),
+                'withcount'     => \App\Models\Member::withCount('listings')->limit(1)->get()->first()?->listings_count ?? 'none',
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => $e->getMessage(), 'where' => basename($e->getFile()) . ':' . $e->getLine()], 500);
+        }
+    });
+
     // Member listings (submit + own list)
     Route::get('/member/listings', [\App\Http\Controllers\Api\V1\MemberListingController::class, 'mine'])->middleware('auth:member');
     Route::post('/member/listings', [\App\Http\Controllers\Api\V1\MemberListingController::class, 'store'])->middleware(['auth:member', 'throttle:10,1']);
