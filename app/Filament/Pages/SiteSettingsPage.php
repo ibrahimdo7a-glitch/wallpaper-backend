@@ -404,15 +404,29 @@ class SiteSettingsPage extends Page
             \Filament\Actions\Action::make('set_webhook')
                 ->label('ربط بوت دخول الأعضاء (Webhook)')
                 ->icon('heroicon-o-bolt')->color('gray')
-                ->requiresConfirmation()
-                ->modalDescription('يربط بوت تلجرام باستقبال طلبات تسجيل دخول الأعضاء. اضغط بعد ضبط توكن البوت.')
                 ->action(function () {
-                    $tg  = app(\App\Services\TelegramService::class);
-                    $res = $tg->setWebhook(\App\Http\Controllers\Api\V1\TelegramAuthController::webhookUrl());
+                    $tg = app(\App\Services\TelegramService::class);
+
+                    if (! $tg->hasBot()) {
+                        Notification::make()->title('أضف توكن البوت أولًا')
+                            ->body('من تبويب «تلجرام» في نفس الصفحة، ثم احفظ، ثم اضغط هذا الزر.')
+                            ->warning()->persistent()->send();
+                        return;
+                    }
+
+                    $base = request()->getSchemeAndHttpHost();   // reliable: same host as the panel
+                    $url  = \App\Http\Controllers\Api\V1\TelegramAuthController::webhookUrl($base);
+                    $res  = $tg->setWebhook($url);
+                    $info = $tg->getWebhookInfo();
+
                     if ($res['ok']) {
-                        Notification::make()->title('تم ربط البوت بنجاح ✓')->success()->send();
+                        Notification::make()->title('تم ربط البوت ✓')
+                            ->body('الرابط المسجّل: ' . ($info['url'] ?? $url))
+                            ->success()->persistent()->send();
                     } else {
-                        Notification::make()->title('فشل الربط')->body($res['error'] ?? '')->danger()->send();
+                        Notification::make()->title('فشل الربط')
+                            ->body(($res['error'] ?? 'خطأ') . ' — الرابط: ' . $url)
+                            ->danger()->persistent()->send();
                     }
                 }),
         ];

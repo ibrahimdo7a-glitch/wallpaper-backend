@@ -23,9 +23,10 @@ class TelegramAuthController extends Controller
         return substr(hash('sha256', (string) config('app.key') . '|' . Setting::get('telegram_bot_token')), 0, 32);
     }
 
-    public static function webhookUrl(): string
+    public static function webhookUrl(?string $base = null): string
     {
-        return rtrim(config('app.url'), '/') . '/api/telegram/webhook/' . self::webhookSecret();
+        $base = $base ?: config('app.url');
+        return rtrim($base, '/') . '/api/telegram/webhook/' . self::webhookSecret();
     }
 
     // POST /v1/auth/telegram/start — begin a login session

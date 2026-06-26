@@ -68,6 +68,20 @@ class TelegramService
         return null;
     }
 
+    /** Current webhook registration info (for diagnostics). */
+    public function getWebhookInfo(): array
+    {
+        $token = Setting::get('telegram_bot_token');
+        if (! $token) {
+            return ['error' => 'no token'];
+        }
+        try {
+            return Http::timeout(10)->get("https://api.telegram.org/bot{$token}/getWebhookInfo")->json('result') ?? [];
+        } catch (\Throwable $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
     /** Register the webhook so the bot receives /start updates. */
     public function setWebhook(string $url): array
     {
