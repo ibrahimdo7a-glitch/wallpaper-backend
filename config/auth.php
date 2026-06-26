@@ -15,12 +15,20 @@ return [
             'driver' => 'sanctum',
             'provider' => 'users',
         ],
+        'member' => [
+            'driver' => 'sanctum',
+            'provider' => 'members',
+        ],
     ],
 
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
             'model' => App\Models\User::class,
+        ],
+        'members' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Member::class,
         ],
     ],
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\BrandController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\HomepageController;
 use App\Http\Controllers\Api\V1\NewsController;
+use App\Http\Controllers\Api\V1\TelegramAuthController;
 use App\Http\Controllers\Api\V1\UploaderController;
 use App\Http\Controllers\Api\V1\WallpaperController;
 use App\Http\Controllers\Api\V1\WallpaperUploadController;
@@ -14,9 +15,15 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::class])->group(function () {
 
-    // Auth
+    // Auth (admin)
     Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
     Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+
+    // Member auth (Telegram login)
+    Route::post('/auth/telegram/start', [TelegramAuthController::class, 'start'])->middleware('throttle:20,1');
+    Route::get('/auth/telegram/status', [TelegramAuthController::class, 'status'])->middleware('throttle:240,1');
+    Route::get('/member/me', [TelegramAuthController::class, 'me'])->middleware('auth:member');
+    Route::post('/member/logout', [TelegramAuthController::class, 'logout'])->middleware('auth:member');
 
     // Public wallpapers
     Route::get('/wallpapers', [WallpaperController::class, 'index']);
@@ -190,3 +197,6 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
         });
     });
 });
+
+// Telegram bot webhook — public (no locale/auth), secret in the path. Receives /start updates.
+Route::post('/telegram/webhook/{secret}', [TelegramAuthController::class, 'webhook']);

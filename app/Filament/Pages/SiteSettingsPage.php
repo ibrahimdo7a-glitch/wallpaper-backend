@@ -400,6 +400,21 @@ class SiteSettingsPage extends Page
                 ->label('حفظ الإعدادات')
                 ->icon('heroicon-o-check')
                 ->action('save'),
+
+            \Filament\Actions\Action::make('set_webhook')
+                ->label('ربط بوت دخول الأعضاء (Webhook)')
+                ->icon('heroicon-o-bolt')->color('gray')
+                ->requiresConfirmation()
+                ->modalDescription('يربط بوت تلجرام باستقبال طلبات تسجيل دخول الأعضاء. اضغط بعد ضبط توكن البوت.')
+                ->action(function () {
+                    $tg  = app(\App\Services\TelegramService::class);
+                    $res = $tg->setWebhook(\App\Http\Controllers\Api\V1\TelegramAuthController::webhookUrl());
+                    if ($res['ok']) {
+                        Notification::make()->title('تم ربط البوت بنجاح ✓')->success()->send();
+                    } else {
+                        Notification::make()->title('فشل الربط')->body($res['error'] ?? '')->danger()->send();
+                    }
+                }),
         ];
     }
 }

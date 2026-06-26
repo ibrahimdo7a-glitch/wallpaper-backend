@@ -16,6 +16,77 @@ class TelegramService
         return filled(Setting::get('telegram_bot_token')) && filled(Setting::get('telegram_channel_id'));
     }
 
+    public function hasBot(): bool
+    {
+        return filled(Setting::get('telegram_bot_token'));
+    }
+
+    /** Send a direct message to a chat (member DM, admin notification). */
+    public function sendMessage(string $chatId, string $text, ?array $replyMarkup = null): array
+    {
+        $token = Setting::get('telegram_bot_token');
+        if (! $token) {
+            return ['ok' => false, 'error' => 'لم يُضبط توكن البوت'];
+        }
+
+        try {
+            $res = Http::timeout(15)->asJson()->post("https://api.telegram.org/bot{$token}/sendMessage", array_filter([
+                'chat_id'      => $chatId,
+                'text'         => $text,
+                'parse_mode'   => 'HTML',
+                'reply_markup' => $replyMarkup,
+            ], fn ($v) => $v !== null));
+
+            $body = $res->json();
+            if ($res->successful() && ($body['ok'] ?? false)) {
+                return ['ok' => true];
+            }
+            return ['ok' => false, 'error' => $body['description'] ?? ('HTTP ' . $res->status())];
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /** The bot's @username (cached in settings) — needed for t.me deep links. */
+    public function getBotUsername(): ?string
+    {
+        if ($cached = Setting::get('telegram_bot_username')) {
+            return $cached;
+        }
+        $token = Setting::get('telegram_bot_token');
+        if (! $token) {
+            return null;
+        }
+        try {
+            $username = Http::timeout(10)->get("https://api.telegram.org/bot{$token}/getMe")->json('result.username');
+            if ($username) {
+                Setting::set('telegram_bot_username', $username);
+                return $username;
+            }
+        } catch (\Throwable) {
+        }
+        return null;
+    }
+
+    /** Register the webhook so the bot receives /start updates. */
+    public function setWebhook(string $url): array
+    {
+        $token = Setting::get('telegram_bot_token');
+        if (! $token) {
+            return ['ok' => false, 'error' => 'لم يُضبط توكن البوت'];
+        }
+        try {
+            $res = Http::timeout(15)->asJson()->post("https://api.telegram.org/bot{$token}/setWebhook", [
+                'url'             => $url,
+                'allowed_updates' => ['message'],
+            ]);
+            $body = $res->json();
+            return ['ok' => (bool) ($body['ok'] ?? false), 'error' => $body['description'] ?? null];
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'error' => $e->getMessage()];
+        }
+    }
+
     /**
      * @param  string|null  $topicId  Explicit forum topic (section). Falls back to
      *                                the default wallpapers topic when null.
