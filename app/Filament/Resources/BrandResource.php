@@ -39,7 +39,6 @@ class BrandResource extends Resource
                         Forms\Components\TextInput::make('name_en')->label('الاسم (إنجليزي)')->maxLength(100),
                     ]),
                     Forms\Components\Grid::make(3)->schema([
-                        Forms\Components\TextInput::make('slug')->label('Slug')->required()->unique(ignoreRecord: true),
                         Forms\Components\TextInput::make('country')->label('الدولة')->placeholder('الصين'),
                         Forms\Components\TextInput::make('website_url')->label('الموقع الرسمي')->url(),
                     ]),

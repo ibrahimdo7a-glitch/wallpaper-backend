@@ -78,12 +78,6 @@ class CategoryResource extends Resource
                             }
                         }),
 
-                    Forms\Components\TextInput::make('slug')
-                        ->label('Slug')
-                        ->required()
-                        ->unique(Category::class, 'slug', ignoreRecord: true)
-                        ->maxLength(255),
-
                     Forms\Components\Textarea::make('description_ar')
                         ->label('الوصف (عربي)')
                         ->rows(3),

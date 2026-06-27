@@ -74,6 +74,13 @@ class Category extends Model
 
     protected static function booted(): void
     {
+        static::creating(function (self $c) {
+            if (empty($c->slug)) {
+                $latin = \Illuminate\Support\Str::slug(transliterator_transliterate('Any-Latin; Latin-ASCII', (string) ($c->name_en ?? $c->name_ar ?? 'category')));
+                $c->slug = ($latin ?: 'category') . '-' . \Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(4));
+            }
+        });
+
         $onChange = static function () {
             \Illuminate\Support\Facades\Cache::forget('categories.tree');
         };

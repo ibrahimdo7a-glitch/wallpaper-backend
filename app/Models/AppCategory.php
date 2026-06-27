@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class AppCategory extends Model
 {
@@ -17,6 +18,17 @@ class AppCategory extends Model
     protected function casts(): array
     {
         return ['is_active' => 'boolean'];
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(fn (self $m) => $m->slug = $m->slug ?: self::makeSlug($m->name_en ?? $m->name_ar));
+    }
+
+    public static function makeSlug(?string $base): string
+    {
+        $latin = Str::slug(transliterator_transliterate('Any-Latin; Latin-ASCII', (string) ($base ?: 'item')));
+        return ($latin ?: 'item') . '-' . Str::lower(Str::random(4));
     }
 
     public function apps(): HasMany

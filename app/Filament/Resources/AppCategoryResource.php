@@ -43,12 +43,6 @@ class AppCategoryResource extends Resource
                     ->label('الاسم (إنجليزي)')
                     ->maxLength(100),
 
-                Forms\Components\TextInput::make('slug')
-                    ->label('Slug')
-                    ->required()
-                    ->unique(ignoreRecord: true)
-                    ->maxLength(100),
-
                 Forms\Components\TextInput::make('icon')
                     ->label('أيقونة (emoji أو heroicon)')
                     ->placeholder('📱')

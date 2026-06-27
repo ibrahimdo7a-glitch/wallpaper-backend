@@ -26,7 +26,6 @@ class CarModelsRelationManager extends RelationManager
                     ),
                 Forms\Components\TextInput::make('name_en')->label('الاسم (إنجليزي)')->maxLength(150),
             ]),
-            Forms\Components\TextInput::make('slug')->label('Slug')->required()->unique(table: 'car_models', ignoreRecord: true),
             Forms\Components\Grid::make(2)->schema([
                 Forms\Components\Textarea::make('description_ar')->label('الوصف (عربي)')->rows(2),
                 Forms\Components\Textarea::make('description_en')->label('الوصف (إنجليزي)')->rows(2),

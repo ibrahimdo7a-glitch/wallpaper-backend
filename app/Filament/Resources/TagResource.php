@@ -41,14 +41,7 @@ class TagResource extends Resource
 
             Forms\Components\TextInput::make('name_en')
                 ->label('الاسم (إنجليزي)')
-                ->required()
-                ->live(onBlur: true)
-                ->afterStateUpdated(fn(Forms\Set $set, ?string $state) => $set('slug', Str::slug($state ?? ''))),
-
-            Forms\Components\TextInput::make('slug')
-                ->label('Slug')
-                ->required()
-                ->unique(Tag::class, 'slug', ignoreRecord: true),
+                ->required(),
         ])->columns(3);
     }
 

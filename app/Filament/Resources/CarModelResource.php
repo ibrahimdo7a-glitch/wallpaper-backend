@@ -47,7 +47,6 @@ class CarModelResource extends Resource
                         Forms\Components\TextInput::make('name_en')->label('اسم الموديل (إنجليزي)')->maxLength(150),
                     ]),
 
-                    Forms\Components\TextInput::make('slug')->label('Slug')->required()->unique(ignoreRecord: true)->maxLength(150),
 
                     Forms\Components\Textarea::make('description_ar')->label('الوصف (عربي)')->rows(3),
                     Forms\Components\Textarea::make('description_en')->label('الوصف (إنجليزي)')->rows(3),

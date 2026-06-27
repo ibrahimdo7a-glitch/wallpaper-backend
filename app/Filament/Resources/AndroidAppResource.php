@@ -83,7 +83,6 @@ class AndroidAppResource extends Resource
                             Forms\Components\Select::make('app_category_id')->label('القسم')
                                 ->options(AppCategory::active()->orderBy('sort_order')->pluck('name_ar', 'id'))
                                 ->searchable()->preload(),
-                            Forms\Components\TextInput::make('slug')->label('Slug')->required()->unique(ignoreRecord: true)->maxLength(200),
                         ]),
                         Forms\Components\Grid::make(2)->schema([
                             Forms\Components\Textarea::make('description_ar')->label('الوصف (عربي)')->rows(3),

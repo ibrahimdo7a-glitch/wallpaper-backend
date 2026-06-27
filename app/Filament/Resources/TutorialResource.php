@@ -37,7 +37,6 @@ class TutorialResource extends Resource
                             ),
                         Forms\Components\TextInput::make('title_en')->label('العنوان (إنجليزي)')->maxLength(255),
                     ]),
-                    Forms\Components\TextInput::make('slug')->label('Slug')->required()->unique(ignoreRecord: true),
                     Forms\Components\Grid::make(2)->schema([
                         Forms\Components\Textarea::make('summary_ar')->label('الملخص (عربي)')->rows(3),
                         Forms\Components\Textarea::make('summary_en')->label('الملخص (إنجليزي)')->rows(3),

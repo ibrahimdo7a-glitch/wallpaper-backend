@@ -34,8 +34,6 @@ class BrandSectionsRelationManager extends RelationManager
                             $set('is_model_specific', $type->is_model_specific);
                         }
                     }),
-                Forms\Components\TextInput::make('slug')->label('Slug للرابط')->required()
-                    ->helperText('مثال: wallpapers — يستخدم في الرابط /brands/zeekr/wallpapers'),
             ]),
             Forms\Components\Grid::make(2)->schema([
                 Forms\Components\TextInput::make('custom_name_ar')->label('اسم مخصص (عربي)')->helperText('اتركه فارغاً للاسم الافتراضي'),

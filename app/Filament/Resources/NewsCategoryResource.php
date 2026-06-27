@@ -35,7 +35,6 @@ class NewsCategoryResource extends Resource
                 Forms\Components\TextInput::make('name_en')->label('الاسم (إنجليزي)')->maxLength(100),
             ]),
             Forms\Components\Grid::make(3)->schema([
-                Forms\Components\TextInput::make('slug')->label('Slug')->required()->unique(ignoreRecord: true),
                 Forms\Components\ColorPicker::make('color')->label('اللون'),
                 Forms\Components\TextInput::make('icon')->label('أيقونة (emoji)')->placeholder('📰'),
             ]),
