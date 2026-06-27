@@ -288,7 +288,7 @@ class BrandController extends Controller
         $apps = $brand->linkedApps()
             ->where('status', 'published')
             ->with('category:id,name_ar,name_en,slug,icon')
-            ->orderByDesc('is_featured')->orderByDesc('apps.created_at')
+            ->orderByDesc('is_featured')->orderBy('apps.sort_order')->orderByDesc('apps.created_at')
             ->get()
             ->map(fn (AndroidApp $a) => $this->appCard($a))
             ->values();
@@ -317,6 +317,7 @@ class BrandController extends Controller
             'file_size_label'      => $app->file_size_label,
             'is_free'              => $app->is_free,
             'is_featured'          => $app->is_featured,
+            'sort_order'           => $app->sort_order,
             'safety_status'        => $app->safety_status,
             'downloads_count'      => $app->downloads_count,
             'published_at'         => $app->published_at?->toISOString(),

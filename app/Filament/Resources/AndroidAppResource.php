@@ -302,7 +302,8 @@ class AndroidAppResource extends Resource
                 Tables\Columns\TextColumn::make('downloads_count')->label('التحميلات')->sortable()->numeric(),
                 Tables\Columns\TextColumn::make('created_at')->label('التاريخ')->dateTime('d/m/Y')->sortable(),
             ])
-            ->defaultSort('created_at', 'desc')
+            ->defaultSort('sort_order')
+            ->reorderable('sort_order')
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->label('الحالة')
                     ->options(['published' => 'منشور', 'pending' => 'انتظار', 'hidden' => 'مخفي']),

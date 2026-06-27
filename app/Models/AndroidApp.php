@@ -29,6 +29,7 @@ class AndroidApp extends Model
         'requires_internet', 'requires_login', 'works_on_car_screen', 'tested_on_car',
         'safety_status', 'status',
         'is_featured', 'is_important', 'is_recommended', 'is_verified', 'show_on_home', 'is_free',
+        'sort_order',
         'downloads_count', 'views_count', 'rating_average', 'rating_count',
         'published_at',
         'meta_title_ar', 'meta_title_en', 'meta_description_ar', 'meta_description_en',

@@ -145,6 +145,7 @@ class AppController extends Controller
             'file_size_label'=> $app->file_size_label,
             'is_free'        => $app->is_free,
             'is_featured'    => $app->is_featured,
+            'sort_order'     => $app->sort_order,
             'downloads_count'=> $app->downloads_count,
             'published_at'   => $app->published_at?->toISOString(),
             'category'       => $app->category ? [
