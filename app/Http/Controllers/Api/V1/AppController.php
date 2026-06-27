@@ -29,7 +29,8 @@ class AppController extends Controller
                 'short_description_ar', 'short_description_en',
                 'badge_text_ar', 'badge_text_en', 'works_on_car_screen',
                 'icon_file', 'cover_image', 'version', 'developer', 'min_android',
-                'file_size', 'is_free', 'is_featured',
+                'file_size', 'is_free', 'is_featured', 'is_important', 'is_verified',
+                'safety_status', 'sort_order',
                 'downloads_count', 'published_at',
             ]);
 
@@ -144,7 +145,10 @@ class AppController extends Controller
             'min_android'    => $app->min_android,
             'file_size_label'=> $app->file_size_label,
             'is_free'        => $app->is_free,
-            'is_featured'    => $app->is_featured,
+            'is_featured'    => (bool) $app->is_featured,
+            'is_important'   => (bool) $app->is_important,
+            'is_verified'    => (bool) $app->is_verified,
+            'safety_status'  => $app->safety_status,
             'sort_order'     => (int) $app->sort_order,
             'downloads_count'=> $app->downloads_count,
             'published_at'   => $app->published_at?->toISOString(),
