@@ -285,15 +285,13 @@ class BrandController extends Controller
     {
         $brand = Brand::active()->where('slug', $slug)->firstOrFail();
 
-        $apps = Cache::remember("brand.{$slug}.apps", 600, function () use ($brand) {
-            return $brand->linkedApps()
-                ->where('status', 'published')
-                ->with('category:id,name_ar,name_en,slug,icon')
-                ->orderByDesc('is_featured')->orderByDesc('apps.created_at')
-                ->get()
-                ->map(fn (AndroidApp $a) => $this->appCard($a))
-                ->values();
-        });
+        $apps = $brand->linkedApps()
+            ->where('status', 'published')
+            ->with('category:id,name_ar,name_en,slug,icon')
+            ->orderByDesc('is_featured')->orderByDesc('apps.created_at')
+            ->get()
+            ->map(fn (AndroidApp $a) => $this->appCard($a))
+            ->values();
 
         return response()->json(['data' => $apps]);
     }
