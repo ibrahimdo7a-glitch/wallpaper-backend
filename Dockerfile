@@ -9,6 +9,7 @@ RUN apk add --no-cache \
     libjpeg-turbo-dev \
     freetype-dev \
     libwebp-dev \
+    libavif-dev \
     postgresql-dev \
     oniguruma-dev \
     libxml2-dev \
@@ -23,7 +24,7 @@ RUN apk add --no-cache \
 RUN pecl install redis && docker-php-ext-enable redis
 
 # Install PHP extensions
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp --with-avif \
     && docker-php-ext-install -j$(nproc) \
         pdo_pgsql \
         mbstring \
