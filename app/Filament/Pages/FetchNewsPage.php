@@ -149,21 +149,30 @@ class FetchNewsPage extends Page
     private function downloadCover(string $url): ?string
     {
         try {
-            $resp = Http::timeout(20)
-                ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; QEVBot/1.0)'])
-                ->get($url);
-            if (! $resp->successful()) {
+            $resp = Http::timeout(20)->withHeaders([
+                'User-Agent' => 'Mozilla/5.0 (compatible; QEVBot/1.0)',
+                'Accept'     => 'image/webp,image/png,image/jpeg,*/*;q=0.8',
+            ])->get($url);
+            if (! $resp->successful() || $resp->body() === '') {
                 return null;
             }
-            $ct  = (string) $resp->header('Content-Type');
-            $ext = match (true) {
-                str_contains($ct, 'png')  => 'png',
-                str_contains($ct, 'webp') => 'webp',
-                str_contains($ct, 'gif')  => 'gif',
-                default                   => 'jpg',
-            };
-            $path = 'news/covers/' . Str::random(24) . '.' . $ext;
-            Storage::disk(config('filesystems.default', 'public'))->put($path, $resp->body(), 'private');
+
+            $disk = config('filesystems.default', 'public');
+            $path = 'news/covers/' . Str::random(24) . '.jpg';
+
+            // Re-encode to JPEG so the cover is usable everywhere (frontend + Telegram).
+            try {
+                $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
+                $img = $manager->read($resp->body());
+                if ($img->width() > 1600) {
+                    $img->scaleDown(width: 1600);
+                }
+                Storage::disk($disk)->put($path, (string) $img->toJpeg(quality: 85), 'private');
+            } catch (\Throwable) {
+                // Couldn't decode (e.g. AVIF) — keep the raw bytes so a cover still exists.
+                Storage::disk($disk)->put($path, $resp->body(), 'private');
+            }
+
             return $path;
         } catch (\Throwable) {
             return null;

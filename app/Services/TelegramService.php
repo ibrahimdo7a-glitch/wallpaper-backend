@@ -117,24 +117,84 @@ class TelegramService
             return ['ok' => false, 'error' => 'لم يُضبط توكن البوت أو معرّف القناة في الإعدادات'];
         }
 
+        $endpoint = "https://api.telegram.org/bot{$token}/sendPhoto";
+        $base = array_filter([
+            'chat_id'           => $channel,
+            'message_thread_id' => filled($topicId) ? (int) $topicId : null,
+            'caption'           => $caption ?: null,
+            'parse_mode'        => $caption ? 'HTML' : null,
+        ], fn ($v) => $v !== null);
+
         try {
-            $res = Http::timeout(25)->asJson()->post("https://api.telegram.org/bot{$token}/sendPhoto", array_filter([
-                'chat_id'                  => $channel,
-                'message_thread_id'        => filled($topicId) ? (int) $topicId : null,
-                'photo'                    => $photoUrl,
-                'caption'                  => $caption ?: null,
-                'parse_mode'               => $caption ? 'HTML' : null,
-            ], fn ($v) => $v !== null));
+            // Preferred: re-encode the image to JPEG and upload the bytes directly.
+            // Telegram rejects WebP/AVIF (which CDNs love to serve), so a plain URL often
+            // fails with "wrong type of the web page content".
+            if ($jpeg = $this->imageAsJpeg($photoUrl)) {
+                $res  = Http::timeout(45)->attach('photo', $jpeg, 'cover.jpg')->post($endpoint, $base);
+                $body = $res->json();
+                if ($res->successful() && ($body['ok'] ?? false)) {
+                    return ['ok' => true];
+                }
+            }
 
+            // Fallback 1: let Telegram fetch the URL itself.
+            $res  = Http::timeout(25)->asJson()->post($endpoint, $base + ['photo' => $photoUrl]);
             $body = $res->json();
-
             if ($res->successful() && ($body['ok'] ?? false)) {
+                return ['ok' => true];
+            }
+
+            // Fallback 2: publish the caption as a text post so the news still goes out.
+            if ($caption && $this->sendChannelText($channel, $caption, $topicId)['ok']) {
                 return ['ok' => true];
             }
 
             return ['ok' => false, 'error' => $body['description'] ?? ('HTTP ' . $res->status())];
         } catch (\Throwable $e) {
             return ['ok' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /** Download an image and re-encode it to JPEG bytes (Telegram-safe), or null on failure. */
+    private function imageAsJpeg(string $url): ?string
+    {
+        try {
+            $resp = Http::timeout(25)->withHeaders([
+                'User-Agent' => 'Mozilla/5.0 (compatible; QEVBot/1.0)',
+                // Ask the CDN for formats GD can decode — never AVIF.
+                'Accept'     => 'image/webp,image/png,image/jpeg,*/*;q=0.8',
+            ])->get($url);
+
+            if (! $resp->successful() || $resp->body() === '') {
+                return null;
+            }
+
+            $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
+            $img = $manager->read($resp->body());
+            if ($img->width() > 2000) {
+                $img->scaleDown(width: 2000);
+            }
+            return (string) $img->toJpeg(quality: 85);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /** Post a plain text message to the channel (optionally inside a forum topic). */
+    private function sendChannelText(string $channel, string $text, ?string $topicId): array
+    {
+        $token = Setting::get('telegram_bot_token');
+        try {
+            $res = Http::timeout(15)->asJson()->post("https://api.telegram.org/bot{$token}/sendMessage", array_filter([
+                'chat_id'           => $channel,
+                'message_thread_id' => filled($topicId) ? (int) $topicId : null,
+                'text'              => $text,
+                'parse_mode'        => 'HTML',
+            ], fn ($v) => $v !== null));
+            $body = $res->json();
+            return ['ok' => (bool) ($res->successful() && ($body['ok'] ?? false))];
+        } catch (\Throwable) {
+            return ['ok' => false];
         }
     }
 }
