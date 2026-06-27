@@ -49,9 +49,6 @@ class NewsSourceResource extends Resource
             ])
             ->defaultSort('sort_order')
             ->reorderable('sort_order')
-            ->headerActions([
-                Tables\Actions\CreateAction::make()->label('إضافة مصدر'),
-            ])
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
@@ -66,7 +63,9 @@ class NewsSourceResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListNewsSources::route('/'),
+            'index'  => Pages\ListNewsSources::route('/'),
+            'create' => Pages\CreateNewsSource::route('/create'),
+            'edit'   => Pages\EditNewsSource::route('/{record}/edit'),
         ];
     }
 }
