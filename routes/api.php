@@ -127,9 +127,6 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
             'ilink_label_ar', 'ilink_label_en',
             'ilink_tooltip_ar', 'ilink_tooltip_en',
             'ilink_file_path',
-            'ilink2_enabled', 'ilink2_label_ar', 'ilink2_label_en', 'ilink2_tooltip_ar', 'ilink2_tooltip_en', 'ilink2_file_path',
-            'ilink3_enabled', 'ilink3_label_ar', 'ilink3_label_en', 'ilink3_tooltip_ar', 'ilink3_tooltip_en', 'ilink3_file_path',
-            'ilink4_enabled', 'ilink4_label_ar', 'ilink4_label_en', 'ilink4_tooltip_ar', 'ilink4_tooltip_en', 'ilink4_file_path',
         ];
         $settings = collect($keys)->mapWithKeys(fn($k) => [$k => \App\Models\Setting::get($k, '')]);
 
@@ -142,35 +139,12 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
         $settings['popular_tags_ar'] = array_filter(array_map('trim', explode(',', $settings['popular_tags_ar'] ?? '')));
         $settings['popular_tags_en'] = array_filter(array_map('trim', explode(',', $settings['popular_tags_en'] ?? '')));
 
-        // Build iLink file URL from stored path
+        // Build iLink file URL from stored path (legacy header banner; kept for backward compat)
         $filePath = $settings['ilink_file_path'] ?? '';
         $settings['ilink_file_url'] = $filePath
             ? \Illuminate\Support\Facades\Storage::disk(config('filesystems.default', 'public'))->url($filePath)
             : '';
-
-        // Up to 4 download boxes (iLink + 3) shown side by side on the apps page.
-        $disk = \Illuminate\Support\Facades\Storage::disk(config('filesystems.default', 'public'));
-        $boxes = [];
-        foreach (['ilink', 'ilink2', 'ilink3', 'ilink4'] as $p) {
-            $enabled = filter_var(\App\Models\Setting::get("{$p}_enabled", ''), FILTER_VALIDATE_BOOLEAN);
-            $path    = \App\Models\Setting::get("{$p}_file_path", '');
-            if (! $enabled || ! $path) {
-                continue;
-            }
-            $boxes[] = [
-                'label_ar'   => \App\Models\Setting::get("{$p}_label_ar", ''),
-                'label_en'   => \App\Models\Setting::get("{$p}_label_en", ''),
-                'tooltip_ar' => \App\Models\Setting::get("{$p}_tooltip_ar", ''),
-                'tooltip_en' => \App\Models\Setting::get("{$p}_tooltip_en", ''),
-                'file_url'   => $disk->url($path),
-            ];
-        }
-        $settings['ilink_boxes'] = $boxes;
-
-        // Drop raw file paths from the payload.
-        foreach (['ilink', 'ilink2', 'ilink3', 'ilink4'] as $p) {
-            unset($settings["{$p}_file_path"]);
-        }
+        unset($settings['ilink_file_path']);
 
         return response()->json([
             'data' => $settings,

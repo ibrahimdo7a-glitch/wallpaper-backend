@@ -54,13 +54,6 @@ class SiteSettingsPage extends Page
             'feature_quality_ar', 'feature_quality_en',
             'feature_fast_ar', 'feature_fast_en',
             'footer_copyright_ar', 'footer_copyright_en',
-            'ilink_enabled',
-            'ilink_label_ar', 'ilink_label_en',
-            'ilink_tooltip_ar', 'ilink_tooltip_en',
-            'ilink_file_path',
-            'ilink2_enabled', 'ilink2_label_ar', 'ilink2_label_en', 'ilink2_tooltip_ar', 'ilink2_tooltip_en', 'ilink2_file_path',
-            'ilink3_enabled', 'ilink3_label_ar', 'ilink3_label_en', 'ilink3_tooltip_ar', 'ilink3_tooltip_en', 'ilink3_file_path',
-            'ilink4_enabled', 'ilink4_label_ar', 'ilink4_label_en', 'ilink4_tooltip_ar', 'ilink4_tooltip_en', 'ilink4_file_path',
             'telegram_bot_token', 'telegram_channel_id',
             'telegram_topic_id', 'telegram_topic_id_apps', 'telegram_topic_id_news',
             'stat_visitors_enabled', 'stat_downloads_enabled', 'stat_wallpapers_enabled', 'stat_apps_enabled',
@@ -282,17 +275,6 @@ class SiteSettingsPage extends Page
                                 ]),
                             ]),
 
-                        Forms\Components\Tabs\Tab::make('iLink')
-                            ->icon('heroicon-o-link')
-                            ->schema([
-                                Forms\Components\Placeholder::make('ilink_help')->label('')
-                                    ->content('حتى ٤ مربعات تحميل تظهر بصف واحد أعلى صفحة التطبيقات. فعّل اللي تبيه، واكتب اسمه ووصفه وارفع ملف الـAPK.'),
-                                self::ilinkBox('ilink',  '📦 المربع ١ (iLink)'),
-                                self::ilinkBox('ilink2', '📦 المربع ٢'),
-                                self::ilinkBox('ilink3', '📦 المربع ٣'),
-                                self::ilinkBox('ilink4', '📦 المربع ٤'),
-                            ]),
-
                         Forms\Components\Tabs\Tab::make('تلجرام')
                             ->icon('heroicon-o-paper-airplane')
                             ->schema([
@@ -367,27 +349,6 @@ class SiteSettingsPage extends Page
         } catch (\Throwable) {
             // non-critical — frontend will refresh on its own schedule
         }
-    }
-
-    private static function ilinkBox(string $prefix, string $title): Forms\Components\Section
-    {
-        $disk = config('filesystems.default', 'public');
-
-        return Forms\Components\Section::make($title)->collapsible()->schema([
-            Forms\Components\Toggle::make("{$prefix}_enabled")->label('تفعيل هذا المربع')->inline(false),
-            Forms\Components\Grid::make(2)->schema([
-                Forms\Components\TextInput::make("{$prefix}_label_ar")->label('الاسم (عربي)')->placeholder('حمّل التطبيق'),
-                Forms\Components\TextInput::make("{$prefix}_label_en")->label('الاسم (إنجليزي)')->placeholder('Download'),
-            ]),
-            Forms\Components\Grid::make(2)->schema([
-                Forms\Components\TextInput::make("{$prefix}_tooltip_ar")->label('وصف صغير (عربي)')->placeholder('جرّب التطبيق مجانًا'),
-                Forms\Components\TextInput::make("{$prefix}_tooltip_en")->label('وصف صغير (إنجليزي)'),
-            ]),
-            Forms\Components\FileUpload::make("{$prefix}_file_path")->label('ملف APK')
-                ->helperText('حتى 500 ميغابايت')
-                ->disk($disk)->directory('ilink')->visibility('private')
-                ->preserveFilenames()->maxSize(512000)->columnSpanFull(),
-        ]);
     }
 
     protected function getFormActions(): array

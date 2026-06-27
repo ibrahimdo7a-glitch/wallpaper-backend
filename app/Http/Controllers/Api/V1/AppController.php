@@ -58,7 +58,8 @@ class AppController extends Controller
             'oldest'          => ['published_at', 'asc'],
             default           => ['published_at', 'desc'],
         };
-        $query->orderBy(...$sort);
+        // Featured apps always surface first (rendered as highlight boxes on the apps page).
+        $query->orderByDesc('is_featured')->orderBy(...$sort);
 
         $apps = $query->paginate($request->integer('per_page', 20));
 
