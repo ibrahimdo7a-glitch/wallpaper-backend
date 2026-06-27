@@ -6,18 +6,16 @@ use App\Models\NewsArticle;
 use App\Services\AiService;
 use App\Services\NewsFetchService;
 use Filament\Actions\Action;
-use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class FetchNewsPage extends Page
 {
-    use \Filament\Forms\Concerns\InteractsWithForms;
     use \App\Filament\Concerns\HiddenFromCreatives;
 
     protected static ?string $navigationIcon  = 'heroicon-o-arrow-down-on-square-stack';
@@ -26,53 +24,14 @@ class FetchNewsPage extends Page
 
     protected static string $view = 'filament.pages.fetch-news';
 
-    /** Fetched headlines (index => ['title','link','source_name','published_at','image','ts']). */
+    /** Fetched headlines (['title','link','source_name','when','image','ts']). */
     public array $items = [];
 
-    /** Form state — holds the checked article links under 'selected'. */
-    public ?array $data = [];
+    /** Checked article links (bound to the checkboxes in the view). */
+    public array $selected = [];
 
     public function getTitle(): string|Htmlable { return 'جلب الأخبار'; }
     public static function getNavigationLabel(): string { return 'جلب الأخبار'; }
-
-    public function mount(): void
-    {
-        $this->form->fill();
-    }
-
-    public function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-                Forms\Components\CheckboxList::make('selected')
-                    ->label('الأخبار المجلوبة — أشّر اللي تبي تحوّله إلى مقالات')
-                    ->options(fn () => $this->itemOptions())
-                    ->descriptions(fn () => $this->itemDescriptions())
-                    ->bulkToggleable()
-                    ->columns(1)
-                    ->hidden(fn () => empty($this->items)),
-            ])
-            ->statePath('data');
-    }
-
-    protected function itemOptions(): array
-    {
-        $opts = [];
-        foreach ($this->items as $i) {
-            $opts[$i['link']] = $i['title'] ?: $i['link'];
-        }
-        return $opts;
-    }
-
-    protected function itemDescriptions(): array
-    {
-        $desc = [];
-        foreach ($this->items as $i) {
-            $date = $i['ts'] ? \Illuminate\Support\Carbon::createFromTimestamp($i['ts'])->diffForHumans() : '';
-            $desc[$i['link']] = trim('📰 ' . ($i['source_name'] ?? '') . ($date ? ' · ' . $date : ''));
-        }
-        return $desc;
-    }
 
     protected function getHeaderActions(): array
     {
@@ -95,8 +54,12 @@ class FetchNewsPage extends Page
 
     public function fetchNews(): void
     {
-        $this->items = app(NewsFetchService::class)->fetchLatest(5);
-        $this->data['selected'] = [];
+        $items = app(NewsFetchService::class)->fetchLatest(5);
+        $this->items = array_map(function ($i) {
+            $i['when'] = ! empty($i['ts']) ? Carbon::createFromTimestamp($i['ts'])->diffForHumans() : '';
+            return $i;
+        }, $items);
+        $this->selected = [];
 
         if (empty($this->items)) {
             Notification::make()
@@ -106,7 +69,13 @@ class FetchNewsPage extends Page
             return;
         }
 
-        Notification::make()->title('تم جلب ' . count($this->items) . ' خبر — أشّر اللي تبيه')->success()->send();
+        Notification::make()->title('تم جلب ' . count($this->items) . ' خبر — افتح العنوان لتقرأه، وأشّر اللي تبيه')->success()->send();
+    }
+
+    public function toggleAll(): void
+    {
+        $links = array_column($this->items, 'link');
+        $this->selected = count($this->selected) >= count($links) ? [] : $links;
     }
 
     public function generateSelected(): void
@@ -117,7 +86,7 @@ class FetchNewsPage extends Page
             return;
         }
 
-        $selected = $this->data['selected'] ?? [];
+        $selected = $this->selected;
         if (empty($selected)) {
             Notification::make()->title('أشّر خبرًا واحدًا على الأقل')->warning()->send();
             return;
@@ -161,7 +130,7 @@ class FetchNewsPage extends Page
 
         // Drop processed items from the list so the page reflects what's left.
         $this->items = collect($this->items)->reject(fn ($i) => in_array($i['link'], $selected, true))->values()->all();
-        $this->data['selected'] = [];
+        $this->selected = [];
 
         Notification::make()
             ->title("تم إنشاء {$ok} مسودة" . ($fail ? " · تعذّر {$fail}" : ''))
