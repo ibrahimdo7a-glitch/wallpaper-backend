@@ -16,7 +16,7 @@ return new class extends Migration
         if (! Schema::hasTable('app_brand')) {
             Schema::create('app_brand', function (Blueprint $table) {
                 $table->id();
-                $table->foreignId('app_id')->constrained('android_apps')->cascadeOnDelete();
+                $table->foreignId('app_id')->constrained('apps')->cascadeOnDelete();
                 $table->foreignId('brand_id')->constrained('brands')->cascadeOnDelete();
                 $table->unique(['app_id', 'brand_id']);
             });

@@ -71,17 +71,6 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
     Route::get('/brands', [BrandController::class, 'index']);
     Route::get('/brands/{slug}', [BrandController::class, 'show']);
     Route::get('/brands/{slug}/apps', [BrandController::class, 'apps']);
-    Route::get('/_debug/brandapps/{slug}', function (string $slug) {
-        try {
-            $brand = \App\Models\Brand::active()->where('slug', $slug)->firstOrFail();
-            $apps = $brand->linkedApps()->where('status', 'published')
-                ->with('category:id,name_ar,name_en,slug,icon')
-                ->orderByDesc('is_featured')->orderByDesc('android_apps.created_at')->get();
-            return response()->json(['count' => $apps->count(), 'ids' => $apps->pluck('id')]);
-        } catch (\Throwable $e) {
-            return response()->json(['error' => $e->getMessage(), 'where' => basename($e->getFile()) . ':' . $e->getLine()], 500);
-        }
-    });
     Route::get('/brands/{slug}/sections', [BrandController::class, 'sections']);
     Route::get('/brands/{slug}/sections/{sectionSlug}', [BrandController::class, 'sectionContent']);
     Route::get('/brands/{slug}/models', [BrandController::class, 'models']);

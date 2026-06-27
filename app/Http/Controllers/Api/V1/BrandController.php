@@ -289,7 +289,7 @@ class BrandController extends Controller
             return $brand->linkedApps()
                 ->where('status', 'published')
                 ->with('category:id,name_ar,name_en,slug,icon')
-                ->orderByDesc('is_featured')->orderByDesc('android_apps.created_at')
+                ->orderByDesc('is_featured')->orderByDesc('apps.created_at')
                 ->get()
                 ->map(fn (AndroidApp $a) => $this->appCard($a))
                 ->values();
