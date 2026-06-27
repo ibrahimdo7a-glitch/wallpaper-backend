@@ -24,7 +24,7 @@ return new class extends Migration
 
         // Carry existing single-brand assignments into the pivot (best-effort).
         try {
-            foreach (DB::table('android_apps')->whereNotNull('brand_id')->get(['id', 'brand_id']) as $a) {
+            foreach (DB::table('apps')->whereNotNull('brand_id')->get(['id', 'brand_id']) as $a) {
                 try {
                     DB::table('app_brand')->insertOrIgnore(['app_id' => $a->id, 'brand_id' => $a->brand_id]);
                 } catch (\Throwable $e) {
