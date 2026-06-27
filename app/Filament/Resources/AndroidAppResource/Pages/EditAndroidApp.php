@@ -10,6 +10,11 @@ class EditAndroidApp extends EditRecord
 {
     protected static string $resource = AndroidAppResource::class;
 
+    public function getTitle(): string
+    {
+        return 'تطبيق ' . ($this->getRecord()->title_ar ?: '');
+    }
+
     protected function getHeaderActions(): array
     {
         return [Actions\DeleteAction::make()];

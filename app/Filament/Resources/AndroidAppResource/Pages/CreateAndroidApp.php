@@ -13,6 +13,11 @@ class CreateAndroidApp extends CreateRecord
 {
     protected static string $resource = AndroidAppResource::class;
 
+    public function getTitle(): string
+    {
+        return 'تطبيق جديد';
+    }
+
     /**
      * Surface the real error in a notification instead of a generic 500
      * (logs go to stderr on Railway, which isn't reachable from here).
