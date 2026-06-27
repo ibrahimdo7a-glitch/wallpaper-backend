@@ -89,6 +89,12 @@ class AndroidApp extends Model
         return $this->belongsTo(Brand::class);
     }
 
+    /** An app can be assigned to several brands (Avatr apps ≠ Leopard apps). */
+    public function brands(): BelongsToMany
+    {
+        return $this->belongsToMany(Brand::class, 'app_brand', 'app_id', 'brand_id');
+    }
+
     public function carModel(): BelongsTo
     {
         return $this->belongsTo(CarModel::class, 'car_model_id');

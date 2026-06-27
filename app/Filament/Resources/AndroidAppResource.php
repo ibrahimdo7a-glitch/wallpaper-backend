@@ -108,8 +108,9 @@ class AndroidAppResource extends Resource
                     ->icon('heroicon-o-truck')
                     ->schema([
                         Forms\Components\Grid::make(2)->schema([
-                            Forms\Components\Select::make('brand_id')->label('الماركة')
-                                ->relationship('brand', 'name_ar')->searchable()->preload()->nullable(),
+                            Forms\Components\Select::make('brands')->label('الماركات')
+                                ->relationship('brands', 'name_ar')->multiple()->searchable()->preload()
+                                ->helperText('اختر ماركة أو أكثر — التطبيق يظهر في صفحة كل ماركة مختارة.'),
                             Forms\Components\Select::make('car_model_id')->label('الموديل')
                                 ->relationship('carModel', 'name_ar')->searchable()->preload()->nullable(),
                         ]),

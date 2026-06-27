@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\AndroidApp;
 use App\Models\Brand;
 use App\Models\BrandSection;
 use App\Models\CarModel;
@@ -10,6 +11,7 @@ use App\Models\ContentCollection;
 use App\Models\ContentItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 class BrandController extends Controller
 {
@@ -275,6 +277,49 @@ class BrandController extends Controller
             'show_in_brand_home' => $s->show_in_brand_home,
             'sort_order'      => $s->sort_order,
             'settings'        => $s->settings,
+        ];
+    }
+
+    // ─── GET /api/v1/brands/{slug}/apps — apps linked to this brand ───────────
+    public function apps(string $slug)
+    {
+        $brand = Brand::active()->where('slug', $slug)->firstOrFail();
+
+        $apps = Cache::remember("brand.{$slug}.apps", 600, function () use ($brand) {
+            return $brand->linkedApps()
+                ->where('status', 'published')
+                ->with('category:id,name_ar,name_en,slug,icon')
+                ->orderByDesc('is_featured')->orderByDesc('android_apps.created_at')
+                ->get()
+                ->map(fn (AndroidApp $a) => $this->appCard($a))
+                ->values();
+        });
+
+        return response()->json(['data' => $apps]);
+    }
+
+    private function appCard(AndroidApp $app): array
+    {
+        $disk = config('filesystems.default', 'public');
+        return [
+            'id'                   => $app->id,
+            'title_ar'             => $app->title_ar,
+            'title_en'             => $app->title_en,
+            'slug'                 => $app->slug,
+            'short_description_ar' => $app->short_description_ar,
+            'short_description_en' => $app->short_description_en,
+            'badge_text_ar'        => $app->badge_text_ar,
+            'badge_text_en'        => $app->badge_text_en,
+            'works_on_car_screen'  => (bool) $app->works_on_car_screen,
+            'icon_url'             => $app->icon_file ? Storage::disk($disk)->url($app->icon_file) : null,
+            'is_free'              => $app->is_free,
+            'is_featured'          => $app->is_featured,
+            'downloads_count'      => $app->downloads_count,
+            'category'             => $app->category ? [
+                'name_ar' => $app->category->name_ar,
+                'name_en' => $app->category->name_en,
+                'icon'    => $app->category->icon,
+            ] : null,
         ];
     }
 

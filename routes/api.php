@@ -70,6 +70,7 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
     // Brands — dynamic Brand Builder system
     Route::get('/brands', [BrandController::class, 'index']);
     Route::get('/brands/{slug}', [BrandController::class, 'show']);
+    Route::get('/brands/{slug}/apps', [BrandController::class, 'apps']);
     Route::get('/brands/{slug}/sections', [BrandController::class, 'sections']);
     Route::get('/brands/{slug}/sections/{sectionSlug}', [BrandController::class, 'sectionContent']);
     Route::get('/brands/{slug}/models', [BrandController::class, 'models']);

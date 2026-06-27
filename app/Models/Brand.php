@@ -105,6 +105,12 @@ class Brand extends Model
         return $this->hasMany(AndroidApp::class, 'brand_id');
     }
 
+    /** Apps linked to this brand via the app_brand pivot (an app can have many brands). */
+    public function linkedApps(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(AndroidApp::class, 'app_brand', 'brand_id', 'app_id');
+    }
+
     public function tutorials(): HasMany
     {
         return $this->hasMany(Tutorial::class);

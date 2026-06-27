@@ -14,4 +14,9 @@ class EditAndroidApp extends EditRecord
     {
         return [Actions\DeleteAction::make()];
     }
+
+    protected function afterSave(): void
+    {
+        $this->record->update(['brand_id' => $this->record->brands()->first()?->id]);
+    }
 }

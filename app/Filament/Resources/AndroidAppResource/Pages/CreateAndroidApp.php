@@ -33,4 +33,11 @@ class CreateAndroidApp extends CreateRecord
                 ->send();
         }
     }
+
+    // Keep the legacy brand_id pointing at the first selected brand so the global
+    // /apps page, filters and counts keep working.
+    protected function afterCreate(): void
+    {
+        $this->record->update(['brand_id' => $this->record->brands()->first()?->id]);
+    }
 }
