@@ -30,6 +30,9 @@ class FetchNewsPage extends Page
     /** Checked article links (bound to the checkboxes in the view). */
     public array $selected = [];
 
+    /** Just-generated drafts to open for review (['title','url']). */
+    public array $generated = [];
+
     public function getTitle(): string|Htmlable { return 'جلب الأخبار'; }
     public static function getNavigationLabel(): string { return 'جلب الأخبار'; }
 
@@ -54,7 +57,8 @@ class FetchNewsPage extends Page
 
     public function fetchNews(): void
     {
-        $items = app(NewsFetchService::class)->fetchLatest(5);
+        $this->generated = [];
+        $items = app(NewsFetchService::class)->fetchLatest(15, 30);
         $this->items = array_map(function ($i) {
             $i['when'] = ! empty($i['ts']) ? Carbon::createFromTimestamp($i['ts'])->diffForHumans() : '';
             return $i;
@@ -92,7 +96,7 @@ class FetchNewsPage extends Page
             return;
         }
 
-        $ok = 0; $fail = 0;
+        $generated = []; $fail = 0;
         foreach ($selected as $link) {
             $item = collect($this->items)->firstWhere('link', $link) ?? [];
             try {
@@ -122,7 +126,10 @@ class FetchNewsPage extends Page
                 }
 
                 $article->save();
-                $ok++;
+                $generated[] = [
+                    'title' => $article->title_ar,
+                    'url'   => \App\Filament\Resources\NewsArticleResource::getUrl('edit', ['record' => $article]),
+                ];
             } catch (\Throwable) {
                 $fail++;
             }
@@ -130,11 +137,12 @@ class FetchNewsPage extends Page
 
         // Drop processed items from the list so the page reflects what's left.
         $this->items = collect($this->items)->reject(fn ($i) => in_array($i['link'], $selected, true))->values()->all();
-        $this->selected = [];
+        $this->selected  = [];
+        $this->generated = $generated;
 
         Notification::make()
-            ->title("تم إنشاء {$ok} مسودة" . ($fail ? " · تعذّر {$fail}" : ''))
-            ->body('راجع المسودات من «الأخبار»، اضبط الصورة، ثم انشر.')
+            ->title('تم توليد ' . count($generated) . ' مقال' . ($fail ? " · تعذّر {$fail}" : ''))
+            ->body('افتح كل مقال من الأعلى للمراجعة والنشر.')
             ->success()->send();
     }
 

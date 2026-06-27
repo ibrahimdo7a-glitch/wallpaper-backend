@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Http;
  */
 class NewsFetchService
 {
-    public function fetchLatest(int $perSource = 5): array
+    public function fetchLatest(int $perSource = 5, int $total = 0): array
     {
         $all = [];
 
@@ -44,7 +44,7 @@ class NewsFetchService
         }));
         usort($all, fn ($a, $b) => ($b['ts'] ?? 0) <=> ($a['ts'] ?? 0));
 
-        return $all;
+        return $total > 0 ? array_slice($all, 0, $total) : $all;
     }
 
     private function fetchSource(NewsSource $source, int $limit): array

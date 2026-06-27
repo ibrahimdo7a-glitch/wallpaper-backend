@@ -8,9 +8,37 @@
             <p>٤) راجع المسودات من قسم <span class="font-semibold">«الأخبار»</span>، اضبط الصورة، ثم انشر.</p>
         </div>
 
+        @if (! empty($generated))
+            <div class="rounded-2xl border border-success-300 dark:border-success-500/30 bg-success-50 dark:bg-success-500/10 p-4 space-y-3">
+                <div class="flex items-center justify-between gap-3">
+                    <p class="font-semibold text-success-700 dark:text-success-300">✅ تم توليد {{ count($generated) }} مقال — افتحها للمراجعة والنشر</p>
+                    <button type="button"
+                        x-data
+                        x-on:click="{{ \Illuminate\Support\Js::from(collect($generated)->pluck('url')) }}.forEach(u => window.open(u, '_blank'))"
+                        class="shrink-0 inline-flex items-center gap-1 rounded-lg bg-success-600 hover:bg-success-700 px-3 py-1.5 text-sm font-medium text-white">
+                        افتح الكل ↗
+                    </button>
+                </div>
+                <ul class="space-y-1">
+                    @foreach ($generated as $g)
+                        <li>
+                            <a href="{{ $g['url'] }}" target="_blank" rel="noopener noreferrer"
+                                class="text-sm text-success-700 dark:text-success-300 hover:underline">
+                                • {{ $g['title'] }} ↗
+                            </a>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         @if (empty($items))
             <div class="text-center py-16 text-gray-400 border border-dashed border-gray-300 dark:border-white/10 rounded-2xl">
-                اضغط «جلب آخر الأخبار» لعرض آخر العناوين من مصادرك.
+                @if (empty($generated))
+                    اضغط «جلب آخر الأخبار» لعرض آخر العناوين من مصادرك.
+                @else
+                    خلصت الأخبار المحددة. اضغط «جلب آخر الأخبار» لجلب المزيد.
+                @endif
             </div>
         @else
             <div class="flex items-center justify-between">
