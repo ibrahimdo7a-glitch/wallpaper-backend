@@ -201,17 +201,32 @@ trait BuildsMarketForm
 
     protected static function contactSection(): Forms\Components\Section
     {
-        return Forms\Components\Section::make('التواصل')->schema([
-            Forms\Components\Grid::make(2)->schema([
-                Forms\Components\TextInput::make('contact_name')->label('اسم المُعلِن')->maxLength(80),
-                Forms\Components\TextInput::make('contact_phone')->label('رقم الهاتف')->tel()->maxLength(30),
-            ]),
-            Forms\Components\Grid::make(2)->schema([
-                Forms\Components\TextInput::make('contact_whatsapp')->label('واتساب')->tel()->maxLength(30)
-                    ->helperText('بصيغة دولية بدون + أو 00، مثال: 974XXXXXXXX'),
-                Forms\Components\TextInput::make('contact_telegram')->label('تلجرام (يوزر)')->maxLength(60)->placeholder('@username'),
-            ]),
-        ]);
+        // Member-submitted listings carry the member's own identity/contact — the admin
+        // moderates the listing but must not be able to rewrite who posted it. Lock these
+        // fields for member listings (disabled in the UI + never dehydrated, so a tampered
+        // payload can't overwrite the stored values). Admin-created listings stay editable.
+        $lockedForMember = fn (?MarketListing $record) => (bool) $record?->member_id;
+        $editableOnly     = fn (?MarketListing $record) => ! $record?->member_id;
+
+        return Forms\Components\Section::make('التواصل')
+            ->description(fn (?MarketListing $record) => $record?->member_id
+                ? '🔒 بيانات العضو مقفولة ولا يمكن تعديلها — أنت تراجع الإعلان فقط.'
+                : null)
+            ->schema([
+                Forms\Components\Grid::make(2)->schema([
+                    Forms\Components\TextInput::make('contact_name')->label('اسم المُعلِن')->maxLength(80)
+                        ->disabled($lockedForMember)->dehydrated($editableOnly),
+                    Forms\Components\TextInput::make('contact_phone')->label('رقم الهاتف')->tel()->maxLength(30)
+                        ->disabled($lockedForMember)->dehydrated($editableOnly),
+                ]),
+                Forms\Components\Grid::make(2)->schema([
+                    Forms\Components\TextInput::make('contact_whatsapp')->label('واتساب')->tel()->maxLength(30)
+                        ->helperText('بصيغة دولية بدون + أو 00، مثال: 974XXXXXXXX')
+                        ->disabled($lockedForMember)->dehydrated($editableOnly),
+                    Forms\Components\TextInput::make('contact_telegram')->label('تلجرام (يوزر)')->maxLength(60)->placeholder('@username')
+                        ->disabled($lockedForMember)->dehydrated($editableOnly),
+                ]),
+            ]);
     }
 
     protected static function publishSection(): Forms\Components\Section
