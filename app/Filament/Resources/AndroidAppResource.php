@@ -211,6 +211,7 @@ class AndroidAppResource extends Resource
                         Forms\Components\Repeater::make('screenshots')
                             ->relationship()
                             ->label('لقطات شاشة التطبيق')
+                            ->defaultItems(0)
                             ->orderColumn('sort_order')
                             ->schema([
                                 Forms\Components\FileUpload::make('image_file')->label('الصورة')
@@ -232,6 +233,7 @@ class AndroidAppResource extends Resource
                         Forms\Components\Repeater::make('installationSteps')
                             ->relationship()
                             ->label('خطوات التنصيب (حد أقصى ٦ خطوات)')
+                            ->defaultItems(0)
                             ->maxItems(6)
                             ->orderColumn('step_number')
                             ->schema([
