@@ -63,7 +63,10 @@ class TelegramService
         ]);
     }
 
-    /** DM every moderator who opted in (telegram linked + notify_new_listings) about a new pending listing. */
+    /**
+     * DM every opted-in moderator about a new pending listing — with the cover photo
+     * and ✅ نشر / ❌ رفض inline buttons so they can moderate from inside Telegram.
+     */
     public function notifyModeratorsNewListing(\App\Models\MarketListing $listing): void
     {
         $mods = \App\Models\User::query()
@@ -78,12 +81,86 @@ class TelegramService
         $isCar     = in_array($listing->listing_type, ['car_sale', 'car_request'], true);
         $reviewUrl = 'https://api.qev.app/admin/' . ($isCar ? 'car-market' : 'parts-market') . '/' . $listing->id . '/edit';
         $member    = $listing->member;
-        $text = "🆕 <b>إعلان جديد بانتظار المراجعة</b>\n«" . e($listing->title_ar) . "»\n"
-              . 'من: ' . e($member?->name ?? 'عضو') . ($member?->telegram_username ? ' (@' . $member->telegram_username . ')' : '');
-        $markup = ['inline_keyboard' => [[['text' => '🔍 مراجعة الإعلان', 'url' => $reviewUrl]]]];
+        $price     = $listing->price !== null ? number_format((float) $listing->price, 0) . ' ' . $listing->currency : 'حسب الطلب';
+        $caption = "🆕 <b>إعلان جديد بانتظار المراجعة</b>\n«" . e($listing->title_ar) . "»\n"
+                 . "💰 {$price}\n"
+                 . '👤 ' . e($member?->name ?? 'عضو') . ($member?->telegram_username ? ' (@' . $member->telegram_username . ')' : '')
+                 . ($listing->description_ar ? "\n\n" . e(mb_substr($listing->description_ar, 0, 300)) : '');
+
+        $markup = ['inline_keyboard' => [
+            [
+                ['text' => '✅ نشر', 'callback_data' => 'approve:' . $listing->id],
+                ['text' => '❌ رفض', 'callback_data' => 'reject:' . $listing->id],
+            ],
+            [['text' => '🔍 فتح في اللوحة', 'url' => $reviewUrl]],
+        ]];
 
         foreach ($mods as $chatId) {
-            $this->sendMessage((string) $chatId, $text, $markup);
+            $this->sendPhotoToChat((string) $chatId, $listing->cover_url, $caption, $markup);
+        }
+    }
+
+    /** Send a photo (or a text fallback) to a specific chat with an optional inline keyboard. */
+    public function sendPhotoToChat(string $chatId, ?string $photoUrl, string $caption, ?array $replyMarkup = null): array
+    {
+        $token = Setting::get('telegram_bot_token');
+        if (! $token) {
+            return ['ok' => false];
+        }
+
+        try {
+            if ($photoUrl && ($jpeg = $this->imageAsJpeg($photoUrl))) {
+                $fields = array_filter([
+                    'chat_id'      => $chatId,
+                    'caption'      => $caption,
+                    'parse_mode'   => 'HTML',
+                    'reply_markup' => $replyMarkup ? json_encode($replyMarkup) : null,
+                ], fn ($v) => $v !== null);
+                $res = Http::timeout(45)->attach('photo', $jpeg, 'cover.jpg')->post("https://api.telegram.org/bot{$token}/sendPhoto", $fields);
+                if ($res->successful() && ($res->json('ok') ?? false)) {
+                    return ['ok' => true];
+                }
+            }
+        } catch (\Throwable) {
+            // fall through to a text message
+        }
+
+        return $this->sendMessage($chatId, $caption, $replyMarkup);
+    }
+
+    /** Acknowledge an inline-button tap (small toast/alert inside Telegram). */
+    public function answerCallback(string $callbackId, string $text = '', bool $alert = false): void
+    {
+        $token = Setting::get('telegram_bot_token');
+        if (! $token) {
+            return;
+        }
+        try {
+            Http::timeout(10)->asJson()->post("https://api.telegram.org/bot{$token}/answerCallbackQuery", array_filter([
+                'callback_query_id' => $callbackId,
+                'text'              => $text ?: null,
+                'show_alert'        => $alert,
+            ], fn ($v) => $v !== null));
+        } catch (\Throwable) {
+        }
+    }
+
+    /** Update a sent photo's caption and drop its inline keyboard (after it's been acted on). */
+    public function editMessageCaption(string $chatId, int $messageId, string $caption): void
+    {
+        $token = Setting::get('telegram_bot_token');
+        if (! $token) {
+            return;
+        }
+        try {
+            Http::timeout(10)->asJson()->post("https://api.telegram.org/bot{$token}/editMessageCaption", [
+                'chat_id'      => $chatId,
+                'message_id'   => $messageId,
+                'caption'      => $caption,
+                'parse_mode'   => 'HTML',
+                'reply_markup' => ['inline_keyboard' => []],
+            ]);
+        } catch (\Throwable) {
         }
     }
 
@@ -132,7 +209,7 @@ class TelegramService
         try {
             $res = Http::timeout(15)->asJson()->post("https://api.telegram.org/bot{$token}/setWebhook", [
                 'url'                  => $url,
-                'allowed_updates'      => ['message'],
+                'allowed_updates'      => ['message', 'callback_query'],
                 'drop_pending_updates' => true,
             ]);
             $body = $res->json();

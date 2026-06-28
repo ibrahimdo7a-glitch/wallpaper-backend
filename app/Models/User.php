@@ -39,6 +39,7 @@ class User extends Authenticatable implements FilamentUser
         'telegram_chat_id',
         'telegram_link_code',
         'notify_new_listings',
+        'pending_reject_listing_id',
         'last_login_at',
         'last_login_ip_hash',
         'failed_login_attempts',

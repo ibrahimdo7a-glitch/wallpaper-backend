@@ -105,6 +105,11 @@ class TelegramAuthController extends Controller
             return response()->json(['ok' => false], 403);
         }
 
+        // Inline-button taps (✅ نشر / ❌ رفض) from moderators.
+        if ($callback = $request->input('callback_query')) {
+            return $this->handleModeratorCallback($callback);
+        }
+
         $message = $request->input('message') ?? $request->input('edited_message');
         $from    = $message['from'] ?? null;
         $text    = trim((string) ($message['text'] ?? ''));
@@ -112,7 +117,17 @@ class TelegramAuthController extends Controller
         $debug = ['at' => now()->toDateTimeString(), 'text' => $text, 'from_id' => $from['id'] ?? null, 'username' => $from['username'] ?? null];
         $record = fn (string $result) => Setting::set('telegram_last_update', json_encode($debug + ['result' => $result], JSON_UNESCAPED_UNICODE));
 
-        if (! $from || ! Str::startsWith($text, '/start')) {
+        if (! $from) {
+            return response()->json(['ok' => true]);
+        }
+
+        // A moderator typing the rejection reason after tapping ❌ رفض.
+        if ($text !== '' && ! Str::startsWith($text, '/') && $this->handleModeratorReason($from, $text)) {
+            $record('سبب رفض من مشرف ✓');
+            return response()->json(['ok' => true]);
+        }
+
+        if (! Str::startsWith($text, '/start')) {
             $record('تجاهل (ليست /start)');
             return response()->json(['ok' => true]);
         }
@@ -169,5 +184,81 @@ class TelegramAuthController extends Controller
 
         $this->telegram->sendMessage((string) $from['id'], '👋 أهلًا بك في <b>qev.app</b>. ارجع للموقع واضغط "تسجيل الدخول" لإكمال الدخول.');
         return response()->json(['ok' => true]);
+    }
+
+    /** Handle a moderator tapping ✅ نشر / ❌ رفض on a listing notification inside Telegram. */
+    private function handleModeratorCallback(array $callback): JsonResponse
+    {
+        $from       = $callback['from'] ?? [];
+        $data       = (string) ($callback['data'] ?? '');
+        $callbackId = (string) ($callback['id'] ?? '');
+        $msg        = $callback['message'] ?? [];
+        $chatId     = (string) ($msg['chat']['id'] ?? ($from['id'] ?? ''));
+        $messageId  = (int) ($msg['message_id'] ?? 0);
+
+        // Only a linked, opted-in moderator may act.
+        $mod = \App\Models\User::where('telegram_chat_id', (string) ($from['id'] ?? ''))
+            ->where('notify_new_listings', true)->first();
+        if (! $mod) {
+            $this->telegram->answerCallback($callbackId, '⛔ غير مصرّح', true);
+            return response()->json(['ok' => true]);
+        }
+
+        [$action, $idRaw] = array_pad(explode(':', $data, 2), 2, null);
+        $listing = $idRaw ? \App\Models\MarketListing::find((int) $idRaw) : null;
+        if (! $listing) {
+            $this->telegram->answerCallback($callbackId, 'الإعلان غير موجود');
+            return response()->json(['ok' => true]);
+        }
+
+        if ($listing->status !== 'pending') {
+            $this->telegram->answerCallback($callbackId, 'تمت معالجته مسبقًا');
+            if ($messageId) {
+                $this->telegram->editMessageCaption($chatId, $messageId, '☑️ عولج مسبقًا — «' . e($listing->title_ar) . '»');
+            }
+            return response()->json(['ok' => true]);
+        }
+
+        if ($action === 'approve') {
+            $listing->update(['status' => 'published', 'rejection_reason' => null, 'published_at' => $listing->published_at ?? now()]);
+            $this->telegram->answerCallback($callbackId, '✅ تم النشر');
+            if ($messageId) {
+                $this->telegram->editMessageCaption($chatId, $messageId, '✅ <b>نُشر</b> — «' . e($listing->title_ar) . '»');
+            }
+            return response()->json(['ok' => true]);
+        }
+
+        if ($action === 'reject') {
+            $mod->update(['pending_reject_listing_id' => $listing->id]);
+            $this->telegram->answerCallback($callbackId, '✍️ اكتب سبب الرفض كرسالة');
+            $this->telegram->sendMessage((string) $from['id'], '✍️ اكتب سبب رفض «<b>' . e($listing->title_ar) . '</b>» كرسالة الآن، وسأرسله للعضو.');
+            return response()->json(['ok' => true]);
+        }
+
+        $this->telegram->answerCallback($callbackId, '');
+        return response()->json(['ok' => true]);
+    }
+
+    /** A moderator with a pending reject typed the reason → reject + notify the member. Returns true if handled. */
+    private function handleModeratorReason(array $from, string $text): bool
+    {
+        $mod = \App\Models\User::where('telegram_chat_id', (string) ($from['id'] ?? ''))
+            ->whereNotNull('pending_reject_listing_id')->first();
+        if (! $mod) {
+            return false;
+        }
+
+        $listing = \App\Models\MarketListing::find($mod->pending_reject_listing_id);
+        $mod->update(['pending_reject_listing_id' => null]);
+
+        if ($listing && $listing->status === 'pending') {
+            $listing->update(['status' => 'rejected', 'rejection_reason' => $text]);
+            $this->telegram->notifyListingRejected($listing, $text);
+            $this->telegram->sendMessage((string) $from['id'], '❌ تم رفض «<b>' . e($listing->title_ar) . '</b>» وإشعار العضو بالسبب.');
+        } else {
+            $this->telegram->sendMessage((string) $from['id'], 'تعذّر — ربما عولج الإعلان مسبقًا.');
+        }
+
+        return true;
     }
 }

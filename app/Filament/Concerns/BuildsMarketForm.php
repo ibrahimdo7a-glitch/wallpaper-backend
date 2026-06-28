@@ -234,8 +234,9 @@ trait BuildsMarketForm
         return Forms\Components\Section::make('النشر')->schema([
             Forms\Components\Grid::make(3)->schema([
                 Forms\Components\Select::make('status')->label('الحالة')
-                    ->options(['published' => 'منشور', 'pending' => 'بانتظار المراجعة', 'rejected' => 'مرفوض', 'sold' => 'مُباع', 'hidden' => 'مخفي'])
-                    ->default('published'),
+                    ->options(['published' => 'منشور', 'pending' => 'بانتظار المراجعة', 'sold' => 'مُباع', 'hidden' => 'مخفي'])
+                    ->default('published')
+                    ->helperText('للرفض استخدم زر «رفض» في القائمة — يطلب سببًا ويُشعر العضو.'),
                 Forms\Components\Toggle::make('is_featured')->label('مميّز ⭐')->inline(false),
                 Forms\Components\DateTimePicker::make('expires_at')->label('ينتهي في (اختياري)')->nullable(),
             ]),
@@ -284,14 +285,30 @@ trait BuildsMarketForm
                 Tables\Actions\Action::make('reject')
                     ->label('رفض')->icon('heroicon-o-x-mark')->color('danger')
                     ->visible(fn (MarketListing $r) => $r->member_id && $r->status !== 'rejected')
+                    ->modalHeading('رفض الإعلان وإشعار العضو')
+                    ->modalSubmitActionLabel('رفض وإرسال للعضو')
                     ->form([
-                        Forms\Components\Textarea::make('reason')->label('سبب الرفض (يصل العضو على تلجرام)')
-                            ->required()->rows(3)->maxLength(500)
-                            ->placeholder('مثال: الصور غير واضحة، أو السعر ناقص.'),
+                        Forms\Components\Select::make('reason_preset')->label('سبب جاهز (بضغطة)')
+                            ->options([
+                                'الصور غير واضحة أو ناقصة' => 'الصور غير واضحة أو ناقصة',
+                                'السعر ناقص أو غير منطقي'  => 'السعر ناقص أو غير منطقي',
+                                'الوصف غير كافٍ'           => 'الوصف غير كافٍ',
+                                'معلومات التواصل ناقصة'    => 'معلومات التواصل ناقصة',
+                                'مخالف لشروط النشر'        => 'مخالف لشروط النشر',
+                            ])->native(false)->live()->placeholder('اختر سببًا سريعًا'),
+                        Forms\Components\Textarea::make('reason_note')->label('ملاحظة / سبب مخصّص')
+                            ->rows(2)->maxLength(500)
+                            ->required(fn (Forms\Get $get) => blank($get('reason_preset')))
+                            ->placeholder('تفاصيل أكثر للعضو، أو سبب مخصّص إن لم تختر من القائمة.'),
                     ])
                     ->action(function (MarketListing $r, array $data) {
-                        $r->update(['status' => 'rejected', 'rejection_reason' => $data['reason']]);
-                        app(\App\Services\TelegramService::class)->notifyListingRejected($r, $data['reason']);
+                        $reason = trim(implode(' — ', array_filter([$data['reason_preset'] ?? null, $data['reason_note'] ?? null])));
+                        if ($reason === '') {
+                            Notification::make()->title('اختر سببًا أو اكتب ملاحظة')->warning()->send();
+                            return;
+                        }
+                        $r->update(['status' => 'rejected', 'rejection_reason' => $reason]);
+                        app(\App\Services\TelegramService::class)->notifyListingRejected($r, $reason);
                         Notification::make()->title('تم رفض الإعلان وإشعار العضو ✓')->success()->send();
                     }),
                 Tables\Actions\Action::make('mark_sold')
