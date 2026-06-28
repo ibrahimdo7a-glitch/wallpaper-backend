@@ -23,10 +23,17 @@ class WallpapersRelationManager extends RelationManager
     protected static ?string $pluralModelLabel = 'الخلفيات';
     protected static ?string $icon = 'heroicon-o-photo';
 
-    /** The brand's enabled wallpapers section id (content_items require it). */
+    private bool $sectionIdResolved = false;
+    private ?int $sectionIdMemo = null;
+
+    /** The brand's enabled wallpapers section id (memoized — runs in several action closures per render). */
     protected function sectionId(): ?int
     {
-        return $this->getOwnerRecord()->sectionByKey('wallpapers')?->id;
+        if (! $this->sectionIdResolved) {
+            $this->sectionIdMemo = $this->getOwnerRecord()->sectionByKey('wallpapers')?->id;
+            $this->sectionIdResolved = true;
+        }
+        return $this->sectionIdMemo;
     }
 
     protected function collectionOptions(): array
@@ -69,6 +76,7 @@ class WallpapersRelationManager extends RelationManager
             ->recordTitleAttribute('title_ar')
             ->defaultSort('created_at', 'desc')
             ->deferLoading() // render the brand page first, then load this image-heavy table
+            ->modifyQueryUsing(fn ($query) => $query->with('designer:id,name_ar'))
             ->paginationPageOptions([12, 24, 48, 100])
             ->defaultPaginationPageOption(12)
             ->columns([
@@ -83,9 +91,8 @@ class WallpapersRelationManager extends RelationManager
                 Tables\Columns\SelectColumn::make('content_collection_id')->label('القسم الفرعي')
                     ->options(fn() => $this->collectionOptions())
                     ->placeholder('بدون قسم فرعي')->width('160px'),
-                Tables\Columns\SelectColumn::make('designer_id')->label('المصمّم')
-                    ->options(fn() => $this->designerOptions())
-                    ->placeholder('بدون مصمّم')->width('160px'),
+                Tables\Columns\TextColumn::make('designer.name_ar')->label('المصمّم')
+                    ->placeholder('بدون مصمّم')->toggleable(),
                 Tables\Columns\BadgeColumn::make('status')->label('الحالة')
                     ->colors(['success' => 'published', 'gray' => 'draft']),
                 Tables\Columns\IconColumn::make('watermark_id')->label('موقّعة')

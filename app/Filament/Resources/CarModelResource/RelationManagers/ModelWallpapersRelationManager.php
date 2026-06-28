@@ -27,16 +27,22 @@ class ModelWallpapersRelationManager extends RelationManager
     // Per-request memo so the inline SelectColumns don't re-query options for every row (was ~96 queries/page).
     protected ?array $collectionOptionsCache = null;
     protected ?array $designerOptionsCache = null;
+    private bool $sectionIdResolved = false;
+    private ?int $sectionIdMemo = null;
 
     protected function brand()
     {
         return $this->getOwnerRecord()->brand;
     }
 
-    /** The brand's enabled wallpapers section id. */
+    /** The brand's enabled wallpapers section id (memoized — runs in several action closures per render). */
     protected function sectionId(): ?int
     {
-        return $this->brand()?->sectionByKey('wallpapers')?->id;
+        if (! $this->sectionIdResolved) {
+            $this->sectionIdMemo = $this->brand()?->sectionByKey('wallpapers')?->id;
+            $this->sectionIdResolved = true;
+        }
+        return $this->sectionIdMemo;
     }
 
     /** Collections scoped to THIS model (per-model sub-sections). Memoized per request. */
@@ -127,6 +133,7 @@ class ModelWallpapersRelationManager extends RelationManager
             ->recordTitleAttribute('title_ar')
             ->defaultSort('created_at', 'desc')
             ->deferLoading() // render the model page first, then load this image-heavy table
+            ->modifyQueryUsing(fn ($query) => $query->with('designer:id,name_ar'))
             ->paginationPageOptions([12, 24, 48, 100])
             ->defaultPaginationPageOption(12)
             ->columns([
@@ -141,9 +148,10 @@ class ModelWallpapersRelationManager extends RelationManager
                 Tables\Columns\SelectColumn::make('content_collection_id')->label('القسم الفرعي')
                     ->options(fn() => $this->collectionOptions())
                     ->placeholder('بدون قسم فرعي')->width('160px'),
-                Tables\Columns\SelectColumn::make('designer_id')->label('المصمّم')
-                    ->options(fn() => $this->designerOptions())
-                    ->placeholder('بدون مصمّم')->width('160px'),
+                // Display-only (was an inline select that embedded every designer's options into
+                // each row — heavy to re-render). Assign via the "تعيين مصمّم" bulk action or Edit.
+                Tables\Columns\TextColumn::make('designer.name_ar')->label('المصمّم')
+                    ->placeholder('بدون مصمّم')->toggleable(),
                 Tables\Columns\BadgeColumn::make('status')->label('الحالة')->colors(['success' => 'published', 'gray' => 'draft']),
                 Tables\Columns\IconColumn::make('watermark_id')->label('موقّعة')
                     ->trueIcon('heroicon-s-finger-print')->falseIcon('heroicon-o-minus')
@@ -229,6 +237,16 @@ class ModelWallpapersRelationManager extends RelationManager
                                 ->options(fn() => $this->collectionOptions())->nullable()->placeholder('بدون قسم فرعي'),
                         ])
                         ->action(fn($records, array $data) => $records->each->update(['content_collection_id' => $data['content_collection_id'] ?? null]))
+                        ->deselectRecordsAfterCompletion(),
+
+                    Tables\Actions\BulkAction::make('assignDesigner')->label('تعيين مصمّم')
+                        ->icon('heroicon-o-paint-brush')->color('warning')
+                        ->modalHeading('تعيين مصمّم للخلفيات المحددة')
+                        ->form([
+                            Forms\Components\Select::make('designer_id')->label('المصمّم')
+                                ->options(fn() => $this->designerOptions())->searchable()->nullable()->placeholder('بدون مصمّم'),
+                        ])
+                        ->action(fn($records, array $data) => $records->each->update(['designer_id' => $data['designer_id'] ?? null]))
                         ->deselectRecordsAfterCompletion(),
 
                     Tables\Actions\BulkAction::make('moveToModel')->label('نقل لموديل آخر')

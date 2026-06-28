@@ -26,9 +26,19 @@ trait InteractsWithContentWatermark
             ->pluck('name', 'id')->toArray();
     }
 
+    private ?bool $hasWatermarksCache = null;
+    private ?bool $tgConfiguredCache = null;
+
     protected function hasWatermarks(): bool
     {
-        return Watermark::where('is_active', true)->exists();
+        // Memoized: this runs in every row action's visible() closure, once per row per render.
+        return $this->hasWatermarksCache ??= Watermark::where('is_active', true)->exists();
+    }
+
+    /** Memoized Telegram-configured check (also evaluated per row per render). */
+    protected function telegramConfigured(): bool
+    {
+        return $this->tgConfiguredCache ??= app(\App\Services\TelegramService::class)->isConfigured();
     }
 
     /** Signature dropdown. */
@@ -93,7 +103,7 @@ trait InteractsWithContentWatermark
             ->label('نشر في تلجرام')
             ->icon('heroicon-o-paper-airplane')
             ->color('success')
-            ->visible(fn () => app(\App\Services\TelegramService::class)->isConfigured())
+            ->visible(fn () => $this->telegramConfigured())
             ->modalHeading('نشر الخلفية في قناة تلجرام')
             ->modalSubmitActionLabel('نشر')
             ->form([
@@ -129,7 +139,7 @@ trait InteractsWithContentWatermark
             ->label('نشر في تلجرام')
             ->icon('heroicon-o-paper-airplane')
             ->color('success')
-            ->visible(fn () => app(\App\Services\TelegramService::class)->isConfigured())
+            ->visible(fn () => $this->telegramConfigured())
             ->requiresConfirmation()
             ->modalHeading('نشر الخلفيات المحددة في القناة')
             ->modalDescription("كل خلفية تُنشر كبوست منفصل بفاصل ٥ ثوانٍ. لا تغلق الصفحة حتى تنتهي. (بحد أقصى {$limit} في المرة — للمزيد كرّر العملية)")
