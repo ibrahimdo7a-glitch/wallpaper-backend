@@ -42,7 +42,7 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
     Route::get('/wallpapers/search', [WallpaperController::class, 'search']);
     Route::get('/wallpapers/{slug}', [WallpaperController::class, 'show']);
     Route::post('/wallpapers/{id}/like', [WallpaperController::class, 'like'])->middleware('throttle:30,1');
-    Route::post('/wallpapers/{id}/download', [WallpaperController::class, 'download'])->middleware('throttle:10,1');
+    Route::post('/wallpapers/{id}/download', [WallpaperController::class, 'download'])->middleware(['auth:member', 'throttle:10,1']);
     Route::post('/wallpapers/{id}/report', [WallpaperController::class, 'report'])->middleware('throttle:5,1');
 
     // Categories
@@ -67,7 +67,7 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
     Route::get('/content/{id}', [\App\Http\Controllers\Api\V1\ContentController::class, 'show']);
     Route::post('/content/{id}/view', [\App\Http\Controllers\Api\V1\ContentController::class, 'view'])->middleware('throttle:60,1');
     Route::post('/content/{id}/like', [\App\Http\Controllers\Api\V1\ContentController::class, 'like'])->middleware('throttle:30,1');
-    Route::post('/content/{id}/download', [\App\Http\Controllers\Api\V1\ContentController::class, 'download'])->middleware('throttle:20,1');
+    Route::post('/content/{id}/download', [\App\Http\Controllers\Api\V1\ContentController::class, 'download'])->middleware(['auth:member', 'throttle:20,1']);
 
     // Brands — dynamic Brand Builder system
     Route::get('/brands', [BrandController::class, 'index']);
@@ -91,7 +91,7 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
     Route::get('/app-categories', [AppController::class, 'categories']);
     Route::get('/apps', [AppController::class, 'index']);
     Route::get('/apps/{slug}', [AppController::class, 'show']);
-    Route::post('/apps/{id}/download', [AppController::class, 'download'])->middleware('throttle:20,1');
+    Route::post('/apps/{id}/download', [AppController::class, 'download'])->middleware(['auth:member', 'throttle:20,1']);
 
     // Uploaders
     Route::get('/uploaders/{username}', [UploaderController::class, 'show']);
