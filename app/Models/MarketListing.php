@@ -44,6 +44,19 @@ class MarketListing extends Model
                 $l->published_at = now();
             }
         });
+
+        // Whenever a member listing transitions to "rejected" — from the status dropdown,
+        // the table action, or a Telegram tap — DM the member the reason once.
+        static::saved(function (self $l) {
+            if ($l->wasChanged('status') && $l->status === 'rejected' && $l->member_id) {
+                try {
+                    app(\App\Services\TelegramService::class)
+                        ->notifyListingRejected($l->loadMissing('member'), (string) $l->rejection_reason);
+                } catch (\Throwable) {
+                    // never let a Telegram failure break the save
+                }
+            }
+        });
     }
 
     public function category()

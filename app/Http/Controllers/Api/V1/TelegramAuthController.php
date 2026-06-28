@@ -192,6 +192,10 @@ class TelegramAuthController extends Controller
         $from       = $callback['from'] ?? [];
         $data       = (string) ($callback['data'] ?? '');
         $callbackId = (string) ($callback['id'] ?? '');
+
+        Setting::set('telegram_last_update', json_encode([
+            'at' => now()->toDateTimeString(), 'callback' => $data, 'from_id' => $from['id'] ?? null,
+        ], JSON_UNESCAPED_UNICODE));
         $msg        = $callback['message'] ?? [];
         $chatId     = (string) ($msg['chat']['id'] ?? ($from['id'] ?? ''));
         $messageId  = (int) ($msg['message_id'] ?? 0);
@@ -253,7 +257,6 @@ class TelegramAuthController extends Controller
 
         if ($listing && $listing->status === 'pending') {
             $listing->update(['status' => 'rejected', 'rejection_reason' => $text]);
-            $this->telegram->notifyListingRejected($listing, $text);
             $this->telegram->sendMessage((string) $from['id'], '❌ تم رفض «<b>' . e($listing->title_ar) . '</b>» وإشعار العضو بالسبب.');
         } else {
             $this->telegram->sendMessage((string) $from['id'], 'تعذّر — ربما عولج الإعلان مسبقًا.');

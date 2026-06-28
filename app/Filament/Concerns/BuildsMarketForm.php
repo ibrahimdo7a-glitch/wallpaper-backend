@@ -234,12 +234,18 @@ trait BuildsMarketForm
         return Forms\Components\Section::make('النشر')->schema([
             Forms\Components\Grid::make(3)->schema([
                 Forms\Components\Select::make('status')->label('الحالة')
-                    ->options(['published' => 'منشور', 'pending' => 'بانتظار المراجعة', 'sold' => 'مُباع', 'hidden' => 'مخفي'])
-                    ->default('published')
-                    ->helperText('للرفض استخدم زر «رفض» في القائمة — يطلب سببًا ويُشعر العضو.'),
+                    ->options(['published' => 'منشور', 'pending' => 'بانتظار المراجعة', 'rejected' => '❌ مرفوض', 'sold' => 'مُباع', 'hidden' => 'مخفي'])
+                    ->default('published')->live(),
                 Forms\Components\Toggle::make('is_featured')->label('مميّز ⭐')->inline(false),
                 Forms\Components\DateTimePicker::make('expires_at')->label('ينتهي في (اختياري)')->nullable(),
             ]),
+            // Appears the moment you pick «مرفوض»; on save the member is DM'd the reason.
+            Forms\Components\Textarea::make('rejection_reason')
+                ->label('سبب الرفض (يصل العضو على تلجرام مع رابط التعديل)')
+                ->rows(2)->maxLength(500)->columnSpanFull()
+                ->visible(fn (Forms\Get $get) => $get('status') === 'rejected')
+                ->required(fn (Forms\Get $get) => $get('status') === 'rejected')
+                ->placeholder('مثال: الصور غير واضحة، أو السعر ناقص.'),
         ]);
     }
 
@@ -308,7 +314,6 @@ trait BuildsMarketForm
                             return;
                         }
                         $r->update(['status' => 'rejected', 'rejection_reason' => $reason]);
-                        app(\App\Services\TelegramService::class)->notifyListingRejected($r, $reason);
                         Notification::make()->title('تم رفض الإعلان وإشعار العضو ✓')->success()->send();
                     }),
                 Tables\Actions\Action::make('mark_sold')
