@@ -215,7 +215,7 @@ class AndroidAppResource extends Resource
                             ->schema([
                                 Forms\Components\FileUpload::make('image_file')->label('الصورة')
                                     ->image()->disk($disk)->directory('apps/screenshots')->visibility('private')
-                                    ->required()->maxSize(5120),
+                                    ->maxSize(5120),
                                 Forms\Components\Grid::make(2)->schema([
                                     Forms\Components\TextInput::make('caption_ar')->label('تعليق (عربي)')->maxLength(200),
                                     Forms\Components\TextInput::make('caption_en')->label('تعليق (إنجليزي)')->maxLength(200),
@@ -238,7 +238,7 @@ class AndroidAppResource extends Resource
                                 Forms\Components\Hidden::make('step_number')->default(1),
                                 Forms\Components\FileUpload::make('image_file')->label('صورة الخطوة')
                                     ->image()->disk($disk)->directory('apps/steps')->visibility('private')
-                                    ->required()->maxSize(5120),
+                                    ->maxSize(5120),
                                 Forms\Components\Grid::make(2)->schema([
                                     Forms\Components\TextInput::make('title_ar')->label('عنوان الخطوة (عربي)')->maxLength(150),
                                     Forms\Components\TextInput::make('title_en')->label('عنوان الخطوة (إنجليزي)')->maxLength(150),
