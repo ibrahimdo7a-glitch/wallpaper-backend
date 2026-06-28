@@ -246,7 +246,12 @@ trait BuildsMarketForm
                 Tables\Columns\TextColumn::make('status')->label('الحالة')->badge()
                     ->colors(['success' => 'published', 'warning' => 'pending', 'gray' => 'sold', 'danger' => 'hidden'])
                     ->formatStateUsing(fn ($state) => match ($state) { 'published' => 'منشور', 'pending' => 'مراجعة', 'sold' => 'مُباع', 'hidden' => 'مخفي', default => $state }),
-                Tables\Columns\TextColumn::make('member.name')->label('المُعلِن')->placeholder('الإدارة')->toggleable(),
+                Tables\Columns\TextColumn::make('member.name')->label('المُعلِن')
+                    ->placeholder('— الإدارة')
+                    ->formatStateUsing(fn ($state, MarketListing $record) => $state
+                        ? $state . ($record->member?->telegram_username ? ' (@' . $record->member->telegram_username . ')' : '')
+                        : null)
+                    ->description(fn (MarketListing $record) => $record->member_id ? 'إعلان عضو' : null),
                 Tables\Columns\TextColumn::make('views_count')->label('👁')->sortable(),
                 Tables\Columns\TextColumn::make('created_at')->label('التاريخ')->dateTime('d/m/Y')->sortable(),
             ])

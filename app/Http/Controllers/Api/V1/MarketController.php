@@ -156,7 +156,7 @@ class MarketController extends Controller
     public function show(string $slug): JsonResponse
     {
         $l = MarketListing::published()
-            ->with(['brand:id,name_ar,name_en,slug', 'carModel:id,name_ar,name_en', 'category:id,name_ar,name_en'])
+            ->with(['brand:id,name_ar,name_en,slug', 'carModel:id,name_ar,name_en', 'category:id,name_ar,name_en', 'member:id,name,telegram_username'])
             ->where('slug', $slug)->firstOrFail();
 
         return response()->json(['data' => $this->detail($l)]);
@@ -233,12 +233,13 @@ class MarketController extends Controller
             'category'       => $l->category?->name_ar,
             'views_count'    => $l->views_count,
             'contact'        => [
-                'name'      => $l->contact_name,
+                // Fall back to the live member identity for listings whose snapshot is empty.
+                'name'      => $l->contact_name ?: $l->member?->name,
                 // Raw phone is never sent in the page payload — revealed only via
                 // /market/{id}/phone after the human check (anti-scraping).
                 'has_phone' => filled($l->contact_phone),
                 'whatsapp'  => $l->contact_whatsapp,
-                'telegram'  => $l->contact_telegram,
+                'telegram'  => $l->contact_telegram ?: $l->member?->telegram_username,
             ],
         ]);
     }
