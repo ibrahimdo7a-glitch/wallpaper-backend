@@ -42,7 +42,13 @@ class NewsArticle extends Model
                 $latin = Str::slug(transliterator_transliterate('Any-Latin; Latin-ASCII', (string) $base));
                 $article->slug = ($latin ?: 'news') . '-' . Str::random(6);
             }
-            if (empty($article->published_at) && $article->status === 'published') {
+        });
+
+        // Stamp the publish time the moment an article becomes published — on create OR
+        // when a draft is published from the Edit form (the creating hook missed that path,
+        // leaving published_at null and breaking newest-first ordering).
+        static::saving(function (self $article) {
+            if ($article->status === 'published' && empty($article->published_at)) {
                 $article->published_at = now();
             }
         });

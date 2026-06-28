@@ -187,7 +187,7 @@ class NewsArticleResource extends Resource
                 Tables\Columns\TextColumn::make('views_count')->label('المشاهدات')->sortable(),
                 Tables\Columns\TextColumn::make('published_at')->label('النشر')->dateTime('d/m/Y')->sortable(),
             ])
-            ->defaultSort('published_at', 'desc')
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->label('الحالة')
                     ->options(['published' => 'منشور', 'draft' => 'مسودة', 'hidden' => 'مخفي']),
