@@ -366,10 +366,10 @@ class SiteSettingsPage extends Page
     {
         return [
             \Filament\Actions\Action::make('set_webhook')
-                ->label('ربط بوت دخول الأعضاء')
+                ->label('ربط البوت (دخول الأعضاء + أزرار المراجعة)')
                 ->icon('heroicon-o-bolt')->color('gray')
                 ->requiresConfirmation()
-                ->modalDescription('يربط بوت تلجرام لاستقبال تسجيل دخول الأعضاء. اضغط بعد ضبط توكن البوت في تبويب «تلجرام».')
+                ->modalDescription('يربط بوت تلجرام لاستقبال دخول الأعضاء وأزرار نشر/رفض الإعلانات داخل تلجرام. اضغط بعد ضبط توكن البوت في تبويب «تلجرام». (مطلوب مرة واحدة بعد كل تحديث لأزرار المراجعة.)')
                 ->action(function () {
                     $tg = app(\App\Services\TelegramService::class);
                     if (! $tg->hasBot()) {
