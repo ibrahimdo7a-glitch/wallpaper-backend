@@ -24,6 +24,7 @@ class MemberListingController extends Controller
             'currency'   => $l->currency,
             'cover_url'  => $l->cover_url,
             'status'     => $l->status,
+            'rejection_reason' => $l->rejection_reason,
             'created_at' => $l->created_at?->toISOString(),
         ]);
 
@@ -99,16 +100,106 @@ class MemberListingController extends Controller
             'status'             => $requireApproval ? 'pending' : 'published',
         ]);
 
-        // Notify the admin on Telegram (if a chat id is configured)
-        if ($adminChat = Setting::get('telegram_admin_chat_id')) {
-            $telegram->sendMessage((string) $adminChat,
-                "🆕 إعلان جديد بانتظار المراجعة\n<b>" . e($listing->title_ar) . "</b>\n"
-                . 'من: ' . e($member->name ?? '') . ($member->telegram_username ? ' (@' . $member->telegram_username . ')' : ''));
+        // Notify every opted-in moderator on Telegram.
+        if ($listing->status === 'pending') {
+            $telegram->notifyModeratorsNewListing($listing->load('member'));
         }
 
         return response()->json([
             'data' => ['slug' => $listing->slug, 'status' => $listing->status],
             'message' => $requireApproval ? 'تم استلام إعلانك — بانتظار مراجعة الإدارة' : 'تم نشر إعلانك',
         ], 201);
+    }
+
+    // GET /v1/member/listings/{id} — fetch the member's own listing for editing
+    public function show(Request $request, int $id): JsonResponse
+    {
+        $l = $request->user()->listings()->findOrFail($id);
+
+        return response()->json(['data' => [
+            'id'                 => $l->id,
+            'section'            => in_array($l->listing_type, ['car_sale', 'car_request'], true) ? 'cars' : 'parts',
+            'listing_type'       => $l->listing_type,
+            'market_category_id' => $l->market_category_id,
+            'title_ar'           => $l->title_ar,
+            'description_ar'     => $l->description_ar,
+            'price'              => $l->price !== null ? (float) $l->price : null,
+            'currency'           => $l->currency,
+            'is_negotiable'      => (bool) $l->is_negotiable,
+            'condition'          => $l->condition,
+            'country'            => $l->country,
+            'city'               => $l->city,
+            'contact_phone'      => $l->contact_phone,
+            'contact_whatsapp'   => $l->contact_whatsapp,
+            'images'             => $l->imageUrls(),
+            'status'             => $l->status,
+            'rejection_reason'   => $l->rejection_reason,
+        ]]);
+    }
+
+    // POST /v1/member/listings/{id} — edit and resubmit for review
+    public function update(Request $request, int $id, TelegramService $telegram): JsonResponse
+    {
+        $member = $request->user();
+        if ($member->isBanned()) {
+            return response()->json(['error' => 'حسابك محظور'], 403);
+        }
+
+        $l = $member->listings()->findOrFail($id);
+
+        $data = $request->validate([
+            'title_ar'         => 'required|string|max:200',
+            'description_ar'   => 'nullable|string|max:5000',
+            'price'            => 'nullable|numeric|min:0',
+            'currency'         => 'nullable|string|max:3',
+            'is_negotiable'    => 'nullable|boolean',
+            'condition'        => 'nullable|in:new,used,na',
+            'country'          => 'nullable|string|max:60',
+            'city'             => 'nullable|string|max:80',
+            'contact_phone'    => 'nullable|string|max:30',
+            'contact_whatsapp' => 'nullable|string|max:30',
+            'images'           => 'nullable|array|max:10',
+            'images.*'         => 'image|max:5120',
+        ]);
+
+        // New images replace the set; no upload keeps the existing images.
+        if ($request->hasFile('images')) {
+            $disk       = config('filesystems.default', 'public');
+            $visibility = in_array($disk, ['r2', 's3'], true) ? 'private' : 'public';
+            $paths      = [];
+            foreach ((array) $request->file('images', []) as $file) {
+                $name = Str::random(40) . '.' . ($file->getClientOriginalExtension() ?: 'jpg');
+                Storage::disk($disk)->putFileAs('market', $file, $name, $visibility);
+                $paths[] = "market/{$name}";
+            }
+            $l->images = $paths;
+        }
+
+        $requireApproval = filter_var(Setting::get('member_listings_require_approval', '1'), FILTER_VALIDATE_BOOLEAN);
+
+        $l->fill([
+            'title_ar'         => $data['title_ar'],
+            'description_ar'   => $data['description_ar'] ?? null,
+            'price'            => $data['price'] ?? null,
+            'currency'         => $data['currency'] ?? 'QAR',
+            'is_negotiable'    => $data['is_negotiable'] ?? false,
+            'condition'        => $data['condition'] ?? null,
+            'country'          => $data['country'] ?? null,
+            'city'             => $data['city'] ?? null,
+            'contact_phone'    => $data['contact_phone'] ?? null,
+            'contact_whatsapp' => $data['contact_whatsapp'] ?? null,
+            'status'           => $requireApproval ? 'pending' : 'published',
+            'rejection_reason' => null,
+        ]);
+        $l->save();
+
+        if ($l->status === 'pending') {
+            $telegram->notifyModeratorsNewListing($l->load('member'));
+        }
+
+        return response()->json([
+            'data'    => ['slug' => $l->slug, 'status' => $l->status],
+            'message' => $requireApproval ? 'تم إرسال التعديل للمراجعة' : 'تم تحديث إعلانك',
+        ]);
     }
 }

@@ -27,7 +27,9 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
 
     // Member listings (submit + own list)
     Route::get('/member/listings', [\App\Http\Controllers\Api\V1\MemberListingController::class, 'mine'])->middleware('auth:member');
+    Route::get('/member/listings/{id}', [\App\Http\Controllers\Api\V1\MemberListingController::class, 'show'])->middleware('auth:member');
     Route::post('/member/listings', [\App\Http\Controllers\Api\V1\MemberListingController::class, 'store'])->middleware(['auth:member', 'throttle:10,1']);
+    Route::post('/member/listings/{id}', [\App\Http\Controllers\Api\V1\MemberListingController::class, 'update'])->middleware(['auth:member', 'throttle:10,1']);
 
     // Member saves + preferences
     Route::post('/member/saves/toggle', [\App\Http\Controllers\Api\V1\MemberController::class, 'toggleSave'])->middleware(['auth:member', 'throttle:60,1']);

@@ -16,7 +16,7 @@ class MarketListing extends Model
         'description_ar', 'description_en', 'price', 'currency', 'is_negotiable',
         'condition', 'country', 'city', 'brand_id', 'car_model_id', 'year', 'mileage',
         'specs', 'images', 'contact_name', 'contact_phone', 'contact_whatsapp', 'contact_telegram',
-        'is_paid_listing', 'is_featured', 'status', 'source', 'member_id', 'views_count', 'published_at', 'expires_at',
+        'is_paid_listing', 'is_featured', 'status', 'rejection_reason', 'source', 'member_id', 'views_count', 'published_at', 'expires_at',
     ];
 
     protected function casts(): array

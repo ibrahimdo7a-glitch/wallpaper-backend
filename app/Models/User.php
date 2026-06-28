@@ -36,6 +36,9 @@ class User extends Authenticatable implements FilamentUser
         'max_file_size_mb',
         'can_upload_without_watermark',
         'show_public_profile',
+        'telegram_chat_id',
+        'telegram_link_code',
+        'notify_new_listings',
         'last_login_at',
         'last_login_ip_hash',
         'failed_login_attempts',
@@ -65,6 +68,7 @@ class User extends Authenticatable implements FilamentUser
             'auto_publish' => 'boolean',
             'can_upload_without_watermark' => 'boolean',
             'show_public_profile' => 'boolean',
+            'notify_new_listings' => 'boolean',
             'two_factor_enabled' => 'boolean',
         ];
     }

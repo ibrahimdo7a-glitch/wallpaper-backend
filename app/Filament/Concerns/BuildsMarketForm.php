@@ -234,7 +234,7 @@ trait BuildsMarketForm
         return Forms\Components\Section::make('النشر')->schema([
             Forms\Components\Grid::make(3)->schema([
                 Forms\Components\Select::make('status')->label('الحالة')
-                    ->options(['published' => 'منشور', 'pending' => 'بانتظار المراجعة', 'sold' => 'مُباع', 'hidden' => 'مخفي'])
+                    ->options(['published' => 'منشور', 'pending' => 'بانتظار المراجعة', 'rejected' => 'مرفوض', 'sold' => 'مُباع', 'hidden' => 'مخفي'])
                     ->default('published'),
                 Forms\Components\Toggle::make('is_featured')->label('مميّز ⭐')->inline(false),
                 Forms\Components\DateTimePicker::make('expires_at')->label('ينتهي في (اختياري)')->nullable(),
@@ -259,8 +259,8 @@ trait BuildsMarketForm
                 Tables\Columns\TextColumn::make('city')->label('المدينة')->toggleable(),
                 Tables\Columns\IconColumn::make('is_paid_listing')->label('مدفوع')->boolean(),
                 Tables\Columns\TextColumn::make('status')->label('الحالة')->badge()
-                    ->colors(['success' => 'published', 'warning' => 'pending', 'gray' => 'sold', 'danger' => 'hidden'])
-                    ->formatStateUsing(fn ($state) => match ($state) { 'published' => 'منشور', 'pending' => 'مراجعة', 'sold' => 'مُباع', 'hidden' => 'مخفي', default => $state }),
+                    ->colors(['success' => 'published', 'warning' => 'pending', 'danger' => 'rejected', 'gray' => ['sold', 'hidden']])
+                    ->formatStateUsing(fn ($state) => match ($state) { 'published' => 'منشور', 'pending' => 'مراجعة', 'rejected' => 'مرفوض', 'sold' => 'مُباع', 'hidden' => 'مخفي', default => $state }),
                 Tables\Columns\TextColumn::make('member.name')->label('المُعلِن')
                     ->placeholder('— الإدارة')
                     ->formatStateUsing(fn ($state, MarketListing $record) => $state
@@ -273,14 +273,27 @@ trait BuildsMarketForm
             ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->label('الحالة')
-                    ->options(['published' => 'منشور', 'pending' => 'مراجعة', 'sold' => 'مُباع', 'hidden' => 'مخفي']),
+                    ->options(['published' => 'منشور', 'pending' => 'مراجعة', 'rejected' => 'مرفوض', 'sold' => 'مُباع', 'hidden' => 'مخفي']),
                 Tables\Filters\TernaryFilter::make('is_paid_listing')->label('مدفوع'),
             ])
             ->actions([
                 Tables\Actions\Action::make('approve')
                     ->label('نشر')->icon('heroicon-o-check')->color('success')
                     ->visible(fn (MarketListing $r) => $r->status === 'pending')
-                    ->action(fn (MarketListing $r) => $r->update(['status' => 'published', 'published_at' => $r->published_at ?? now()])),
+                    ->action(fn (MarketListing $r) => $r->update(['status' => 'published', 'rejection_reason' => null, 'published_at' => $r->published_at ?? now()])),
+                Tables\Actions\Action::make('reject')
+                    ->label('رفض')->icon('heroicon-o-x-mark')->color('danger')
+                    ->visible(fn (MarketListing $r) => $r->member_id && $r->status !== 'rejected')
+                    ->form([
+                        Forms\Components\Textarea::make('reason')->label('سبب الرفض (يصل العضو على تلجرام)')
+                            ->required()->rows(3)->maxLength(500)
+                            ->placeholder('مثال: الصور غير واضحة، أو السعر ناقص.'),
+                    ])
+                    ->action(function (MarketListing $r, array $data) {
+                        $r->update(['status' => 'rejected', 'rejection_reason' => $data['reason']]);
+                        app(\App\Services\TelegramService::class)->notifyListingRejected($r, $data['reason']);
+                        Notification::make()->title('تم رفض الإعلان وإشعار العضو ✓')->success()->send();
+                    }),
                 Tables\Actions\Action::make('mark_sold')
                     ->label('مُباع')->icon('heroicon-o-check-badge')->color('gray')
                     ->visible(fn (MarketListing $r) => $r->status !== 'sold')

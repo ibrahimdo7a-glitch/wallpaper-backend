@@ -137,6 +137,21 @@ class TelegramAuthController extends Controller
         $debug['token_param'] = $loginToken;
 
         if ($loginToken !== '') {
+            // Moderator Telegram linking: /start adm_<code> → store the chat id on the user.
+            if (Str::startsWith($loginToken, 'adm_')) {
+                $code = Str::after($loginToken, 'adm_');
+                $user = \App\Models\User::where('telegram_link_code', $code)->first();
+                if ($user) {
+                    $user->update(['telegram_chat_id' => (string) $from['id'], 'telegram_link_code' => null]);
+                    $record('ربط مشرف ✓');
+                    $this->telegram->sendMessage((string) $from['id'], '✅ تم ربط حسابك كمشرف في <b>qev.app</b> — ستصلك إشعارات الإعلانات الجديدة هنا.');
+                } else {
+                    $record('رمز مشرف غير صالح');
+                    $this->telegram->sendMessage((string) $from['id'], '⚠️ رمز الربط غير صالح أو مستخدَم. أنشئ رمزًا جديدًا من لوحة التحكم.');
+                }
+                return response()->json(['ok' => true]);
+            }
+
             $login = MemberLoginToken::where('token', $loginToken)->where('status', 'pending')->first();
             if (! $login) {
                 $record('الرمز غير موجود');

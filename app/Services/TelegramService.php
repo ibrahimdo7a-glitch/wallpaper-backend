@@ -47,6 +47,46 @@ class TelegramService
         }
     }
 
+    /** DM the member that their listing was rejected, with the reason + an edit-and-resubmit link. */
+    public function notifyListingRejected(\App\Models\MarketListing $listing, string $reason): void
+    {
+        $chatId = $listing->member?->telegram_id;
+        if (! $chatId) {
+            return;
+        }
+        $editUrl = 'https://qev.app/ar/sell?edit=' . $listing->id;
+        $text = "❌ <b>تم رفض إعلانك</b>\n«" . e($listing->title_ar) . "»\n\n"
+              . '📝 السبب: ' . e($reason)
+              . "\n\nعدّل إعلانك وأعد إرساله للمراجعة من الزر بالأسفل.";
+        $this->sendMessage((string) $chatId, $text, [
+            'inline_keyboard' => [[['text' => '✏️ تعديل الإعلان', 'url' => $editUrl]]],
+        ]);
+    }
+
+    /** DM every moderator who opted in (telegram linked + notify_new_listings) about a new pending listing. */
+    public function notifyModeratorsNewListing(\App\Models\MarketListing $listing): void
+    {
+        $mods = \App\Models\User::query()
+            ->where('notify_new_listings', true)
+            ->whereNotNull('telegram_chat_id')
+            ->where('telegram_chat_id', '!=', '')
+            ->pluck('telegram_chat_id');
+        if ($mods->isEmpty()) {
+            return;
+        }
+
+        $isCar     = in_array($listing->listing_type, ['car_sale', 'car_request'], true);
+        $reviewUrl = 'https://api.qev.app/admin/' . ($isCar ? 'car-market' : 'parts-market') . '/' . $listing->id . '/edit';
+        $member    = $listing->member;
+        $text = "🆕 <b>إعلان جديد بانتظار المراجعة</b>\n«" . e($listing->title_ar) . "»\n"
+              . 'من: ' . e($member?->name ?? 'عضو') . ($member?->telegram_username ? ' (@' . $member->telegram_username . ')' : '');
+        $markup = ['inline_keyboard' => [[['text' => '🔍 مراجعة الإعلان', 'url' => $reviewUrl]]]];
+
+        foreach ($mods as $chatId) {
+            $this->sendMessage((string) $chatId, $text, $markup);
+        }
+    }
+
     /** The bot's @username (cached in settings) — needed for t.me deep links. */
     public function getBotUsername(): ?string
     {

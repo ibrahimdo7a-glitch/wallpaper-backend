@@ -96,6 +96,18 @@ class UserResource extends Resource
                         ->searchable(),
                 ])->columns(2),
 
+            Forms\Components\Section::make('إشعارات تلجرام (مراجعة الإعلانات)')
+                ->description('فعّل الخيار ثم اربط تلجرام المشرف ليصله إشعار + زر مراجعة بكل إعلان عضو جديد بانتظار المراجعة.')
+                ->schema([
+                    Forms\Components\Toggle::make('notify_new_listings')
+                        ->label('يستقبل إشعارات الإعلانات الجديدة على تلجرام'),
+                    Forms\Components\Placeholder::make('tg_link_status')
+                        ->label('حالة ربط تلجرام')
+                        ->content(fn (?User $record) => $record?->telegram_chat_id
+                            ? '✅ مربوط — جاهز لاستقبال الإشعارات'
+                            : '❌ غير مربوط — اضغط «رابط ربط تلجرام» بالأعلى وأرسل الرابط للمشرف ليفتحه من تلجرامه.'),
+                ]),
+
             Forms\Components\Section::make('إعدادات الرفع')
                 ->schema([
                     Forms\Components\TextInput::make('daily_upload_limit')
