@@ -68,8 +68,9 @@ class WallpapersRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('title_ar')
             ->defaultSort('created_at', 'desc')
-            ->paginationPageOptions([12, 24, 48, 100, 'all'])
-            ->defaultPaginationPageOption(48)
+            ->deferLoading() // render the brand page first, then load this image-heavy table
+            ->paginationPageOptions([12, 24, 48, 100])
+            ->defaultPaginationPageOption(12)
             ->columns([
                 Tables\Columns\ImageColumn::make('thumbnail_path')->label('')
                     ->disk(config('filesystems.default', 'public'))->square()->size(100)
