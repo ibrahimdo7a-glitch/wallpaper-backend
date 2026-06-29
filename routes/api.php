@@ -30,6 +30,7 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
     Route::get('/member/listings/{id}', [\App\Http\Controllers\Api\V1\MemberListingController::class, 'show'])->middleware('auth:member');
     Route::post('/member/listings', [\App\Http\Controllers\Api\V1\MemberListingController::class, 'store'])->middleware(['auth:member', 'throttle:10,1']);
     Route::post('/member/listings/{id}', [\App\Http\Controllers\Api\V1\MemberListingController::class, 'update'])->middleware(['auth:member', 'throttle:10,1']);
+    Route::post('/contact', [\App\Http\Controllers\Api\V1\ContactController::class, 'send'])->middleware(['auth:member', 'throttle:5,1']);
 
     // Member saves + preferences
     Route::post('/member/saves/toggle', [\App\Http\Controllers\Api\V1\MemberController::class, 'toggleSave'])->middleware(['auth:member', 'throttle:60,1']);
@@ -128,6 +129,7 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
             'terms_ar', 'terms_en',
             'privacy_ar', 'privacy_en',
             'about_ar', 'about_en',
+            'contact_enabled',
             'ilink_enabled',
             'ilink_label_ar', 'ilink_label_en',
             'ilink_tooltip_ar', 'ilink_tooltip_en',
@@ -139,6 +141,10 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
         $settings['search_enabled'] = $settings['search_enabled'] === ''
             ? true
             : filter_var($settings['search_enabled'], FILTER_VALIDATE_BOOLEAN);
+
+        $settings['contact_enabled'] = $settings['contact_enabled'] === ''
+            ? true
+            : filter_var($settings['contact_enabled'], FILTER_VALIDATE_BOOLEAN);
 
         // Parse popular_tags as arrays
         $settings['popular_tags_ar'] = array_filter(array_map('trim', explode(',', $settings['popular_tags_ar'] ?? '')));

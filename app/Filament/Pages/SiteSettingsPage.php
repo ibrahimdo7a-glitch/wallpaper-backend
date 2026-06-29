@@ -57,6 +57,7 @@ class SiteSettingsPage extends Page
             'terms_ar', 'terms_en',
             'privacy_ar', 'privacy_en',
             'about_ar', 'about_en',
+            'contact_enabled',
             'telegram_bot_token', 'telegram_channel_id',
             'telegram_topic_id', 'telegram_topic_id_apps', 'telegram_topic_id_news',
             'stat_visitors_enabled', 'stat_downloads_enabled', 'stat_wallpapers_enabled', 'stat_apps_enabled',
@@ -315,6 +316,28 @@ class SiteSettingsPage extends Page
                                 Forms\Components\RichEditor::make('about_en')->label('من نحن (إنجليزي)')
                                     ->toolbarButtons(['bold', 'italic', 'h2', 'h3', 'bulletList', 'orderedList', 'link', 'blockquote', 'undo', 'redo'])
                                     ->columnSpanFull(),
+                            ]),
+
+                        Forms\Components\Tabs\Tab::make('تواصل معنا')
+                            ->icon('heroicon-o-chat-bubble-left-right')
+                            ->schema([
+                                Forms\Components\Toggle::make('contact_enabled')->label('تفعيل زر «تواصل معنا» في الموقع')->default(true)
+                                    ->helperText('يظهر زر في تذييل الموقع، يكتب العضو رسالة قصيرة (حتى ٢٠٠ حرف) تصلك على تلجرام.'),
+                                Forms\Components\Placeholder::make('contact_messages')
+                                    ->label('آخر الرسائل (حتى ٥٠ — تُحذف الأقدم تلقائيًا)')
+                                    ->content(function () {
+                                        $msgs = \App\Models\ContactMessage::orderByDesc('id')->limit(50)->get();
+                                        if ($msgs->isEmpty()) {
+                                            return 'لا توجد رسائل بعد.';
+                                        }
+                                        $html = '<div style="max-height:420px;overflow:auto;display:flex;flex-direction:column;gap:8px">';
+                                        foreach ($msgs as $m) {
+                                            $html .= '<div style="border:1px solid rgba(120,120,120,.25);border-radius:10px;padding:10px">'
+                                                   . '<div style="font-weight:600;font-size:12px;opacity:.7">' . e($m->member_name) . ' · ' . $m->created_at?->diffForHumans() . '</div>'
+                                                   . '<div style="margin-top:4px">' . e($m->message) . '</div></div>';
+                                        }
+                                        return new \Illuminate\Support\HtmlString($html . '</div>');
+                                    }),
                             ]),
 
                         Forms\Components\Tabs\Tab::make('تلجرام')
