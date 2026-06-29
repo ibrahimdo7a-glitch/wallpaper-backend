@@ -68,6 +68,8 @@ class SiteSettingsPage extends Page
             'stat_likes_order', 'stat_views_order', 'stat_news_order',
             'ai_enabled', 'ai_api_key', 'ai_model', 'ai_translation_prompt', 'ai_summarize_prompt',
             'site_favicon_path',
+            'seo_google_verification', 'seo_bing_verification',
+            'seo_keywords_ar', 'seo_keywords_en',
         ];
 
         $formData = [];
@@ -128,6 +130,31 @@ class SiteSettingsPage extends Page
                                     ->directory('site')
                                     ->visibility('private')
                                     ->maxSize(2048),
+                            ]),
+
+                        Forms\Components\Tabs\Tab::make('SEO ومحركات البحث')
+                            ->icon('heroicon-o-magnifying-glass')
+                            ->schema([
+                                Forms\Components\Placeholder::make('seo_help')
+                                    ->label('')
+                                    ->content('بعد إنشاء حساب في Google Search Console و Bing Webmaster، الصق رمز التحقق هنا واحفظ — يظهر تلقائيًا في كل صفحات الموقع. ثم أرسل خريطة الموقع: https://qev.app/sitemap.xml'),
+                                Forms\Components\Grid::make(2)->schema([
+                                    Forms\Components\TextInput::make('seo_google_verification')
+                                        ->label('رمز تحقق Google')
+                                        ->helperText('من Google Search Console → إضافة موقع → علامة HTML. الصق قيمة content فقط.')
+                                        ->placeholder('مثال: aBcD1234...'),
+                                    Forms\Components\TextInput::make('seo_bing_verification')
+                                        ->label('رمز تحقق Bing')
+                                        ->helperText('من Bing Webmaster Tools → علامة HTML (msvalidate.01).')
+                                        ->placeholder('مثال: 1A2B3C...'),
+                                ]),
+                                Forms\Components\Textarea::make('seo_keywords_ar')
+                                    ->label('كلمات مفتاحية (عربي) — مفصولة بفواصل')
+                                    ->rows(2)
+                                    ->helperText('اتركها فارغة لاستخدام الكلمات الافتراضية القوية المضمّنة في الموقع.'),
+                                Forms\Components\Textarea::make('seo_keywords_en')
+                                    ->label('كلمات مفتاحية (إنجليزي) — مفصولة بفواصل')
+                                    ->rows(2),
                             ]),
 
                         Forms\Components\Tabs\Tab::make('الصفحة الرئيسية')

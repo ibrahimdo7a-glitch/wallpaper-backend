@@ -137,6 +137,8 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
             'ilink_tooltip_ar', 'ilink_tooltip_en',
             'ilink_file_path',
             'site_favicon_path',
+            'seo_google_verification', 'seo_bing_verification',
+            'seo_keywords_ar', 'seo_keywords_en',
         ];
         $settings = collect($keys)->mapWithKeys(fn($k) => [$k => \App\Models\Setting::get($k, '')]);
 
