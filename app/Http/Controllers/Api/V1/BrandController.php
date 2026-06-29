@@ -174,13 +174,45 @@ class BrandController extends Controller
             ->get()
             ->map(fn($s) => $this->sectionCard($s));
 
+        // Last 12 marketplace listings that picked THIS model (featured first).
+        $listings = \App\Models\MarketListing::where('car_model_id', $model->id)
+            ->where('status', 'published')
+            ->orderByDesc('is_featured')
+            ->orderByDesc('published_at')
+            ->limit(12)
+            ->get()
+            ->map(fn ($l) => [
+                'id'           => $l->id,
+                'title_ar'     => $l->title_ar,
+                'title_en'     => $l->title_en,
+                'slug'         => $l->slug,
+                'price'        => $l->price !== null ? (float) $l->price : null,
+                'currency'     => $l->currency,
+                'city'         => $l->city,
+                'cover_url'    => $l->cover_url,
+                'is_featured'  => (bool) $l->is_featured,
+                'listing_type' => $l->listing_type,
+            ]);
+
+        // Latest wallpapers that picked THIS model.
+        $wallpapers = ContentItem::where('car_model_id', $model->id)
+            ->where('content_type', 'wallpapers')
+            ->where('status', 'published')
+            ->with('brandSection:id,slug')
+            ->orderByDesc('created_at')
+            ->limit(12)
+            ->get()
+            ->map(fn ($i) => $this->contentCard($i) + ['section_slug' => $i->brandSection?->slug]);
+
         return response()->json([
             'data' => array_merge($this->modelCard($model), [
                 'description_ar' => $model->description_ar,
                 'description_en' => $model->description_en,
                 'brand' => ['name_ar' => $brand->name_ar, 'name_en' => $brand->name_en, 'slug' => $brand->slug, 'logo_url' => $brand->logo_url, 'primary_color' => $brand->primary_color],
             ]),
-            'sections' => $sections,
+            'sections'   => $sections,
+            'listings'   => $listings,
+            'wallpapers' => $wallpapers,
         ]);
     }
 
