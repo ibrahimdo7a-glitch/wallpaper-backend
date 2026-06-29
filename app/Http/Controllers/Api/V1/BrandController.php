@@ -312,6 +312,49 @@ class BrandController extends Controller
         ];
     }
 
+    // ─── GET /api/v1/brands/{slug}/showcase — listings + latest wallpapers for the brand page ─
+    public function showcase(string $slug)
+    {
+        $brand = Brand::active()->where('slug', $slug)->firstOrFail();
+
+        // Latest 12 listings linked to this brand — featured first (frontend renders them on top).
+        $listings = \App\Models\MarketListing::published()
+            ->where('brand_id', $brand->id)
+            ->orderByDesc('is_featured')->orderByDesc('created_at')
+            ->limit(12)->get()
+            ->map(fn (\App\Models\MarketListing $l) => [
+                'id'            => $l->id,
+                'title_ar'      => $l->title_ar,
+                'title_en'      => $l->title_en,
+                'slug'          => $l->slug,
+                'price'         => $l->price !== null ? (float) $l->price : null,
+                'currency'      => $l->currency,
+                'is_negotiable' => (bool) $l->is_negotiable,
+                'city'          => $l->city,
+                'cover_url'     => $l->cover_url,
+                'is_featured'   => (bool) $l->is_featured,
+            ]);
+
+        // Latest wallpapers for this brand.
+        $wallpapers = ContentItem::with('brandSection:id,slug')
+            ->where('brand_id', $brand->id)
+            ->where('content_type', 'wallpapers')
+            ->where('status', 'published')
+            ->orderByDesc('created_at')->limit(12)->get()
+            ->map(fn (ContentItem $i) => [
+                'id'              => $i->id,
+                'title_ar'        => $i->title_ar,
+                'title_en'        => $i->title_en,
+                'slug'            => $i->slug,
+                'image_url'       => $i->image_url,
+                'thumbnail_url'   => $i->thumbnail_url,
+                'section_slug'    => $i->brandSection?->slug,
+                'downloads_count' => $i->downloads_count,
+            ]);
+
+        return response()->json(['data' => ['listings' => $listings, 'wallpapers' => $wallpapers]]);
+    }
+
     // ─── GET /api/v1/brands/{slug}/apps — apps linked to this brand ───────────
     public function apps(string $slug)
     {
