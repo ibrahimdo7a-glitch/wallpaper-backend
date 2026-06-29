@@ -67,6 +67,7 @@ class SiteSettingsPage extends Page
             'stat_visitors_order', 'stat_downloads_order', 'stat_wallpapers_order', 'stat_apps_order',
             'stat_likes_order', 'stat_views_order', 'stat_news_order',
             'ai_enabled', 'ai_api_key', 'ai_model', 'ai_translation_prompt', 'ai_summarize_prompt',
+            'site_favicon_path',
         ];
 
         $formData = [];
@@ -117,6 +118,16 @@ class SiteSettingsPage extends Page
                                         ->required()
                                         ->placeholder('Leopard Wallpapers'),
                                 ]),
+                                Forms\Components\FileUpload::make('site_favicon_path')
+                                    ->label('أيقونة الموقع (Favicon)')
+                                    ->helperText('الأيقونة التي تظهر في تبويب المتصفح وعلى الجوال — تُطبَّق تلقائيًا على كل المتصفحات. يُفضَّل صورة مربّعة بخلفية شفافة (PNG). استخدم أداة القص لجعلها مربّعة، وغيّرها وقت ما تشاء (مثلاً في المناسبات).')
+                                    ->image()
+                                    ->imageEditor()
+                                    ->imageEditorAspectRatios(['1:1'])
+                                    ->disk(config('filesystems.default', 'public'))
+                                    ->directory('site')
+                                    ->visibility('private')
+                                    ->maxSize(2048),
                             ]),
 
                         Forms\Components\Tabs\Tab::make('الصفحة الرئيسية')

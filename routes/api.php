@@ -136,6 +136,7 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
             'ilink_label_ar', 'ilink_label_en',
             'ilink_tooltip_ar', 'ilink_tooltip_en',
             'ilink_file_path',
+            'site_favicon_path',
         ];
         $settings = collect($keys)->mapWithKeys(fn($k) => [$k => \App\Models\Setting::get($k, '')]);
 
@@ -158,6 +159,13 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
             ? \Illuminate\Support\Facades\Storage::disk(config('filesystems.default', 'public'))->url($filePath)
             : '';
         unset($settings['ilink_file_path']);
+
+        // Build the favicon URL (browser-tab / mobile icon) from the uploaded path.
+        $faviconPath = $settings['site_favicon_path'] ?? '';
+        $settings['favicon_url'] = $faviconPath
+            ? \Illuminate\Support\Facades\Storage::disk(config('filesystems.default', 'public'))->url($faviconPath)
+            : '';
+        unset($settings['site_favicon_path']);
 
         return response()->json([
             'data' => $settings,
