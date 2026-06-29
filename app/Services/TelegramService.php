@@ -92,12 +92,43 @@ class TelegramService
                 ['text' => '✅ نشر', 'callback_data' => 'approve:' . $listing->id],
                 ['text' => '❌ رفض', 'callback_data' => 'reject:' . $listing->id],
             ],
+            [['text' => '📣 نشر + قناة الإعلانات', 'callback_data' => 'approve_tg:' . $listing->id]],
             [['text' => '🔍 فتح في اللوحة', 'url' => $reviewUrl]],
         ]];
 
         foreach ($mods as $chatId) {
             $this->sendPhotoToChat((string) $chatId, $listing->cover_url, $caption, $markup);
         }
+    }
+
+    /**
+     * Publish an approved listing into the channel's "listings" topic — cover photo,
+     * a tidy caption (title / price / location / blurb) and a link back to the site.
+     * Requires telegram_topic_id_market so listings never leak into another topic.
+     *
+     * @return array{ok: bool, error?: string}
+     */
+    public function sendListingToChannel(\App\Models\MarketListing $listing): array
+    {
+        $topic = Setting::get('telegram_topic_id_market');
+        if (blank($topic)) {
+            return ['ok' => false, 'error' => 'لم يُضبط رقم قسم الإعلانات في الإعدادات'];
+        }
+
+        $front = rtrim(config('app.frontend_url', 'https://qev.app'), '/');
+        $isCar = in_array($listing->listing_type, ['car_sale', 'car_request'], true);
+        $price = $listing->price !== null
+            ? number_format((float) $listing->price, 0) . ' ' . $listing->currency
+            : 'حسب الطلب';
+        $loc = trim(implode('، ', array_filter([$listing->city, $listing->country])));
+
+        $caption = ($isCar ? '🚗 ' : '🛒 ') . '<b>' . e($listing->title_ar) . "</b>\n"
+                 . '💰 ' . e($price) . ($listing->is_negotiable ? ' • قابل للتفاوض' : '') . "\n"
+                 . ($loc ? '📍 ' . e($loc) . "\n" : '')
+                 . ($listing->description_ar ? "\n" . e(mb_substr($listing->description_ar, 0, 400)) . "\n" : '')
+                 . "\n🔗 " . $front . '/ar/market/' . $listing->slug;
+
+        return $this->sendPhoto((string) $listing->cover_url, $caption, (string) $topic);
     }
 
     /** Send a photo (or a text fallback) to a specific chat with an optional inline keyboard. */

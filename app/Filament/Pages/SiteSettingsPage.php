@@ -59,7 +59,7 @@ class SiteSettingsPage extends Page
             'about_ar', 'about_en',
             'contact_enabled',
             'telegram_bot_token', 'telegram_channel_id',
-            'telegram_topic_id', 'telegram_topic_id_apps', 'telegram_topic_id_news',
+            'telegram_topic_id', 'telegram_topic_id_apps', 'telegram_topic_id_news', 'telegram_topic_id_market',
             'stat_visitors_enabled', 'stat_downloads_enabled', 'stat_wallpapers_enabled', 'stat_apps_enabled',
             'stat_likes_enabled', 'stat_views_enabled', 'stat_news_enabled',
             'stat_visitors_value', 'stat_downloads_value', 'stat_wallpapers_value', 'stat_apps_value',
@@ -351,7 +351,7 @@ class SiteSettingsPage extends Page
                                     ->label('معرّف القناة')
                                     ->helperText('مثال: ‎@Qatar_ev‎ أو ‎-1001234567890‎. لازم تضيف البوت كمشرف في القناة أولاً.')
                                     ->columnSpanFull(),
-                                Forms\Components\Grid::make(3)->schema([
+                                Forms\Components\Grid::make(2)->schema([
                                     Forms\Components\TextInput::make('telegram_topic_id')
                                         ->label('رقم قسم الخلفيات (Topic)')
                                         ->numeric()
@@ -364,6 +364,10 @@ class SiteSettingsPage extends Page
                                         ->label('رقم قسم الأخبار (Topic)')
                                         ->numeric()
                                         ->helperText('قسم الأخبار.'),
+                                    Forms\Components\TextInput::make('telegram_topic_id_market')
+                                        ->label('رقم قسم الإعلانات (Topic)')
+                                        ->numeric()
+                                        ->helperText('قسم السوق/الإعلانات — يُستخدم مع زر "نشر + قناة الإعلانات".'),
                                 ]),
                                 Forms\Components\Placeholder::make('telegram_topic_help')
                                     ->label('')

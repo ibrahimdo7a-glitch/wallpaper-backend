@@ -223,11 +223,28 @@ class TelegramAuthController extends Controller
             return response()->json(['ok' => true]);
         }
 
-        if ($action === 'approve') {
+        if ($action === 'approve' || $action === 'approve_tg') {
             $listing->update(['status' => 'published', 'rejection_reason' => null, 'published_at' => $listing->published_at ?? now()]);
-            $this->telegram->answerCallback($callbackId, '✅ تم النشر');
-            if ($messageId) {
-                $this->telegram->editMessageCaption($chatId, $messageId, '✅ <b>نُشر</b> — «' . e($listing->title_ar) . '»');
+
+            if ($action === 'approve_tg') {
+                // Publish on the site AND post into the channel's listings topic.
+                $res  = $this->telegram->sendListingToChannel($listing->fresh());
+                $okTg = $res['ok'] ?? false;
+                $this->telegram->answerCallback(
+                    $callbackId,
+                    $okTg ? '✅ نُشر في الموقع وقناة الإعلانات' : ('✅ نُشر في الموقع — تعذّر النشر في القناة: ' . ($res['error'] ?? '')),
+                    ! $okTg,
+                );
+                if ($messageId) {
+                    $this->telegram->editMessageCaption($chatId, $messageId, $okTg
+                        ? '📣 <b>نُشر في الموقع + قناة الإعلانات</b> — «' . e($listing->title_ar) . '»'
+                        : '✅ <b>نُشر في الموقع</b> (تعذّر النشر في القناة) — «' . e($listing->title_ar) . '»');
+                }
+            } else {
+                $this->telegram->answerCallback($callbackId, '✅ تم النشر');
+                if ($messageId) {
+                    $this->telegram->editMessageCaption($chatId, $messageId, '✅ <b>نُشر</b> — «' . e($listing->title_ar) . '»');
+                }
             }
             return response()->json(['ok' => true]);
         }
