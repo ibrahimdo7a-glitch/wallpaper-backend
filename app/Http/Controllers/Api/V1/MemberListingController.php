@@ -63,7 +63,7 @@ class MemberListingController extends Controller
             'contact_whatsapp'   => 'nullable|string|max:30',
             'contact_telegram'   => 'nullable|string|max:60',
             'specs'              => 'nullable|array',
-            'images'             => 'nullable|array|max:10',
+            'images'             => 'nullable|array|max:3',
             'images.*'           => 'image|max:5120',
         ]);
 
@@ -170,7 +170,7 @@ class MemberListingController extends Controller
             'custom_model'     => 'nullable|string|max:60',
             'contact_phone'    => 'nullable|string|max:30',
             'contact_whatsapp' => 'nullable|string|max:30',
-            'images'           => 'nullable|array|max:10',
+            'images'           => 'nullable|array|max:3',
             'images.*'         => 'image|max:5120',
         ]);
 
