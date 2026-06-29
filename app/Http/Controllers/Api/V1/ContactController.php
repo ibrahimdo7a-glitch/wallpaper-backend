@@ -37,7 +37,7 @@ class ContactController extends Controller
             ->whereNotNull('telegram_chat_id')->where('telegram_chat_id', '!=', '')
             ->pluck('telegram_chat_id');
 
-        $text = "📩 <b>رسالة تواصل جديدة</b>\nمن: " . e($msg->member_name)
+        $text = "🔴 <b>رسالة تواصل جديدة</b> 🔴\nمن: " . e($msg->member_name)
               . ($member->telegram_username ? ' (@' . $member->telegram_username . ')' : '')
               . "\n\n" . e($msg->message);
 
