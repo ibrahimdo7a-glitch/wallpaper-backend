@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -41,11 +42,24 @@ class CarModel extends Model
 
         static::saved(function (self $model) {
             $model->brand?->refreshCounts();
+            $model->flushBrandCache();
         });
 
         static::deleted(function (self $model) {
             $model->brand?->refreshCounts();
+            $model->flushBrandCache();
         });
+    }
+
+    /** Forget cached brand payloads so model edits (image, name, …) appear immediately. */
+    public function flushBrandCache(): void
+    {
+        $slug = $this->brand?->slug;
+        if (! $slug) return;
+
+        Cache::forget("brand.{$slug}");
+        Cache::forget("brand.{$slug}.sections");
+        Cache::forget("brand.{$slug}.models");
     }
 
     public function brand(): BelongsTo
