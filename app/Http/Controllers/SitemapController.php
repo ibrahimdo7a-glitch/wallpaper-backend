@@ -41,7 +41,8 @@ class SitemapController extends Controller
 
     public function sitemap(): Response
     {
-        $xml = Cache::remember('sitemap.xml', 3600, fn () => $this->build());
+        // Bump the key suffix when the URL set changes to bust the persisted cache.
+        $xml = Cache::remember('sitemap.xml.v2', 3600, fn () => $this->build());
 
         return response($xml, 200, ['Content-Type' => 'application/xml; charset=UTF-8']);
     }
