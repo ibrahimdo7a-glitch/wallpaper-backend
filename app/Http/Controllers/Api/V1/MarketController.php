@@ -38,7 +38,22 @@ class MarketController extends Controller
             'icon'     => $c->icon,
         ])->values();
 
+        // Brands (each with its models) for the listing form's brand/model pickers.
+        $brands = \App\Models\Brand::active()
+            ->with(['carModels' => fn ($q) => $q->where('is_active', true)->orderBy('name_ar')])
+            ->orderBy('name_ar')
+            ->get(['id', 'name_ar', 'name_en'])
+            ->map(fn ($b) => [
+                'id'      => $b->id,
+                'name_ar' => $b->name_ar,
+                'name_en' => $b->name_en,
+                'models'  => $b->carModels->map(fn ($m) => [
+                    'id' => $m->id, 'name_ar' => $m->name_ar, 'name_en' => $m->name_en,
+                ])->values(),
+            ])->values();
+
         return response()->json([
+            'brands' => $brands,
             'cars' => [
                 'enabled'  => $this->sectionEnabled('cars'),
                 'label_ar' => Setting::get('cars_label_ar') ?: 'سوق السيارات',
@@ -228,8 +243,10 @@ class MarketController extends Controller
             'mileage'        => $l->mileage,
             'specs'          => $l->specs,
             'spec_fields'    => $this->resolveSpecFields($l),
-            'brand'          => $l->brand ? ['name_ar' => $l->brand->name_ar, 'slug' => $l->brand->slug] : null,
-            'car_model'      => $l->carModel?->name_ar,
+            'brand'          => $l->brand
+                ? ['name_ar' => $l->brand->name_ar, 'slug' => $l->brand->slug]
+                : ($l->custom_brand ? ['name_ar' => $l->custom_brand, 'slug' => null] : null),
+            'car_model'      => $l->carModel?->name_ar ?? $l->custom_model,
             'category'       => $l->category?->name_ar,
             'views_count'    => $l->views_count,
             'contact'        => [

@@ -14,7 +14,7 @@ class MarketListing extends Model
     protected $fillable = [
         'listing_type', 'market_category_id', 'title_ar', 'title_en', 'slug',
         'description_ar', 'description_en', 'price', 'currency', 'is_negotiable',
-        'condition', 'country', 'city', 'brand_id', 'car_model_id', 'year', 'mileage',
+        'condition', 'country', 'city', 'brand_id', 'car_model_id', 'custom_brand', 'custom_model', 'year', 'mileage',
         'specs', 'images', 'contact_name', 'contact_phone', 'contact_whatsapp', 'contact_telegram',
         'is_paid_listing', 'is_featured', 'status', 'rejection_reason', 'source', 'member_id', 'views_count', 'published_at', 'expires_at',
     ];
