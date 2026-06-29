@@ -218,4 +218,21 @@ class MemberListingController extends Controller
             'message' => $requireApproval ? 'تم إرسال التعديل للمراجعة' : 'تم تحديث إعلانك',
         ]);
     }
+
+    // POST /v1/member/listings/{id}/toggle-active — member pauses/resumes their own listing.
+    // Pausing hides it from the public market; it stays visible in the member's account.
+    public function toggleActive(Request $request, int $id): JsonResponse
+    {
+        $l = $request->user()->listings()->findOrFail($id);
+
+        if ($l->status === 'published') {
+            $l->update(['status' => 'hidden']);
+        } elseif ($l->status === 'hidden') {
+            $l->update(['status' => 'published', 'published_at' => $l->published_at ?? now()]);
+        } else {
+            return response()->json(['error' => 'لا يمكن إيقاف/تشغيل هذا الإعلان في حالته الحالية'], 422);
+        }
+
+        return response()->json(['ok' => true, 'status' => $l->status]);
+    }
 }
