@@ -55,6 +55,8 @@ class SiteSettingsPage extends Page
             'feature_fast_ar', 'feature_fast_en',
             'footer_copyright_ar', 'footer_copyright_en',
             'terms_ar', 'terms_en',
+            'privacy_ar', 'privacy_en',
+            'about_ar', 'about_en',
             'telegram_bot_token', 'telegram_channel_id',
             'telegram_topic_id', 'telegram_topic_id_apps', 'telegram_topic_id_news',
             'stat_visitors_enabled', 'stat_downloads_enabled', 'stat_wallpapers_enabled', 'stat_apps_enabled',
@@ -285,6 +287,32 @@ class SiteSettingsPage extends Page
                                     ->toolbarButtons(['bold', 'italic', 'h2', 'h3', 'bulletList', 'orderedList', 'link', 'blockquote', 'undo', 'redo'])
                                     ->columnSpanFull(),
                                 Forms\Components\RichEditor::make('terms_en')->label('الشروط (إنجليزي)')
+                                    ->toolbarButtons(['bold', 'italic', 'h2', 'h3', 'bulletList', 'orderedList', 'link', 'blockquote', 'undo', 'redo'])
+                                    ->columnSpanFull(),
+                            ]),
+
+                        Forms\Components\Tabs\Tab::make('سياسة الخصوصية')
+                            ->icon('heroicon-o-lock-closed')
+                            ->schema([
+                                Forms\Components\Placeholder::make('privacy_help')->label('')
+                                    ->content('تظهر مباشرة في صفحة /privacy. اتركها فارغة لعرض النص الافتراضي.'),
+                                Forms\Components\RichEditor::make('privacy_ar')->label('سياسة الخصوصية (عربي)')
+                                    ->toolbarButtons(['bold', 'italic', 'h2', 'h3', 'bulletList', 'orderedList', 'link', 'blockquote', 'undo', 'redo'])
+                                    ->columnSpanFull(),
+                                Forms\Components\RichEditor::make('privacy_en')->label('سياسة الخصوصية (إنجليزي)')
+                                    ->toolbarButtons(['bold', 'italic', 'h2', 'h3', 'bulletList', 'orderedList', 'link', 'blockquote', 'undo', 'redo'])
+                                    ->columnSpanFull(),
+                            ]),
+
+                        Forms\Components\Tabs\Tab::make('من نحن')
+                            ->icon('heroicon-o-information-circle')
+                            ->schema([
+                                Forms\Components\Placeholder::make('about_help')->label('')
+                                    ->content('تظهر مباشرة في صفحة /about. اتركها فارغة لإخفاء الصفحة من التذييل.'),
+                                Forms\Components\RichEditor::make('about_ar')->label('من نحن (عربي)')
+                                    ->toolbarButtons(['bold', 'italic', 'h2', 'h3', 'bulletList', 'orderedList', 'link', 'blockquote', 'undo', 'redo'])
+                                    ->columnSpanFull(),
+                                Forms\Components\RichEditor::make('about_en')->label('من نحن (إنجليزي)')
                                     ->toolbarButtons(['bold', 'italic', 'h2', 'h3', 'bulletList', 'orderedList', 'link', 'blockquote', 'undo', 'redo'])
                                     ->columnSpanFull(),
                             ]),

@@ -126,6 +126,8 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
             'feature_fast_ar', 'feature_fast_en',
             'footer_copyright_ar', 'footer_copyright_en',
             'terms_ar', 'terms_en',
+            'privacy_ar', 'privacy_en',
+            'about_ar', 'about_en',
             'ilink_enabled',
             'ilink_label_ar', 'ilink_label_en',
             'ilink_tooltip_ar', 'ilink_tooltip_en',
