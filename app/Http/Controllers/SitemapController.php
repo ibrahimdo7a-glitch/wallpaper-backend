@@ -63,6 +63,11 @@ class SitemapController extends Controller
             $add($p, null, 'monthly', '0.3');
         }
 
+        // ── Geo landing pages (slugs mirror frontend lib/countries.ts) ──
+        foreach (['qatar', 'saudi-arabia', 'uae', 'kuwait', 'bahrain', 'oman', 'jordan', 'iraq'] as $cs) {
+            $add("/electric-cars/{$cs}", null, 'weekly', '0.8');
+        }
+
         // ── Brands ──
         Brand::active()->get(['id', 'slug', 'updated_at'])->each(
             fn (Brand $b) => $add("/brands/{$b->slug}", $b->updated_at, 'weekly', '0.8')
