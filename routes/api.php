@@ -30,7 +30,7 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
     Route::get('/member/listings/{id}', [\App\Http\Controllers\Api\V1\MemberListingController::class, 'show'])->middleware('auth:member');
     Route::post('/member/listings', [\App\Http\Controllers\Api\V1\MemberListingController::class, 'store'])->middleware(['auth:member', 'throttle:10,1']);
     Route::post('/member/listings/{id}', [\App\Http\Controllers\Api\V1\MemberListingController::class, 'update'])->middleware(['auth:member', 'throttle:10,1']);
-    Route::post('/member/listings/{id}/toggle-active', [\App\Http\Controllers\Api\V1\MemberListingController::class, 'toggleActive'])->middleware(['auth:member', 'throttle:30,1']);
+    Route::post('/member/listings/{id}/action', [\App\Http\Controllers\Api\V1\MemberListingController::class, 'action'])->middleware(['auth:member', 'throttle:30,1']);
     Route::post('/contact', [\App\Http\Controllers\Api\V1\ContactController::class, 'send'])->middleware(['auth:member', 'throttle:5,1']);
 
     // Member saves + preferences

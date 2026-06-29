@@ -16,17 +16,33 @@ class MemberListingController extends Controller
     // GET /v1/member/listings — the member's own listings
     public function mine(Request $request): JsonResponse
     {
-        $items = $request->user()->listings()->latest()->get()->map(fn (MarketListing $l) => [
-            'id'         => $l->id,
-            'title_ar'   => $l->title_ar,
-            'slug'       => $l->slug,
-            'price'      => $l->price !== null ? (float) $l->price : null,
-            'currency'   => $l->currency,
-            'cover_url'  => $l->cover_url,
-            'status'     => $l->status,
-            'rejection_reason' => $l->rejection_reason,
-            'created_at' => $l->created_at?->toISOString(),
-        ]);
+        $items = $request->user()->listings()->latest()->get()->map(function (MarketListing $l) {
+            // A published listing can be renewed (bumped to the top) once a week.
+            $canRenew = false;
+            $renewInDays = 0;
+            if ($l->status === 'published') {
+                $eligibleAt = ($l->published_at ?? $l->created_at)->copy()->addWeek();
+                if (now()->gte($eligibleAt)) {
+                    $canRenew = true;
+                } else {
+                    $renewInDays = max(1, (int) ceil(now()->floatDiffInDays($eligibleAt)));
+                }
+            }
+
+            return [
+                'id'         => $l->id,
+                'title_ar'   => $l->title_ar,
+                'slug'       => $l->slug,
+                'price'      => $l->price !== null ? (float) $l->price : null,
+                'currency'   => $l->currency,
+                'cover_url'  => $l->cover_url,
+                'status'     => $l->status,
+                'rejection_reason' => $l->rejection_reason,
+                'can_renew'    => $canRenew,
+                'renew_in_days' => $renewInDays,
+                'created_at' => $l->created_at?->toISOString(),
+            ];
+        });
 
         return response()->json(['data' => $items]);
     }
@@ -219,20 +235,56 @@ class MemberListingController extends Controller
         ]);
     }
 
-    // POST /v1/member/listings/{id}/toggle-active — member pauses/resumes their own listing.
-    // Pausing hides it from the public market; it stays visible in the member's account.
-    public function toggleActive(Request $request, int $id): JsonResponse
+    // POST /v1/member/listings/{id}/action {action: pause|resume|sold|renew}
+    // The member manages their own listing: pause (hide from market), resume, mark sold,
+    // or renew (bump to the top once a week — no change to views or data).
+    public function action(Request $request, int $id): JsonResponse
     {
         $l = $request->user()->listings()->findOrFail($id);
+        $action = (string) $request->input('action');
 
-        if ($l->status === 'published') {
-            $l->update(['status' => 'hidden']);
-        } elseif ($l->status === 'hidden') {
-            $l->update(['status' => 'published', 'published_at' => $l->published_at ?? now()]);
-        } else {
-            return response()->json(['error' => 'لا يمكن إيقاف/تشغيل هذا الإعلان في حالته الحالية'], 422);
+        switch ($action) {
+            case 'pause':
+                if ($l->status !== 'published') {
+                    return response()->json(['error' => 'لا يمكن إيقاف هذا الإعلان'], 422);
+                }
+                $l->update(['status' => 'hidden']);
+                break;
+
+            case 'resume':
+                if (! in_array($l->status, ['hidden', 'sold'], true)) {
+                    return response()->json(['error' => 'لا يمكن إعادة نشر هذا الإعلان'], 422);
+                }
+                $l->update(['status' => 'published', 'published_at' => $l->published_at ?? now()]);
+                break;
+
+            case 'sold':
+                if (! in_array($l->status, ['published', 'hidden'], true)) {
+                    return response()->json(['error' => 'لا يمكن تعليم هذا الإعلان كمباع'], 422);
+                }
+                $l->update(['status' => 'sold']);
+                break;
+
+            case 'renew':
+                if ($l->status !== 'published') {
+                    return response()->json(['error' => 'يمكن تجديد الإعلانات المنشورة فقط'], 422);
+                }
+                $eligibleAt = ($l->published_at ?? $l->created_at)->copy()->addWeek();
+                if (now()->lt($eligibleAt)) {
+                    $days = max(1, (int) ceil(now()->floatDiffInDays($eligibleAt)));
+                    return response()->json(['error' => "يمكنك التجديد بعد {$days} يوم"], 422);
+                }
+                // Bump to the top without touching views or data.
+                $l->update(['published_at' => now()]);
+                break;
+
+            default:
+                return response()->json(['error' => 'إجراء غير معروف'], 422);
         }
 
-        return response()->json(['ok' => true, 'status' => $l->status]);
+        $canRenew = $l->status === 'published'
+            && now()->gte(($l->published_at ?? $l->created_at)->copy()->addWeek());
+
+        return response()->json(['ok' => true, 'status' => $l->status, 'can_renew' => $canRenew]);
     }
 }
