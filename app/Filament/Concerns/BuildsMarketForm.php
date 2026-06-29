@@ -22,7 +22,7 @@ trait BuildsMarketForm
 
     protected static function gulfCountries(): array
     {
-        return ['قطر' => 'قطر', 'السعودية' => 'السعودية', 'الإمارات' => 'الإمارات', 'الكويت' => 'الكويت', 'البحرين' => 'البحرين', 'عُمان' => 'عُمان'];
+        return array_combine(\App\Models\MarketListing::COUNTRIES, \App\Models\MarketListing::COUNTRIES);
     }
 
     public static function form(Form $form): Form

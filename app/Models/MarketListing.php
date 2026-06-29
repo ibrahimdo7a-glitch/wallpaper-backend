@@ -11,6 +11,9 @@ class MarketListing extends Model
 {
     use SoftDeletes;
 
+    /** Canonical country list — drives the admin form picker and the public market filter. */
+    public const COUNTRIES = ['قطر', 'السعودية', 'الإمارات', 'الكويت', 'البحرين', 'عُمان'];
+
     protected $fillable = [
         'listing_type', 'market_category_id', 'title_ar', 'title_en', 'slug',
         'description_ar', 'description_en', 'price', 'currency', 'is_negotiable',

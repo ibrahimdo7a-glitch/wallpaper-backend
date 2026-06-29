@@ -53,7 +53,8 @@ class MarketController extends Controller
             ])->values();
 
         return response()->json([
-            'brands' => $brands,
+            'brands'    => $brands,
+            'countries' => MarketListing::COUNTRIES,
             'cars' => [
                 'enabled'  => $this->sectionEnabled('cars'),
                 'label_ar' => Setting::get('cars_label_ar') ?: 'سوق السيارات',
