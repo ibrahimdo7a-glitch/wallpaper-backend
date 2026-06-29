@@ -54,6 +54,7 @@ class SiteSettingsPage extends Page
             'feature_quality_ar', 'feature_quality_en',
             'feature_fast_ar', 'feature_fast_en',
             'footer_copyright_ar', 'footer_copyright_en',
+            'terms_ar', 'terms_en',
             'telegram_bot_token', 'telegram_channel_id',
             'telegram_topic_id', 'telegram_topic_id_apps', 'telegram_topic_id_news',
             'stat_visitors_enabled', 'stat_downloads_enabled', 'stat_wallpapers_enabled', 'stat_apps_enabled',
@@ -273,6 +274,19 @@ class SiteSettingsPage extends Page
                                         ->label('حقوق النشر (إنجليزي)')
                                         ->placeholder('© 2025 Leopard Wallpapers. All rights reserved.'),
                                 ]),
+                            ]),
+
+                        Forms\Components\Tabs\Tab::make('الشروط والأحكام')
+                            ->icon('heroicon-o-document-text')
+                            ->schema([
+                                Forms\Components\Placeholder::make('terms_help')->label('')
+                                    ->content('اكتب الشروط والأحكام هنا — تظهر مباشرة في صفحة /terms بالموقع. اتركها فارغة لعرض النص الافتراضي.'),
+                                Forms\Components\RichEditor::make('terms_ar')->label('الشروط (عربي)')
+                                    ->toolbarButtons(['bold', 'italic', 'h2', 'h3', 'bulletList', 'orderedList', 'link', 'blockquote', 'undo', 'redo'])
+                                    ->columnSpanFull(),
+                                Forms\Components\RichEditor::make('terms_en')->label('الشروط (إنجليزي)')
+                                    ->toolbarButtons(['bold', 'italic', 'h2', 'h3', 'bulletList', 'orderedList', 'link', 'blockquote', 'undo', 'redo'])
+                                    ->columnSpanFull(),
                             ]),
 
                         Forms\Components\Tabs\Tab::make('تلجرام')
