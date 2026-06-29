@@ -122,6 +122,10 @@ class MarketController extends Controller
         $sectionTypes = self::SECTION_TYPES[$section];
         $query = MarketListing::published()->whereIn('listing_type', $sectionTypes);
 
+        // Member listings expire 14 days after publish/renew (unless renewed); admin listings never expire.
+        $query->where(fn ($q) => $q->whereNull('member_id')
+            ->orWhere('published_at', '>=', now()->subDays(14)));
+
         if ($request->type && in_array($request->type, $sectionTypes, true)) {
             $query->where('listing_type', $request->type);
         }

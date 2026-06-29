@@ -320,7 +320,8 @@ class BrandController extends Controller
         // Latest 12 listings linked to this brand — featured first (frontend renders them on top).
         $listings = \App\Models\MarketListing::published()
             ->where('brand_id', $brand->id)
-            ->orderByDesc('is_featured')->orderByDesc('created_at')
+            ->where(fn ($q) => $q->whereNull('member_id')->orWhere('published_at', '>=', now()->subDays(14)))
+            ->orderByDesc('is_featured')->orderByDesc('published_at')
             ->limit(12)->get()
             ->map(fn (\App\Models\MarketListing $l) => [
                 'id'            => $l->id,

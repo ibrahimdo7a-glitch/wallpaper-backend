@@ -17,16 +17,14 @@ class MemberListingController extends Controller
     public function mine(Request $request): JsonResponse
     {
         $items = $request->user()->listings()->latest()->get()->map(function (MarketListing $l) {
-            // A published listing can be renewed (bumped to the top) once a week.
+            // A published listing can be renewed (bumped to the top) once a week, and
+            // expires (drops out of the public market) 14 days after publish/renew.
             $canRenew = false;
-            $renewInDays = 0;
+            $isExpired = false;
             if ($l->status === 'published') {
-                $eligibleAt = ($l->published_at ?? $l->created_at)->copy()->addWeek();
-                if (now()->gte($eligibleAt)) {
-                    $canRenew = true;
-                } else {
-                    $renewInDays = max(1, (int) ceil(now()->floatDiffInDays($eligibleAt)));
-                }
+                $base = $l->published_at ?? $l->created_at;
+                $canRenew = now()->gte($base->copy()->addWeek());
+                $isExpired = now()->gte($base->copy()->addDays(14));
             }
 
             return [
@@ -39,7 +37,7 @@ class MemberListingController extends Controller
                 'status'     => $l->status,
                 'rejection_reason' => $l->rejection_reason,
                 'can_renew'    => $canRenew,
-                'renew_in_days' => $renewInDays,
+                'is_expired'   => $isExpired,
                 'created_at' => $l->created_at?->toISOString(),
             ];
         });
@@ -272,7 +270,7 @@ class MemberListingController extends Controller
                 $eligibleAt = ($l->published_at ?? $l->created_at)->copy()->addWeek();
                 if (now()->lt($eligibleAt)) {
                     $days = max(1, (int) ceil(now()->floatDiffInDays($eligibleAt)));
-                    return response()->json(['error' => "يمكنك التجديد بعد {$days} يوم"], 422);
+                    return response()->json(['error' => "لم يمضِ على نشر الإعلان ٧ أيام — متبقّي {$days} يوم لهذا الخيار."], 422);
                 }
                 // Bump to the top without touching views or data.
                 $l->update(['published_at' => now()]);
