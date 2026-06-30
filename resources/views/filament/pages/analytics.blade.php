@@ -130,7 +130,57 @@
         </div>
     </div>
 
+    {{-- Top pages --}}
+    @php $tp = $r['top_pages'] ?? []; $tpMax = max(array_merge([1], array_values($tp))); @endphp
+    <div class="rounded-xl border border-gray-200 dark:border-white/10 p-4">
+        <h2 class="font-bold text-sm mb-3">🔥 أكثر الصفحات زيارة — {{ $r['period_label'] ?? '' }}</h2>
+        @forelse($tp as $path => $c)
+            <div class="mb-2">
+                <div class="flex justify-between text-xs mb-0.5">
+                    <span class="truncate text-gray-600 dark:text-gray-300" dir="ltr">{{ $path }}</span>
+                    <span class="text-gray-400 shrink-0 ms-2">{{ number_format($c) }}</span>
+                </div>
+                <div class="h-1.5 rounded-full bg-gray-100 dark:bg-white/10 overflow-hidden">
+                    <div class="h-full rounded-full bg-primary-500" style="width: {{ round($c / $tpMax * 100) }}%"></div>
+                </div>
+            </div>
+        @empty
+            <p class="text-sm text-gray-400">لا توجد بيانات صفحات بعد.</p>
+        @endforelse
+    </div>
+
+    {{-- Geographic --}}
+    <div class="grid md:grid-cols-2 gap-3">
+        <div class="rounded-xl border border-gray-200 dark:border-white/10 p-4">
+            <h2 class="font-bold text-sm mb-3">🌍 أكثر الدول زيارة</h2>
+            @php $tc = $r['top_countries'] ?? []; $tcMax = max(array_merge([1], array_values($tc))); @endphp
+            @forelse($tc as $cc => $c)
+                <div class="flex items-center gap-2 mb-2 text-sm">
+                    <span class="text-lg">{{ \App\Services\AnalyticsService::flag($cc) }}</span>
+                    <span class="w-8 text-gray-500">{{ $cc }}</span>
+                    <div class="flex-1 h-2 rounded-full bg-gray-100 dark:bg-white/10 overflow-hidden">
+                        <div class="h-full rounded-full bg-primary-500" style="width: {{ round($c / $tcMax * 100) }}%"></div>
+                    </div>
+                    <span class="text-gray-400 w-10 text-end">{{ number_format($c) }}</span>
+                </div>
+            @empty
+                <p class="text-sm text-gray-400">لا توجد بيانات جغرافية بعد (الدولة تأتي عبر Cloudflare).</p>
+            @endforelse
+        </div>
+        <div class="rounded-xl border border-gray-200 dark:border-white/10 p-4">
+            <h2 class="font-bold text-sm mb-3">👥 الأعضاء حسب الدولة</h2>
+            @forelse($r['members_by_country'] ?? [] as $cc => $c)
+                <div class="flex items-center justify-between mb-1.5 text-sm border-b border-gray-100 dark:border-white/5 pb-1">
+                    <span>{{ \App\Services\AnalyticsService::flag($cc) }} <span class="text-gray-500">{{ $cc }}</span></span>
+                    <span class="text-gray-400">{{ number_format($c) }}</span>
+                </div>
+            @empty
+                <p class="text-sm text-gray-400">لا يوجد أعضاء بدولة محدّدة بعد.</p>
+            @endforelse
+        </div>
+    </div>
+
     <div class="text-xs text-gray-400">
-        نظام تحليلات أول‑طرف مدمج — الأرقام مقيسة مباشرة من زوّار موقعك. الجغرافيا الدقيقة والـreal-time المتقدّم وسلوك التنقّل تُكمّلها Vercel/GA4 (المرحلة الهجينة). صفحة الزوّار المباشرين والخريطة الجغرافية ضمن المرحلة التالية.
+        نظام تحليلات أول‑طرف مدمج — الأرقام مقيسة مباشرة من زوّار موقعك. صفحة «الزوّار المباشرون» في القائمة لعرض من يتصفّح الآن لحظيًا. الجغرافيا على مستوى المدينة والـreal-time المتقدّم وسلوك التنقّل تُكمّلها Vercel/GA4.
     </div>
 </x-filament-panels::page>

@@ -247,6 +247,63 @@ class AnalyticsService
             ->pluck('c', 's')->map(fn ($v) => (int) $v)->toArray();
     }
 
+    /** Currently-online visitors (last $minutes), newest activity first — for the live page. */
+    public function liveVisitors(int $minutes = self::ONLINE_MINUTES, int $limit = 100): array
+    {
+        return AnalyticsVisitor::with('member:id,name,telegram_username')
+            ->where('last_seen_at', '>=', now()->subMinutes($minutes))
+            ->orderByDesc('last_seen_at')
+            ->limit($limit)
+            ->get()
+            ->map(fn (AnalyticsVisitor $v) => [
+                'country'    => $v->country,
+                'device'     => $v->device,
+                'os'         => $v->os,
+                'browser'    => $v->browser,
+                'last_path'  => $v->last_path,
+                'last_seen'  => $v->last_seen_at,
+                'first_seen' => $v->first_seen_at,
+                'views'      => (int) $v->total_views,
+                'returning'  => (int) ($v->sessions ?? 0) > 1,
+                'ip'         => $v->ip,
+                'member'     => $v->member ? ($v->member->name ?: ($v->member->telegram_username ? '@' . $v->member->telegram_username : 'عضو')) : null,
+            ])->toArray();
+    }
+
+    /** @return array<string,int> path => pageviews (most-visited pages). */
+    public function topPages(Carbon $from, int $limit = 10): array
+    {
+        return AnalyticsEvent::where('type', 'pageview')->where('created_at', '>=', $from)->whereNotNull('path')
+            ->selectRaw('path, count(*) as c')->groupBy('path')->orderByDesc('c')->limit($limit)
+            ->pluck('c', 'path')->map(fn ($v) => (int) $v)->toArray();
+    }
+
+    /** @return array<string,int> country => distinct visitors. */
+    public function topCountries(Carbon $from, int $limit = 12): array
+    {
+        return AnalyticsEvent::where('created_at', '>=', $from)->whereNotNull('country')
+            ->selectRaw('country, count(distinct visitor_id) as c')->groupBy('country')->orderByDesc('c')->limit($limit)
+            ->pluck('c', 'country')->map(fn ($v) => (int) $v)->toArray();
+    }
+
+    /** @return array<string,int> country => members. */
+    public function membersByCountry(int $limit = 12): array
+    {
+        return AnalyticsVisitor::whereNotNull('member_id')->whereNotNull('country')
+            ->selectRaw('country, count(distinct member_id) as c')->groupBy('country')->orderByDesc('c')->limit($limit)
+            ->pluck('c', 'country')->map(fn ($v) => (int) $v)->toArray();
+    }
+
+    /** ISO-3166 alpha-2 code → flag emoji. */
+    public static function flag(?string $code): string
+    {
+        if (! $code || strlen($code) !== 2 || ! ctype_alpha($code)) {
+            return '🌐';
+        }
+        $code = strtoupper($code);
+        return mb_chr(0x1F1E6 + ord($code[0]) - 65) . mb_chr(0x1F1E6 + ord($code[1]) - 65);
+    }
+
     /** Aligned last-$days daily series of distinct visitors. @return array<string,int> */
     public function dailyVisitors(int $days = 14): array
     {

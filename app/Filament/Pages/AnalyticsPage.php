@@ -48,6 +48,7 @@ class AnalyticsPage extends Page
     {
         $svc = app(AnalyticsService::class);
         [$from, $to, $prevFrom, $prevTo] = $this->range($this->period);
+        $listFrom = $this->period === 'lifetime' ? Carbon::createFromTimestamp(0) : $from;
 
         // Period metrics + deltas vs the previous equal-length window.
         $visitors      = $svc->visitorsBetween($from, $to);
@@ -85,6 +86,9 @@ class AnalyticsPage extends Page
                 'visitors'  => array_values($dailyV),
                 'pageviews' => array_values($dailyP),
             ],
+            'top_pages'          => $svc->topPages($listFrom, 10),
+            'top_countries'      => $svc->topCountries($listFrom, 12),
+            'members_by_country' => $svc->membersByCountry(12),
             'members' => [
                 'today'   => $svc->newMembersSince(now()->startOfDay()),
                 'week'    => $svc->newMembersSince(now()->subDays(7)),
