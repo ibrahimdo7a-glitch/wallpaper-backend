@@ -42,7 +42,7 @@ class SitemapController extends Controller
     public function sitemap(): Response
     {
         // Bump the key suffix when the URL set changes to bust the persisted cache.
-        $xml = Cache::remember('sitemap.xml.v2', 3600, fn () => $this->build());
+        $xml = Cache::remember('sitemap.xml.v3', 3600, fn () => $this->build());
 
         return response($xml, 200, ['Content-Type' => 'application/xml; charset=UTF-8']);
     }
@@ -57,7 +57,7 @@ class SitemapController extends Controller
 
         // ── Static pages ──
         $add('', null, 'daily', '1.0');
-        foreach (['/cars', '/parts', '/brands', '/apps', '/news'] as $p) {
+        foreach (['/cars', '/parts', '/brands', '/apps', '/news', '/wallpapers'] as $p) {
             $add($p, null, 'daily', '0.9');
         }
         foreach (['/about', '/terms', '/privacy'] as $p) {

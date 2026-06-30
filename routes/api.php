@@ -188,6 +188,10 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
             'audience' => \App\Models\Setting::get('broadcast_audience', 'all') ?: 'all',
         ] : null;
 
+        // Wallpapers gallery on/off (drives the header link).
+        $wpRaw = \App\Models\Setting::get('wp_enabled', null);
+        $settings['wp_enabled'] = $wpRaw === null || $wpRaw === '' ? true : filter_var($wpRaw, FILTER_VALIDATE_BOOLEAN);
+
         return response()->json([
             'data' => $settings,
         ]);
