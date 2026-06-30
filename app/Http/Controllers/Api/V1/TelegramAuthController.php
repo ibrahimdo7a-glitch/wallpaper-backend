@@ -88,7 +88,19 @@ class TelegramAuthController extends Controller
     // GET /v1/auth/me — current member (auth:member)
     public function me(Request $request): JsonResponse
     {
-        return response()->json(['member' => $request->user()->toPublicArray()]);
+        $member = $request->user();
+        return response()->json([
+            'member' => $member->toPublicArray(),
+            // One-time admin message shown in a modal, then acknowledged & cleared.
+            'notice' => $member->site_message ?: null,
+        ]);
+    }
+
+    // POST /v1/member/notice/ack — clear the one-time message after the member reads it
+    public function dismissNotice(Request $request): JsonResponse
+    {
+        $request->user()->update(['site_message' => null]);
+        return response()->json(['ok' => true]);
     }
 
     // POST /v1/auth/logout — revoke current token (auth:member)

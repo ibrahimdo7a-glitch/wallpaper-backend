@@ -12,13 +12,17 @@ use Filament\Tables\Table;
 
 class MemberResource extends Resource
 {
-    use \App\Filament\Concerns\HiddenFromCreatives;
-
     protected static ?string $model = Member::class;
     protected static ?string $slug = 'members';
     protected static ?string $navigationIcon  = 'heroicon-o-user-group';
     protected static ?string $navigationGroup = 'الأعضاء';
     protected static ?int    $navigationSort   = 1;
+
+    // Members list is visible to the super admin only.
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->hasRole('super_admin') ?? false;
+    }
 
     public static function getNavigationLabel(): string  { return 'الأعضاء'; }
     public static function getModelLabel(): string       { return 'عضو'; }
@@ -66,11 +70,53 @@ class MemberResource extends Resource
                     ->options(['active' => 'مفعّل', 'banned' => 'محظور']),
             ])
             ->actions([
+                Tables\Actions\Action::make('telegram_dm')
+                    ->label('مراسلة تلجرام')->icon('heroicon-o-paper-airplane')->color('info')
+                    ->modalHeading('إرسال رسالة عبر تلجرام')
+                    ->form([
+                        Forms\Components\Textarea::make('message')->label('الرسالة')->required()->rows(4)->maxLength(2000),
+                    ])
+                    ->action(function (Member $record, array $data) {
+                        try {
+                            $res = app(\App\Services\TelegramService::class)->sendMessage((string) $record->telegram_id, $data['message']);
+                            ($res['ok'] ?? false)
+                                ? \Filament\Notifications\Notification::make()->title('تم الإرسال عبر تلجرام ✓')->success()->send()
+                                : \Filament\Notifications\Notification::make()->title('تعذّر الإرسال — قد لا يكون العضو بدأ محادثة البوت')->warning()->send();
+                        } catch (\Throwable $e) {
+                            \Filament\Notifications\Notification::make()->title('فشل الإرسال')->body($e->getMessage())->danger()->send();
+                        }
+                    }),
+
+                Tables\Actions\Action::make('site_message')
+                    ->label('رسالة بالموقع')->icon('heroicon-o-chat-bubble-left-right')->color('warning')
+                    ->modalHeading('رسالة تظهر للعضو داخل الموقع')
+                    ->modalDescription('تظهر للعضو في نافذة عند فتحه الموقع، مرة واحدة فقط ثم تختفي.')
+                    ->fillForm(fn (Member $record) => ['site_message' => $record->site_message])
+                    ->form([
+                        Forms\Components\Textarea::make('site_message')->label('نص الرسالة')->required()->rows(4)->maxLength(1000),
+                    ])
+                    ->action(function (Member $record, array $data) {
+                        $record->update(['site_message' => $data['site_message']]);
+                        \Filament\Notifications\Notification::make()->title('سيراها العضو عند زيارته القادمة ✓')->success()->send();
+                    }),
+
                 Tables\Actions\Action::make('toggle_ban')
-                    ->label(fn (Member $record) => $record->status === 'banned' ? 'تفعيل' : 'حظر')
+                    ->label(fn (Member $record) => $record->status === 'banned' ? 'تفعيل' : 'طرد / حظر')
                     ->icon('heroicon-o-no-symbol')
+                    ->color(fn (Member $record) => $record->status === 'banned' ? 'success' : 'danger')
                     ->requiresConfirmation()
-                    ->action(fn (Member $record) => $record->update(['status' => $record->status === 'banned' ? 'active' : 'banned'])),
+                    ->action(function (Member $record) {
+                        $banning = $record->status !== 'banned';
+                        $record->update(['status' => $banning ? 'banned' : 'active']);
+                        if ($banning) {
+                            // Force-logout: revoke all the member's API tokens.
+                            try { $record->tokens()->delete(); } catch (\Throwable) {}
+                        }
+                        \Filament\Notifications\Notification::make()
+                            ->title($banning ? 'تم طرد العضو وإنهاء جلساته' : 'تمت إعادة تفعيل العضو')
+                            ->success()->send();
+                    }),
+
                 Tables\Actions\EditAction::make(),
             ]);
     }

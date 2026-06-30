@@ -24,6 +24,7 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
     Route::get('/auth/telegram/status', [TelegramAuthController::class, 'status'])->middleware('throttle:240,1');
     Route::get('/member/me', [TelegramAuthController::class, 'me'])->middleware('auth:member');
     Route::post('/member/logout', [TelegramAuthController::class, 'logout'])->middleware('auth:member');
+    Route::post('/member/notice/ack', [TelegramAuthController::class, 'dismissNotice'])->middleware('auth:member');
 
     // Member listings (submit + own list)
     Route::get('/member/listings', [\App\Http\Controllers\Api\V1\MemberListingController::class, 'mine'])->middleware('auth:member');

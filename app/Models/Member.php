@@ -12,7 +12,7 @@ class Member extends Authenticatable
 
     protected $fillable = [
         'telegram_id', 'telegram_username', 'name', 'photo_url', 'phone',
-        'status', 'tier', 'is_premium', 'news_telegram', 'last_login_at',
+        'status', 'tier', 'is_premium', 'news_telegram', 'last_login_at', 'site_message',
     ];
 
     protected function casts(): array
