@@ -320,6 +320,18 @@ trait BuildsMarketForm
                     ->label('مُباع')->icon('heroicon-o-check-badge')->color('gray')
                     ->visible(fn (MarketListing $r) => $r->status !== 'sold')
                     ->action(fn (MarketListing $r) => $r->update(['status' => 'sold'])),
+                Tables\Actions\Action::make('publish_telegram')
+                    ->label('نشر في تلجرام')->icon('heroicon-o-paper-airplane')->color('info')
+                    ->visible(fn (MarketListing $r) => $r->status === 'published')
+                    ->requiresConfirmation()
+                    ->modalHeading('نشر الإعلان في قناة تلجرام')
+                    ->modalDescription('يُنشر الإعلان (صورة + سعر + موقع + رابط) في قسم الإعلانات بالقناة. اضبط «رقم قسم الإعلانات» في إعدادات الموقع → تلجرام أولًا.')
+                    ->action(function (MarketListing $r) {
+                        $res = app(\App\Services\TelegramService::class)->sendListingToChannel($r->fresh());
+                        ($res['ok'] ?? false)
+                            ? Notification::make()->title('تم النشر في قناة الإعلانات ✓')->success()->send()
+                            : Notification::make()->title('تعذّر النشر')->body($res['error'] ?? '')->danger()->send();
+                    }),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
