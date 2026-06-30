@@ -153,6 +153,13 @@ class TelegramAuthController extends Controller
             ]
         );
 
+        // First-time registrant → queue the admin welcome message (shown once in-site).
+        if ($member->wasRecentlyCreated
+            && filter_var(\App\Models\Setting::get('welcome_enabled', '0'), FILTER_VALIDATE_BOOLEAN)
+            && ($welcome = trim((string) \App\Models\Setting::get('welcome_message', ''))) !== '') {
+            $member->update(['site_message' => $welcome]);
+        }
+
         if ($member->isBanned()) {
             $record('محظور');
             $this->telegram->sendMessage((string) $from['id'], '🚫 حسابك محظور. تواصل مع الإدارة.');

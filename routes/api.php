@@ -172,6 +172,18 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
             : '';
         unset($settings['site_favicon_path']);
 
+        // General broadcast (one-time in-site modal). Only sent while active & unexpired;
+        // the frontend gates "once per visitor" (localStorage) and audience.
+        $bEnabled = filter_var(\App\Models\Setting::get('broadcast_enabled', '0'), FILTER_VALIDATE_BOOLEAN);
+        $bMessage = (string) \App\Models\Setting::get('broadcast_message', '');
+        $bExpires = (string) \App\Models\Setting::get('broadcast_expires_at', '');
+        $bActive  = $bEnabled && $bMessage !== '' && ($bExpires === '' || \Illuminate\Support\Carbon::parse($bExpires)->isFuture());
+        $settings['broadcast'] = $bActive ? [
+            'id'       => (string) \App\Models\Setting::get('broadcast_id', '1'),
+            'message'  => $bMessage,
+            'audience' => \App\Models\Setting::get('broadcast_audience', 'all') ?: 'all',
+        ] : null;
+
         return response()->json([
             'data' => $settings,
         ]);
