@@ -174,13 +174,24 @@ class HealthCheckService
             $out[] = $this->check('Redis', self::NA, 'غير مستخدم في هذه البنية');
         }
 
-        // Queue worker
+        // Queue — a worker now runs inside the container (Dockerfile). The real
+        // health signal is the backlog: a low/zero pending count means it drains.
         $queue = (string) config('queue.default');
         if ($queue === 'sync') {
-            $out[] = $this->check('الطوابير (Queue)', self::OK, 'تزامني (sync) — ينفّذ فورًا، لا يحتاج عامل');
+            $out[] = $this->check('الطوابير (Queue)', self::OK, 'تزامني (sync) — ينفّذ فورًا');
         } else {
-            $out[] = $this->check('الطوابير (Queue)', self::WARN, "connection={$queue} — لا يوجد عامل (worker) في الحاوية", 'المهام المؤجَّلة لن تُنفَّذ');
-            $this->recommend("QUEUE_CONNECTION={$queue} لكن لا يوجد worker على Railway — حوّله إلى sync أو أضف خدمة worker.");
+            $pending = 0;
+            try {
+                if (\Illuminate\Support\Facades\Schema::hasTable('jobs')) {
+                    $pending = DB::table('jobs')->count();
+                }
+            } catch (\Throwable) {
+            }
+            $status = $pending > 50 ? self::WARN : self::OK;
+            $out[] = $this->check('الطوابير (Queue)', $status, "connection={$queue} • عامل داخل الحاوية • معلّقة الآن: {$pending}", $pending > 50 ? 'تراكم في الطابور' : '');
+            if ($pending > 50) {
+                $this->recommend("يوجد {$pending} مهمة معلّقة في الطابور — تأكّد أن عامل الطوابير يعمل (راجع سجلات Railway).");
+            }
         }
 
         // Scheduler / cron
