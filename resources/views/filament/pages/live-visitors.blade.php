@@ -1,12 +1,12 @@
 <x-filament-panels::page>
-    <div wire:poll.20s="refresh">
+    <div wire:poll.600s="refresh">
         <div class="flex items-center gap-3 mb-4">
             <span class="relative flex h-3 w-3">
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-success-400 opacity-75"></span>
                 <span class="relative inline-flex rounded-full h-3 w-3 bg-success-500"></span>
             </span>
             <span class="text-2xl font-extrabold text-gray-900 dark:text-white">{{ $count }}</span>
-            <span class="text-sm text-gray-500">متواجد الآن (آخر ٣ دقائق) — يُحدّث تلقائيًا كل ٢٠ ثانية</span>
+            <span class="text-sm text-gray-500">متواجد الآن (آخر ٣ دقائق) — يُحدّث تلقائيًا كل ١٠ دقائق (أو اضغط «تحديث الآن»)</span>
         </div>
 
         @if($count === 0)
