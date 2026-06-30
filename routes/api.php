@@ -56,6 +56,8 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
     Route::get('/navigation', [HomepageController::class, 'navigation']);
     Route::get('/search', [HomepageController::class, 'search']);
     Route::post('/track/visit', [HomepageController::class, 'trackVisit'])->middleware('throttle:60,1');
+    // First-party analytics beacon (pageviews + presence heartbeats).
+    Route::post('/track/hit', [\App\Http\Controllers\Api\V1\AnalyticsController::class, 'track'])->middleware('throttle:300,1');
 
     // Marketplace (السوق)
     Route::get('/market', [\App\Http\Controllers\Api\V1\MarketController::class, 'index']);
