@@ -56,6 +56,10 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
     Route::get('/homepage', [HomepageController::class, 'index']);
     Route::get('/navigation', [HomepageController::class, 'navigation']);
     Route::get('/search', [HomepageController::class, 'search']);
+
+    // Unified wallpapers gallery (real content) + its keyword-tag facets
+    Route::get('/wallpapers-gallery/facets', [\App\Http\Controllers\Api\V1\WallpaperGalleryController::class, 'facets']);
+    Route::get('/wallpapers-gallery', [\App\Http\Controllers\Api\V1\WallpaperGalleryController::class, 'index']);
     Route::post('/track/visit', [HomepageController::class, 'trackVisit'])->middleware('throttle:60,1');
     // First-party analytics beacon (pageviews + presence heartbeats).
     Route::post('/track/hit', [\App\Http\Controllers\Api\V1\AnalyticsController::class, 'track'])->middleware('throttle:300,1');
