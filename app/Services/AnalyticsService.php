@@ -27,7 +27,8 @@ class AnalyticsService
             return;
         }
 
-        $type     = $request->input('type') === 'event' ? 'event' : 'pageview';
+        $raw      = (string) $request->input('type');
+        $type     = in_array($raw, ['event', 'heartbeat'], true) ? $raw : 'pageview';
         $path     = substr((string) $request->input('path', ''), 0, 512) ?: null;
         $referrer = (string) $request->input('referrer', '');
         $refHost  = $referrer ? (parse_url($referrer, PHP_URL_HOST) ?: null) : null;
@@ -42,8 +43,9 @@ class AnalyticsService
         } catch (\Throwable) {
         }
 
-        // Append the event (powers trends + sources).
+        // Append the event (powers trends + sources). Heartbeats are presence-only.
         try {
+            if ($type !== 'heartbeat') {
             AnalyticsEvent::create([
                 'visitor_id'    => $vid,
                 'session_id'    => substr((string) $request->input('session_id', ''), 0, 64) ?: null,
@@ -57,6 +59,7 @@ class AnalyticsService
                 'device'        => $device,
                 'created_at'    => now(),
             ]);
+            }
         } catch (\Throwable) {
         }
 
@@ -185,6 +188,17 @@ class AnalyticsService
     public function newMembersSince(Carbon $from): int
     {
         return Member::where('created_at', '>=', $from)->count();
+    }
+
+    public function newMembersBetween(Carbon $from, Carbon $to): int
+    {
+        return Member::where('created_at', '>=', $from)->where('created_at', '<', $to)->count();
+    }
+
+    /** Members seen (last_login_at) within $minutes — a rough "active members" gauge. */
+    public function activeMembersSince(Carbon $from): int
+    {
+        return Member::where('last_login_at', '>=', $from)->count();
     }
 
     public function lifetimeVisitors(): int
