@@ -42,12 +42,20 @@ class WallpaperGalleryController extends Controller
             $q->where(fn ($w) => $w->where('title_ar', 'ILIKE', "%{$s}%")->orWhere('title_en', 'ILIKE', "%{$s}%"));
         }
 
-        $sort = match ($request->get('sort', $this->setting('wp_default_sort', 'newest'))) {
-            'views'     => ['views_count', 'desc'],
-            'downloads' => ['downloads_count', 'desc'],
-            default     => ['published_at', 'desc'],
-        };
-        $q->orderByDesc('is_featured')->orderBy($sort[0], $sort[1]);
+        $sortKey = $request->get('sort', $this->setting('wp_default_sort', 'newest'));
+        if ($sortKey === 'random') {
+            // Seeded shuffle: stable within the hour (so pagination has no dupes/gaps),
+            // reshuffles each hour. A client may pass ?seed= for its own stable order.
+            $seed = preg_replace('/[^a-zA-Z0-9]/', '', (string) $request->get('seed', now()->format('YmdH'))) ?: now()->format('Ymd');
+            $q->orderByRaw('md5(content_items.id::text || ?)', [$seed]);
+        } else {
+            $sort = match ($sortKey) {
+                'views'     => ['views_count', 'desc'],
+                'downloads' => ['downloads_count', 'desc'],
+                default     => ['published_at', 'desc'],
+            };
+            $q->orderByDesc('is_featured')->orderBy($sort[0], $sort[1]);
+        }
 
         $items = $q->paginate(min(60, (int) $this->setting('wp_per_page', 24)));
 

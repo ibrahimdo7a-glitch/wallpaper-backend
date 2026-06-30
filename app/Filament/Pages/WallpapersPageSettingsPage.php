@@ -76,7 +76,7 @@ class WallpapersPageSettingsPage extends Page
             Forms\Components\Section::make('العرض')->schema([
                 Forms\Components\Grid::make(3)->schema([
                     Forms\Components\Select::make('wp_default_sort')->label('الترتيب الافتراضي')
-                        ->options(['newest' => 'الأحدث', 'views' => 'الأكثر مشاهدة', 'downloads' => 'الأكثر تحميلًا'])->default('newest'),
+                        ->options(['newest' => 'الأحدث', 'views' => 'الأكثر مشاهدة', 'downloads' => 'الأكثر تحميلًا', 'random' => 'عشوائي 🎲'])->default('newest'),
                     Forms\Components\TextInput::make('wp_per_page')->label('عدد لكل صفحة')->numeric()->minValue(6)->maxValue(60)->default(24),
                     Forms\Components\TextInput::make('wp_featured_count')->label('عدد الخلفيات المميّزة بالأعلى')->numeric()->minValue(0)->maxValue(12)->default(6),
                 ]),
