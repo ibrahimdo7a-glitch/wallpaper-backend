@@ -28,7 +28,7 @@ class HealthCheckCommand extends Command
         $report = $health->run();
         $plain = [];
 
-        $emit = function (string $colored, string $plainText = null) use (&$plain) {
+        $emit = function (string $colored, ?string $plainText = null) use (&$plain) {
             $this->line($colored);
             $plain[] = $plainText ?? preg_replace('/<[^>]+>/', '', $colored);
         };
