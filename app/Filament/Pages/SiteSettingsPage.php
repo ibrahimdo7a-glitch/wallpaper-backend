@@ -67,7 +67,7 @@ class SiteSettingsPage extends Page
             'stat_visitors_order', 'stat_downloads_order', 'stat_wallpapers_order', 'stat_apps_order',
             'stat_likes_order', 'stat_views_order', 'stat_news_order',
             'ai_enabled', 'ai_api_key', 'ai_model', 'ai_translation_prompt', 'ai_summarize_prompt',
-            'site_favicon_path',
+            'site_favicon_path', 'og_image_path',
             'seo_google_verification', 'seo_bing_verification',
             'seo_keywords_ar', 'seo_keywords_en',
         ];
@@ -130,6 +130,16 @@ class SiteSettingsPage extends Page
                                     ->directory('site')
                                     ->visibility('private')
                                     ->maxSize(2048),
+                                Forms\Components\FileUpload::make('og_image_path')
+                                    ->label('صورة المشاركة (عند نشر الروابط)')
+                                    ->helperText('الصورة التي تظهر عند مشاركة أي رابط من الموقع في تلجرام/واتساب/تويتر. يُفضَّل مقاس 1200×630 (أفقي). اتركها فارغة لاستخدام صورة QEV الافتراضية. ملاحظة: تلجرام يخزّن المعاينة — حدّثها عبر @WebpageBot بعد التغيير.')
+                                    ->image()
+                                    ->imageEditor()
+                                    ->imageEditorAspectRatios(['1.91:1'])
+                                    ->disk(config('filesystems.default', 'public'))
+                                    ->directory('site')
+                                    ->visibility('private')
+                                    ->maxSize(4096),
                             ]),
 
                         Forms\Components\Tabs\Tab::make('SEO ومحركات البحث')

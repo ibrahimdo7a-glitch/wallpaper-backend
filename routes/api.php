@@ -176,6 +176,12 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
             : '';
         unset($settings['site_favicon_path']);
 
+        // Custom social share image (overrides the auto-generated /api/og when set).
+        $ogPath = (string) \App\Models\Setting::get('og_image_path', '');
+        $settings['og_image_url'] = $ogPath
+            ? \Illuminate\Support\Facades\Storage::disk(config('filesystems.default', 'public'))->url($ogPath)
+            : '';
+
         // General broadcast (one-time in-site modal). Only sent while active & unexpired;
         // the frontend gates "once per visitor" (localStorage) and audience.
         $bEnabled = filter_var(\App\Models\Setting::get('broadcast_enabled', '0'), FILTER_VALIDATE_BOOLEAN);
