@@ -3,118 +3,138 @@
         $p = $this->ops['pulse'] ?? [];
         $online = $p['online'] ?? ['total' => 0, 'members' => 0, 'guests' => 0];
         $eventMap = [
-            'login_no_2fa'   => ['✅ دخول', 'text-success-600 dark:text-success-400'],
-            'otp_success'    => ['✅ دخول (2FA)', 'text-success-600 dark:text-success-400'],
-            'otp_sent'       => ['📤 إرسال رمز', 'text-gray-500'],
-            'recovery_used'  => ['🔑 دخول احتياطي', 'text-warning-600 dark:text-warning-400'],
-            'password_failed'=> ['❌ كلمة مرور خاطئة', 'text-danger-600 dark:text-danger-400'],
-            'otp_failed'     => ['⚠️ رمز خاطئ', 'text-warning-600 dark:text-warning-400'],
-            'otp_locked'     => ['🔒 قُفل بعد ٣ محاولات', 'text-danger-600 dark:text-danger-400'],
-            'recovery_failed'=> ['⚠️ رمز احتياطي خاطئ', 'text-warning-600 dark:text-warning-400'],
+            'login_no_2fa'    => ['✅ دخول', '#16a34a'],
+            'otp_success'     => ['✅ دخول (2FA)', '#16a34a'],
+            'otp_sent'        => ['📤 إرسال رمز', '#8a95ad'],
+            'recovery_used'   => ['🔑 دخول احتياطي', '#d97706'],
+            'password_failed' => ['❌ كلمة مرور خاطئة', '#dc2626'],
+            'otp_failed'      => ['⚠️ رمز خاطئ', '#d97706'],
+            'otp_locked'      => ['🔒 قُفل بعد ٣ محاولات', '#dc2626'],
+            'recovery_failed' => ['⚠️ رمز احتياطي خاطئ', '#d97706'],
         ];
     @endphp
 
-    {{-- ═══ 1) Live pulse + system health ═══ --}}
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        <div class="rounded-2xl border border-success-200 dark:border-success-800 bg-success-50 dark:bg-success-950/30 p-4">
-            <div class="flex items-center gap-1.5 text-xs text-success-700 dark:text-success-400">
-                <span class="relative flex h-2.5 w-2.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-success-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-success-500"></span></span>
-                متواجدون الآن
+    <style>
+        .ops-grid { display:grid; grid-template-columns:repeat(12,1fr); gap:12px; align-items:stretch; }
+        .ops-tile { border-radius:16px; padding:14px 16px; border:1px solid #e5e7eb; background:#fff; display:flex; flex-direction:column; }
+        .dark .ops-tile { border-color:rgba(255,255,255,.08); background:rgba(255,255,255,.03); }
+        .ops-head { grid-column:span 12; font-size:12px; font-weight:800; color:#6b7280; margin:6px 2px -4px; }
+        .dark .ops-head { color:#9aa6bd; }
+        .ops-s3{grid-column:span 3;} .ops-s4{grid-column:span 4;} .ops-s6{grid-column:span 6;} .ops-s12{grid-column:span 12;}
+        @media (max-width:1023px){ .ops-grid{grid-template-columns:repeat(6,1fr);} .ops-s3{grid-column:span 3;} .ops-s4{grid-column:span 6;} .ops-s6{grid-column:span 6;} }
+        @media (max-width:639px){ .ops-grid{grid-template-columns:repeat(2,1fr);} .ops-s3,.ops-s4,.ops-s6,.ops-s12{grid-column:span 2;} }
+        .ops-kpi { font-size:34px; font-weight:900; line-height:1; }
+        .ops-cap { font-size:11px; color:#6b7280; margin-top:6px; } .dark .ops-cap{color:#9aa6bd;}
+        .ops-task { text-decoration:none; transition:transform .12s; }
+        .ops-task:hover { transform:translateY(-2px); }
+        .ops-launch { display:grid; grid-template-columns:repeat(auto-fill,minmax(90px,1fr)); gap:10px; margin-top:10px; }
+        .ops-app { display:flex; flex-direction:column; align-items:center; gap:5px; padding:12px 6px; border-radius:14px;
+                   border:1px solid #e5e7eb; text-decoration:none; color:#374151; transition:all .12s; }
+        .dark .ops-app { border-color:rgba(255,255,255,.08); color:#e5e7eb; }
+        .ops-app:hover { border-color:#3b82f6; background:rgba(59,130,246,.08); transform:translateY(-2px); }
+        .ops-app .em { font-size:23px; } .ops-app .lb { font-size:11px; font-weight:600; text-align:center; }
+        .ops-row { display:flex; align-items:center; gap:8px; font-size:13px; padding:6px 0; border-bottom:1px solid #f0f0f0; }
+        .dark .ops-row { border-color:rgba(255,255,255,.05); }
+        .ops-row:last-child { border-bottom:0; }
+        .ops-dot { height:9px; width:9px; border-radius:99px; flex-shrink:0; }
+    </style>
+
+    <div class="ops-grid">
+        {{-- ── Live pulse (KPIs) ── --}}
+        <div class="ops-tile ops-s3" style="border-color:#16a34a33; background:#16a34a0f;">
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#16a34a;font-weight:700;">
+                <span style="position:relative;display:inline-flex;height:9px;width:9px;">
+                    <span style="position:absolute;height:100%;width:100%;border-radius:99px;background:#22c55e;opacity:.75;animation:ping 1.2s cubic-bezier(0,0,.2,1) infinite;"></span>
+                    <span style="position:relative;height:9px;width:9px;border-radius:99px;background:#16a34a;"></span>
+                </span> متواجدون الآن
             </div>
-            <div class="text-4xl font-extrabold text-success-700 dark:text-success-400 mt-1">{{ number_format($online['total']) }}</div>
-            <div class="text-xs text-gray-500 mt-1">👤 أعضاء: {{ $online['members'] }} · 🌐 زوّار: {{ $online['guests'] }}</div>
+            <div class="ops-kpi" style="color:#16a34a;margin-top:6px;">{{ number_format($online['total']) }}</div>
+            <div class="ops-cap">👤 {{ $online['members'] }} · 🌐 {{ $online['guests'] }}</div>
         </div>
 
-        <div class="rounded-2xl border border-gray-200 dark:border-white/10 p-4 grid grid-cols-2 gap-3">
-            <div><div class="text-2xl font-extrabold">{{ number_format($p['visitors_today'] ?? 0) }}</div><div class="text-xs text-gray-500">👁️ زوّار اليوم</div></div>
-            <div><div class="text-2xl font-extrabold">{{ number_format($p['registrations_today'] ?? 0) }}</div><div class="text-xs text-gray-500">🆕 تسجيلات اليوم</div></div>
+        <div class="ops-tile ops-s3">
+            <div class="ops-kpi">{{ number_format($p['visitors_today'] ?? 0) }}</div>
+            <div class="ops-cap">👁️ زوّار اليوم</div>
+        </div>
+        <div class="ops-tile ops-s3">
+            <div class="ops-kpi">{{ number_format($p['registrations_today'] ?? 0) }}</div>
+            <div class="ops-cap">🆕 تسجيلات اليوم</div>
         </div>
 
-        <div class="rounded-2xl border border-gray-200 dark:border-white/10 p-4">
-            <div class="text-xs text-gray-500 mb-2 font-semibold">نبض النظام</div>
-            <div class="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
-                @foreach($p['system'] ?? [] as $s)
-                    <div class="flex items-center gap-1.5">
-                        <span class="h-2 w-2 rounded-full {{ $s['ok'] ? 'bg-success-500' : 'bg-danger-500' }}"></span>
-                        <span class="text-gray-600 dark:text-gray-300">{{ $s['label'] }}</span>
-                        <span class="text-gray-400 ms-auto">{{ $s['note'] }}</span>
-                    </div>
+        <div class="ops-tile ops-s3">
+            <div class="ops-cap" style="margin:0 0 6px;font-weight:700;">نبض النظام</div>
+            @foreach($p['system'] ?? [] as $s)
+                <div style="display:flex;align-items:center;gap:6px;font-size:11.5px;padding:2px 0;">
+                    <span class="ops-dot" style="background:{{ $s['ok'] ? '#22c55e' : '#ef4444' }};"></span>
+                    <span style="opacity:.85;">{{ $s['label'] }}</span>
+                    <span style="margin-inline-start:auto;opacity:.55;">{{ $s['note'] }}</span>
+                </div>
+            @endforeach
+        </div>
+
+        {{-- ── Task queue ── --}}
+        <div class="ops-head">🚨 يحتاج إجراءك</div>
+        @foreach($this->ops['tasks'] ?? [] as $t)
+            @php $has = ($t['count'] ?? 0) > 0; @endphp
+            <a href="{{ $t['url'] }}" class="ops-tile ops-task ops-s3"
+               style="{{ $has ? 'border-color:#dc262655;background:#dc26260f;' : '' }}">
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-size:22px;">{{ $t['icon'] }}</span>
+                    <span style="font-size:32px;font-weight:900;color:{{ $has ? '#dc2626' : '#cbd5e1' }};">{{ number_format($t['count']) }}</span>
+                </div>
+                <div style="font-size:12px;margin-top:2px;color:{{ $has ? '#dc2626' : '#6b7280' }};font-weight:{{ $has ? '700' : '400' }};">{{ $t['label'] }}</div>
+                <div style="font-size:11px;margin-top:2px;color:{{ $has ? '#dc2626' : '#9ca3af' }};">{{ $has ? 'اضغط للمعالجة ←' : 'لا شيء ✓' }}</div>
+            </a>
+        @endforeach
+
+        {{-- ── Quick launch ── --}}
+        <div class="ops-head">⚡ دخول سريع</div>
+        <div class="ops-tile ops-s12" style="padding-top:6px;">
+            <div class="ops-launch">
+                @foreach($this->ops['launch'] ?? [] as $l)
+                    <a href="{{ $l['url'] }}" class="ops-app">
+                        <span class="em">{{ $l['icon'] }}</span>
+                        <span class="lb">{{ $l['label'] }}</span>
+                    </a>
                 @endforeach
             </div>
         </div>
-    </div>
 
-    {{-- ═══ 2) Urgent task queue ═══ --}}
-    <div>
-        <h2 class="text-sm font-bold text-gray-500 dark:text-gray-400 mb-2">🚨 يحتاج إجراءك</h2>
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            @foreach($this->ops['tasks'] ?? [] as $t)
-                @php $has = ($t['count'] ?? 0) > 0; @endphp
-                <a href="{{ $t['url'] }}"
-                   class="rounded-2xl border p-4 transition hover:scale-[1.02] {{ $has ? 'border-danger-300 dark:border-danger-800 bg-danger-50 dark:bg-danger-950/30' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-white/5' }}">
-                    <div class="flex items-center justify-between">
-                        <span class="text-2xl">{{ $t['icon'] }}</span>
-                        <span class="text-3xl font-extrabold {{ $has ? 'text-danger-600 dark:text-danger-400' : 'text-gray-300 dark:text-gray-600' }}">{{ number_format($t['count']) }}</span>
-                    </div>
-                    <div class="text-xs mt-1 {{ $has ? 'text-danger-700 dark:text-danger-300 font-semibold' : 'text-gray-500' }}">{{ $t['label'] }}</div>
-                    <div class="text-[11px] mt-1 {{ $has ? 'text-danger-600 dark:text-danger-400' : 'text-gray-400' }}">{{ $has ? 'اضغط للمعالجة ←' : 'لا شيء ✓' }}</div>
-                </a>
-            @endforeach
-        </div>
-    </div>
-
-    {{-- ═══ 3) Quick launch ═══ --}}
-    <div>
-        <h2 class="text-sm font-bold text-gray-500 dark:text-gray-400 mb-2">⚡ دخول سريع</h2>
-        <div class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
-            @foreach($this->ops['launch'] ?? [] as $l)
-                <a href="{{ $l['url'] }}"
-                   class="group flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 hover:bg-primary-50 dark:hover:bg-primary-950/30 hover:border-primary-300 dark:hover:border-primary-700 p-4 transition text-center">
-                    <span class="text-2xl group-hover:scale-110 transition-transform">{{ $l['icon'] }}</span>
-                    <span class="text-xs font-medium text-gray-700 dark:text-gray-200">{{ $l['label'] }}</span>
-                </a>
-            @endforeach
-        </div>
-    </div>
-
-    {{-- ═══ 4/5) Activity feed + Security pulse ═══ --}}
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        <div class="rounded-2xl border border-gray-200 dark:border-white/10 p-4">
-            <h2 class="text-sm font-bold mb-3">🕒 آخر النشاط</h2>
-            <div class="space-y-2">
-                @forelse($this->ops['activity'] ?? [] as $a)
-                    <div class="flex items-center gap-2 text-sm border-b border-gray-100 dark:border-white/5 pb-2 last:border-0">
-                        <span>{{ $a['icon'] }}</span>
-                        <span class="flex-1 truncate text-gray-700 dark:text-gray-200">{{ $a['text'] }}</span>
-                        <span class="text-xs text-gray-400 shrink-0">{{ $a['at']?->diffForHumans() }}</span>
-                    </div>
-                @empty
-                    <p class="text-sm text-gray-400">لا يوجد نشاط بعد.</p>
-                @endforelse
-            </div>
+        {{-- ── Activity + Security ── --}}
+        <div class="ops-tile {{ $this->isSuper ? 'ops-s6' : 'ops-s12' }}">
+            <div class="ops-cap" style="margin:0 0 6px;font-weight:800;font-size:13px;">🕒 آخر النشاط</div>
+            @forelse($this->ops['activity'] ?? [] as $a)
+                <div class="ops-row">
+                    <span>{{ $a['icon'] }}</span>
+                    <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ $a['text'] }}</span>
+                    <span style="font-size:11px;opacity:.55;flex-shrink:0;">{{ $a['at']?->diffForHumans() }}</span>
+                </div>
+            @empty
+                <div class="ops-cap">لا يوجد نشاط بعد.</div>
+            @endforelse
         </div>
 
         @if($this->isSuper)
-            <div class="rounded-2xl border border-gray-200 dark:border-white/10 p-4">
-                <div class="flex items-center justify-between mb-3">
-                    <h2 class="text-sm font-bold">🔐 نبض الأمان — آخر عمليات الدخول</h2>
+            <div class="ops-tile ops-s6">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                    <span class="ops-cap" style="margin:0;font-weight:800;font-size:13px;">🔐 نبض الأمان — آخر الدخول</span>
                     @if(($this->ops['failed_logins'] ?? 0) > 0)
-                        <span class="text-[11px] px-2 py-0.5 rounded-full bg-danger-500/15 text-danger-600 dark:text-danger-400 font-semibold">{{ $this->ops['failed_logins'] }} فاشلة (٢٤ساعة)</span>
+                        <span style="font-size:11px;padding:2px 8px;border-radius:99px;background:#dc26261f;color:#dc2626;font-weight:700;">{{ $this->ops['failed_logins'] }} فاشلة (٢٤س)</span>
                     @endif
                 </div>
-                <div class="space-y-1.5">
-                    @forelse($this->ops['logins'] ?? [] as $log)
-                        @php $meta = $eventMap[$log['event']] ?? [$log['event'], 'text-gray-500']; @endphp
-                        <div class="flex items-center gap-2 text-xs border-b border-gray-100 dark:border-white/5 pb-1.5 last:border-0">
-                            <span class="{{ $meta[1] }} font-medium w-32 shrink-0">{{ $meta[0] }}</span>
-                            <span class="text-gray-500">{{ \App\Services\AnalyticsService::flag($log['country'] ?? null) }} {{ $log['device'] ?? '' }} · {{ $log['browser'] ?? '' }}</span>
-                            <span class="text-gray-400 ms-auto shrink-0">{{ \Illuminate\Support\Carbon::parse($log['created_at'])->diffForHumans() }}</span>
-                        </div>
-                    @empty
-                        <p class="text-sm text-gray-400">لا توجد سجلات دخول بعد.</p>
-                    @endforelse
-                </div>
+                @forelse($this->ops['logins'] ?? [] as $log)
+                    @php $meta = $eventMap[$log['event']] ?? [$log['event'], '#8a95ad']; @endphp
+                    <div class="ops-row" style="font-size:12px;">
+                        <span style="color:{{ $meta[1] }};font-weight:600;width:120px;flex-shrink:0;">{{ $meta[0] }}</span>
+                        <span style="opacity:.7;">{{ \App\Services\AnalyticsService::flag($log['country'] ?? null) }} {{ $log['device'] ?? '' }} · {{ $log['browser'] ?? '' }}</span>
+                        <span style="margin-inline-start:auto;font-size:11px;opacity:.5;flex-shrink:0;">{{ \Illuminate\Support\Carbon::parse($log['created_at'])->diffForHumans() }}</span>
+                    </div>
+                @empty
+                    <div class="ops-cap">لا توجد سجلات دخول بعد.</div>
+                @endforelse
             </div>
         @endif
     </div>
+
+    <style>@keyframes ping{75%,100%{transform:scale(2);opacity:0;}}</style>
 </x-filament-panels::page>
