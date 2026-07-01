@@ -106,4 +106,5 @@ CMD mkdir -p storage/app/public/livewire-tmp storage/app/private/livewire-tmp st
     && sed "s/__PORT__/${PORT:-8080}/g" /etc/nginx/http.d/app.conf.template > /etc/nginx/http.d/app.conf \
     && php-fpm -D \
     && ( while true; do php artisan queue:work --queue=image-processing,watermark,default --sleep=3 --tries=3 --max-time=3600 --memory=256; sleep 2; done & ) \
+    && ( while true; do php artisan schedule:work; sleep 5; done & ) \
     && nginx -g 'daemon off;'
