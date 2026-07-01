@@ -70,6 +70,7 @@ class SiteSettingsPage extends Page
             'site_favicon_path', 'og_image_path',
             'seo_google_verification', 'seo_bing_verification',
             'seo_keywords_ar', 'seo_keywords_en',
+            'admin_2fa_enabled',
         ];
 
         $formData = [];
@@ -97,6 +98,9 @@ class SiteSettingsPage extends Page
         $formData['ai_model'] = $formData['ai_model'] ?: 'claude-haiku-4-5-20251001';
         $formData['ai_translation_prompt'] = $formData['ai_translation_prompt'] ?: $ai->defaultTranslationPrompt();
         $formData['ai_summarize_prompt']   = $formData['ai_summarize_prompt'] ?: $ai->defaultSummarizePrompt();
+
+        // Admin 2FA: OFF until explicitly enabled (prevents lockout on first deploy).
+        $formData['admin_2fa_enabled'] = filter_var($formData['admin_2fa_enabled'], FILTER_VALIDATE_BOOLEAN);
 
         $this->form->fill($formData);
     }
@@ -140,6 +144,10 @@ class SiteSettingsPage extends Page
                                     ->directory('site')
                                     ->visibility('private')
                                     ->maxSize(4096),
+                                Forms\Components\Toggle::make('admin_2fa_enabled')
+                                    ->label('تحقّق ثنائي للوحة التحكم عبر تيليجرام (2FA)')
+                                    ->helperText('عند التفعيل: بعد الإيميل وكلمة المرور، يُرسَل رمز من ٤ أرقام إلى تيليجرام المشرف قبل الدخول. يعمل فقط للمشرفين الذين ربطوا حسابهم بالبوت (زر «ربط البوت»). للطوارئ يمكن تعطيله بضبط ADMIN_2FA_DISABLED=true في متغيّرات Railway.')
+                                    ->inline(false),
                             ]),
 
                         Forms\Components\Tabs\Tab::make('SEO ومحركات البحث')
