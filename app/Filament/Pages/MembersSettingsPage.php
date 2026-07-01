@@ -25,7 +25,8 @@ class MembersSettingsPage extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->check() && ! auth()->user()?->hasRole('مبدع');
+        // Member settings visible to the super admin only.
+        return auth()->user()?->hasRole('super_admin') ?? false;
     }
 
     public function mount(): void

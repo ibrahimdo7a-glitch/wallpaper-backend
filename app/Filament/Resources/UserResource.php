@@ -38,7 +38,8 @@ class UserResource extends Resource
 
     public static function canAccess(): bool
     {
-        return auth()->user()?->hasPermissionTo('can_manage_users');
+        // Moderators list is visible to the super admin only.
+        return auth()->user()?->hasRole('super_admin') ?? false;
     }
 
     public static function form(Form $form): Form
