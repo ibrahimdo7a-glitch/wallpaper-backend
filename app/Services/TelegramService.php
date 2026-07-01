@@ -110,13 +110,17 @@ class TelegramService
      */
     public function sendListingToChannel(\App\Models\MarketListing $listing): array
     {
-        $topic = Setting::get('telegram_topic_id_market');
+        $isCar = in_array($listing->listing_type, ['car_sale', 'car_request'], true);
+        // Route to the matching topic: cars → car-listings topic, parts/accessories →
+        // parts topic (falling back to the car topic if the parts topic isn't set).
+        $topic = $isCar
+            ? Setting::get('telegram_topic_id_market')
+            : (Setting::get('telegram_topic_id_parts') ?: Setting::get('telegram_topic_id_market'));
         if (blank($topic)) {
             return ['ok' => false, 'error' => 'لم يُضبط رقم قسم الإعلانات في الإعدادات'];
         }
 
         $front = rtrim(config('app.frontend_url', 'https://qev.app'), '/');
-        $isCar = in_array($listing->listing_type, ['car_sale', 'car_request'], true);
         $price = $listing->price !== null
             ? number_format((float) $listing->price, 0) . ' ' . $listing->currency
             : 'حسب الطلب';

@@ -59,7 +59,7 @@ class SiteSettingsPage extends Page
             'about_ar', 'about_en',
             'contact_enabled',
             'telegram_bot_token', 'telegram_channel_id',
-            'telegram_topic_id', 'telegram_topic_id_apps', 'telegram_topic_id_news', 'telegram_topic_id_market',
+            'telegram_topic_id', 'telegram_topic_id_apps', 'telegram_topic_id_news', 'telegram_topic_id_market', 'telegram_topic_id_parts',
             'stat_visitors_enabled', 'stat_downloads_enabled', 'stat_wallpapers_enabled', 'stat_apps_enabled',
             'stat_likes_enabled', 'stat_views_enabled', 'stat_news_enabled',
             'stat_visitors_value', 'stat_downloads_value', 'stat_wallpapers_value', 'stat_apps_value',
@@ -425,9 +425,13 @@ class SiteSettingsPage extends Page
                                         ->numeric()
                                         ->helperText('قسم الأخبار.'),
                                     Forms\Components\TextInput::make('telegram_topic_id_market')
-                                        ->label('رقم قسم الإعلانات (Topic)')
+                                        ->label('رقم قسم إعلانات السيارات (Topic)')
                                         ->numeric()
-                                        ->helperText('قسم السوق/الإعلانات — يُستخدم مع زر "نشر + قناة الإعلانات".'),
+                                        ->helperText('إعلانات سوق السيارات (بيع/طلب سيارة) تُنشر في هذا القسم.'),
+                                    Forms\Components\TextInput::make('telegram_topic_id_parts')
+                                        ->label('رقم قسم إعلانات قطع الغيار (Topic)')
+                                        ->numeric()
+                                        ->helperText('إعلانات القطع والإكسسوارات تُنشر في هذا القسم. لو تركته فارغًا تروح لقسم السيارات.'),
                                 ]),
                                 Forms\Components\Placeholder::make('telegram_topic_help')
                                     ->label('')
