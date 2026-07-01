@@ -146,8 +146,12 @@ class SiteSettingsPage extends Page
                                     ->maxSize(4096),
                                 Forms\Components\Toggle::make('admin_2fa_enabled')
                                     ->label('تحقّق ثنائي للوحة التحكم عبر تيليجرام (2FA)')
-                                    ->helperText('عند التفعيل: بعد الإيميل وكلمة المرور، يُرسَل رمز من ٤ أرقام إلى تيليجرام المشرف قبل الدخول. يعمل فقط للمشرفين الذين ربطوا حسابهم بالبوت (زر «ربط البوت»). للطوارئ يمكن تعطيله بضبط ADMIN_2FA_DISABLED=true في متغيّرات Railway.')
-                                    ->inline(false),
+                                    ->helperText('عند التفعيل: بعد الإيميل وكلمة المرور، يُرسَل رمز من ٤ أرقام إلى تيليجرام المشرف قبل الدخول. يعمل فقط للمشرفين الذين ربطوا حسابهم بالبوت (زر «ربط البوت»). للطوارئ يمكن تعطيله بضبط ADMIN_2FA_DISABLED=true في متغيّرات Railway.'),
+                                Forms\Components\TextInput::make('admin_2fa_recovery_code')
+                                    ->label('رمز الدخول الاحتياطي (للطوارئ — سوبر أدمن فقط)')
+                                    ->password()->revealable()->autocomplete('new-password')
+                                    ->helperText(fn () => (\App\Models\Setting::get('admin_2fa_recovery_hash', '') ? '✅ يوجد رمز محفوظ حاليًا. ' : '⚠️ لا يوجد رمز بعد. ')
+                                        . 'رمز طويل (٨ أحرف فأكثر) تُدخله بدل رمز تيليجرام لو تعطّل البوت. يُخزَّن مشفّرًا ولا يُعرض أبدًا. اتركه فارغًا للإبقاء على الحالي. احفظه في مدير كلمات مرور.'),
                             ]),
 
                         Forms\Components\Tabs\Tab::make('SEO ومحركات البحث')
@@ -438,6 +442,18 @@ class SiteSettingsPage extends Page
     public function save(): void
     {
         $data = $this->form->getState();
+
+        // Backup recovery code (2FA fallback): hash it — never persist plaintext — and
+        // keep it out of the generic settings loop below.
+        if (filled($data['admin_2fa_recovery_code'] ?? null)) {
+            $recovery = trim((string) $data['admin_2fa_recovery_code']);
+            if (strlen($recovery) < 8) {
+                Notification::make()->title('الرمز الاحتياطي قصير — استخدم ٨ أحرف على الأقل')->danger()->send();
+                return;
+            }
+            Setting::set('admin_2fa_recovery_hash', \Illuminate\Support\Facades\Hash::make($recovery));
+        }
+        unset($data['admin_2fa_recovery_code']);
 
         foreach ($data as $key => $value) {
             // store toggles as explicit '1'/'0' so "off" isn't confused with "never set"

@@ -38,6 +38,15 @@ class TwoFactorController extends Controller
         }
         RateLimiter::hit($key, 120);
 
+        // Emergency fallback: super admin backup code (when Telegram is down).
+        if ($request->filled('recovery_code')) {
+            return match ($svc->verifyRecovery((string) $request->input('recovery_code'), $request)) {
+                'ok'      => redirect()->intended('/admin'),
+                'expired' => redirect('/admin/login')->withErrors(['code' => 'انتهت صلاحية الجلسة. أعد تسجيل الدخول.']),
+                default   => back()->withErrors(['code' => 'الرمز الاحتياطي غير صحيح.']),
+            };
+        }
+
         $request->validate(['code' => 'required|digits:4'], [], ['code' => 'الرمز']);
 
         return match ($svc->verify((string) $request->input('code'), $request)) {

@@ -58,18 +58,42 @@
             <button type="submit">تأكيد الدخول</button>
         </form>
 
-        <div class="timer">تنتهي صلاحية الرمز خلال <b id="t">{{ $secondsLeft }}</b> ثانية</div>
-        <a class="back" href="/admin/login">العودة لتسجيل الدخول</a>
+        <div class="timer" id="timerWrap">تنتهي صلاحية الرمز خلال <b id="t">{{ $secondsLeft }}</b> ثانية</div>
+
+        <div id="recWrap" style="display:none; margin-top:16px; border-top:1px solid rgba(255,255,255,.08); padding-top:16px;">
+            <form method="POST" action="/two-factor">
+                @csrf
+                <input name="recovery_code" type="password" placeholder="الرمز الاحتياطي" autocomplete="off"
+                       style="width:100%; padding:12px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background:#0a0f1a; color:#fff; outline:none; direction:ltr; text-align:center; font-size:15px;" />
+                <button type="submit" style="background:#334155;">دخول بالرمز الاحتياطي</button>
+            </form>
+            <p style="font-size:11px;color:#7a8399;margin-top:10px;">للسوبر أدمن فقط — عند تعطّل تيليجرام.</p>
+        </div>
+
+        <a class="back" href="#" id="recToggle">تعذّر وصول الرمز؟ استخدم الرمز الاحتياطي</a>
+        <a class="back" href="/admin/login" style="display:block;">العودة لتسجيل الدخول</a>
     </div>
 
     <script>
-        // Countdown; on expiry send the admin back to login.
+        // Countdown for the OTP. On expiry we do NOT auto-redirect, so the backup
+        // code stays usable (the login session lives longer than the OTP).
         var left = {{ (int) $secondsLeft }};
         var el = document.getElementById('t');
+        var tw = document.getElementById('timerWrap');
         var iv = setInterval(function () {
-            left--; if (el) el.textContent = left < 0 ? 0 : left;
-            if (left <= 0) { clearInterval(iv); window.location.href = '/admin/login'; }
+            left--;
+            if (left <= 0) {
+                clearInterval(iv);
+                if (tw) tw.innerHTML = 'انتهت صلاحية رمز تيليجرام — أعد تسجيل الدخول لرمز جديد، أو استخدم الرمز الاحتياطي.';
+            } else if (el) { el.textContent = left; }
         }, 1000);
+        // Reveal the backup-code form.
+        var rt = document.getElementById('recToggle');
+        if (rt) rt.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.getElementById('recWrap').style.display = 'block';
+            this.style.display = 'none';
+        });
         // Auto-submit once 4 digits are entered.
         var input = document.querySelector('input[name="code"]');
         input.addEventListener('input', function () {

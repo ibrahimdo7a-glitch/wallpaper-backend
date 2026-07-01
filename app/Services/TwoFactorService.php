@@ -17,7 +17,8 @@ use Illuminate\Support\Facades\Hash;
 class TwoFactorService
 {
     private const KEY = 'admin_2fa';
-    private const TTL = 60;       // seconds
+    private const CODE_TTL = 60;      // OTP validity (seconds)
+    private const SESSION_TTL = 600;  // challenge/recovery window (seconds)
     private const MAX_ATTEMPTS = 3;
 
     /** Is 2FA active for this admin? Off by default; env kill-switch wins. */
@@ -38,11 +39,12 @@ class TwoFactorService
         $code = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
 
         session()->put(self::KEY, [
-            'user_id'    => $user->id,
-            'code_hash'  => Hash::make($code),
-            'expires_at' => now()->addSeconds(self::TTL)->timestamp,
-            'attempts'   => 0,
-            'remember'   => $remember,
+            'user_id'         => $user->id,
+            'code_hash'       => Hash::make($code),
+            'code_expires_at' => now()->addSeconds(self::CODE_TTL)->timestamp,
+            'expires_at'      => now()->addSeconds(self::SESSION_TTL)->timestamp,
+            'attempts'        => 0,
+            'remember'        => $remember,
         ]);
 
         $this->sendOtp($user, $code);
@@ -58,7 +60,7 @@ class TwoFactorService
     public function secondsLeft(): int
     {
         $c = session(self::KEY);
-        return is_array($c) ? max(0, (int) ($c['expires_at'] ?? 0) - now()->timestamp) : 0;
+        return is_array($c) ? max(0, (int) ($c['code_expires_at'] ?? 0) - now()->timestamp) : 0;
     }
 
     public function attemptsLeft(): int
@@ -80,6 +82,9 @@ class TwoFactorService
         if (($c['expires_at'] ?? 0) < now()->timestamp) {
             session()->forget(self::KEY);
             return 'expired';
+        }
+        if (($c['code_expires_at'] ?? 0) < now()->timestamp) {
+            return 'expired'; // OTP window passed — recovery / re-login still possible
         }
 
         $c['attempts'] = (int) ($c['attempts'] ?? 0) + 1;
@@ -108,6 +113,41 @@ class TwoFactorService
 
         $this->log('otp_success', $request, $user->id);
         $this->notifySuccess($user, $request);
+
+        return 'ok';
+    }
+
+    /**
+     * Emergency fallback: the super admin enters the pre-set backup code instead of
+     * the Telegram OTP (used when the bot / Telegram is down). Still second-factor —
+     * the password was already verified to reach this step. Super-admin only.
+     */
+    public function verifyRecovery(string $code, Request $request): string
+    {
+        $c = session(self::KEY);
+        if (! is_array($c)) {
+            return 'expired';
+        }
+
+        $user = User::find($c['user_id'] ?? null);
+        if (! $user || ! $user->hasRole('super_admin')) {
+            $this->log('recovery_failed', $request, $c['user_id'] ?? null);
+            return 'wrong';
+        }
+
+        $hash = (string) Setting::get('admin_2fa_recovery_hash', '');
+        if (blank($hash) || ! Hash::check($code, $hash)) {
+            $this->log('recovery_failed', $request, $user->id);
+            $this->notifyFailed($user, $request, 'رمز احتياطي خاطئ');
+            return 'wrong';
+        }
+
+        session()->forget(self::KEY);
+        auth('web')->login($user, (bool) ($c['remember'] ?? false));
+        session()->regenerate();
+
+        $this->log('recovery_used', $request, $user->id);
+        $this->notifyRecovery($user, $request);
 
         return 'ok';
     }
@@ -149,6 +189,13 @@ class TwoFactorService
     public function notifyBadPassword(?User $user, Request $request): void
     {
         $this->notifyFailed($user, $request, 'كلمة مرور خاطئة');
+    }
+
+    private function notifyRecovery(User $user, Request $request): void
+    {
+        [$device, $os, $browser] = $this->parseUa((string) $request->userAgent());
+        $ctx = $this->context($request, $device, $os, $browser);
+        $this->tg($user, "🔑 <b>تم الدخول إلى لوحة تحكم QEV عبر الرمز الاحتياطي</b>\n{$ctx}\n\nإذا لم تكن أنت، غيّر كلمة المرور والرمز الاحتياطي فورًا.");
     }
 
     private function context(Request $request, string $device, string $os, string $browser): string
