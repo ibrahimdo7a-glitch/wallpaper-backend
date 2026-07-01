@@ -69,7 +69,7 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
     Route::get('/market/config', [\App\Http\Controllers\Api\V1\MarketController::class, 'config']);
     Route::get('/market-categories', [\App\Http\Controllers\Api\V1\MarketController::class, 'categories']);
     Route::post('/market/{id}/view', [\App\Http\Controllers\Api\V1\MarketController::class, 'view'])->middleware('throttle:60,1');
-    Route::get('/market/{id}/phone', [\App\Http\Controllers\Api\V1\MarketController::class, 'phone'])->whereNumber('id')->middleware('throttle:20,1');
+    Route::get('/market/{id}/phone', [\App\Http\Controllers\Api\V1\MarketController::class, 'phone'])->whereNumber('id')->middleware('throttle:8,1');
     Route::get('/market/{slug}', [\App\Http\Controllers\Api\V1\MarketController::class, 'show']);
 
     // Content item detail + actions

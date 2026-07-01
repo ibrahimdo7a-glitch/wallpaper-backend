@@ -69,7 +69,8 @@ class WallpaperController extends Controller
         };
         $query->orderBy(...$sort);
 
-        $wallpapers = $query->paginate($request->integer('per_page', 24));
+        // Cap per_page so nobody can dump the whole catalog in one request.
+        $wallpapers = $query->paginate(min(48, max(1, $request->integer('per_page', 24))));
 
         return response()->json([
             'data' => $wallpapers->map(fn($w) => $this->formatWallpaper($w)),

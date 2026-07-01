@@ -34,6 +34,23 @@ class NewsArticle extends Model
         ];
     }
 
+    /**
+     * Lightweight HTML hardening for stored article content — strips script/iframe/
+     * event-handlers/js-URIs. Not a full sanitizer (HTMLPurifier is the long-term
+     * fix) but closes the practical XSS vectors in AI/admin-authored HTML.
+     */
+    public static function sanitizeHtml(?string $html): ?string
+    {
+        if ($html === null || $html === '') {
+            return $html;
+        }
+        $html = preg_replace('#<\s*(script|style|iframe|object|embed|form)\b[^>]*>.*?<\s*/\s*\1\s*>#is', '', $html) ?? $html;
+        $html = preg_replace('#<\s*/?\s*(script|style|iframe|object|embed|form)\b[^>]*>#is', '', $html) ?? $html;
+        $html = preg_replace('#\son\w+\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)#i', '', $html) ?? $html;
+        $html = preg_replace('#\b(href|src)\s*=\s*("|\')\s*(?:javascript|data)\s*:[^"\']*\2#i', '$1=$2#$2', $html) ?? $html;
+        return $html;
+    }
+
     protected static function booted(): void
     {
         static::creating(function (self $article) {
@@ -51,6 +68,9 @@ class NewsArticle extends Model
             if ($article->status === 'published' && empty($article->published_at)) {
                 $article->published_at = now();
             }
+            // Harden rich HTML (defense against XSS in AI-generated / admin content).
+            $article->content_ar = static::sanitizeHtml($article->content_ar);
+            $article->content_en = static::sanitizeHtml($article->content_en);
         });
 
         static::saved(function (self $article) {

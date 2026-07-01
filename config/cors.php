@@ -9,9 +9,9 @@ return [
         'https://wallpaper-frontend-ten.vercel.app',
         'http://localhost:3000',
     ],
-    'allowed_origins_patterns' => [
-        '/^https:\/\/wallpaper-frontend-.*\.vercel\.app$/',
-    ],
+    // No wildcard pattern: anyone could register a matching *.vercel.app subdomain
+    // and (with credentials) read cross-origin responses. Pin to exact origins above.
+    'allowed_origins_patterns' => [],
     'allowed_headers' => ['*'],
     'exposed_headers' => [],
     'max_age' => 86400,

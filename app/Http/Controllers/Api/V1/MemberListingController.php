@@ -78,17 +78,10 @@ class MemberListingController extends Controller
             'contact_telegram'   => 'nullable|string|max:60',
             'specs'              => 'nullable|array',
             'images'             => 'nullable|array|max:3',
-            'images.*'           => 'image|max:5120',
+            'images.*'           => 'image|mimes:jpg,jpeg,png,webp|max:5120',
         ]);
 
-        $paths = [];
-        $disk  = config('filesystems.default', 'public');
-        $visibility = in_array($disk, ['r2', 's3'], true) ? 'private' : 'public';
-        foreach ((array) $request->file('images', []) as $file) {
-            $name = Str::random(40) . '.' . ($file->getClientOriginalExtension() ?: 'jpg');
-            Storage::disk($disk)->putFileAs('market', $file, $name, $visibility);
-            $paths[] = "market/{$name}";
-        }
+        $paths = $this->storeImages($request);
 
         $requireApproval = filter_var(Setting::get('member_listings_require_approval', '1'), FILTER_VALIDATE_BOOLEAN);
 
@@ -127,6 +120,35 @@ class MemberListingController extends Controller
             'data' => ['slug' => $listing->slug, 'status' => $listing->status],
             'message' => $requireApproval ? 'تم استلام إعلانك — بانتظار مراجعة الإدارة' : 'تم نشر إعلانك',
         ], 201);
+    }
+
+    /**
+     * Re-encode each uploaded image to JPEG before storing. This strips EXIF/GPS
+     * and any embedded payload (crafted SVG/polyglot bytes can't survive a raster
+     * re-encode), and uses a random server-side filename. Returns the stored paths.
+     */
+    private function storeImages(Request $request): array
+    {
+        $disk       = config('filesystems.default', 'public');
+        $visibility = in_array($disk, ['r2', 's3'], true) ? 'private' : 'public';
+        $manager    = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
+        $paths      = [];
+
+        foreach ((array) $request->file('images', []) as $file) {
+            try {
+                $img = $manager->read($file->getRealPath());
+                if ($img->width() > 2000) {
+                    $img->scaleDown(width: 2000);
+                }
+                $name = Str::random(40) . '.jpg';
+                Storage::disk($disk)->put("market/{$name}", (string) $img->toJpeg(quality: 85), $visibility);
+                $paths[] = "market/{$name}";
+            } catch (\Throwable) {
+                // Skip anything that can't be decoded as a raster image.
+            }
+        }
+
+        return $paths;
     }
 
     // GET /v1/member/listings/{id} — fetch the member's own listing for editing
@@ -185,20 +207,12 @@ class MemberListingController extends Controller
             'contact_phone'    => 'nullable|string|max:30',
             'contact_whatsapp' => 'nullable|string|max:30',
             'images'           => 'nullable|array|max:3',
-            'images.*'         => 'image|max:5120',
+            'images.*'         => 'image|mimes:jpg,jpeg,png,webp|max:5120',
         ]);
 
         // New images replace the set; no upload keeps the existing images.
         if ($request->hasFile('images')) {
-            $disk       = config('filesystems.default', 'public');
-            $visibility = in_array($disk, ['r2', 's3'], true) ? 'private' : 'public';
-            $paths      = [];
-            foreach ((array) $request->file('images', []) as $file) {
-                $name = Str::random(40) . '.' . ($file->getClientOriginalExtension() ?: 'jpg');
-                Storage::disk($disk)->putFileAs('market', $file, $name, $visibility);
-                $paths[] = "market/{$name}";
-            }
-            $l->images = $paths;
+            $l->images = $this->storeImages($request);
         }
 
         $requireApproval = filter_var(Setting::get('member_listings_require_approval', '1'), FILTER_VALIDATE_BOOLEAN);

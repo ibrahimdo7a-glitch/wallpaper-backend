@@ -157,7 +157,8 @@ class MarketController extends Controller
         };
         $query->orderByDesc('is_featured')->orderBy($sort[0], $sort[1]);
 
-        $items = $query->paginate($request->integer('per_page', 24));
+        // Cap per_page so nobody can dump the whole catalog in one request.
+        $items = $query->paginate(min(48, max(1, $request->integer('per_page', 24))));
 
         return response()->json([
             'data' => collect($items->items())->map(fn ($l) => $this->card($l))->values(),
