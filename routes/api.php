@@ -40,6 +40,10 @@ Route::prefix('v1')->middleware(['throttle:api', App\Http\Middleware\SetLocale::
     Route::get('/member/saves', [\App\Http\Controllers\Api\V1\MemberController::class, 'mySaves'])->middleware('auth:member');
     Route::post('/member/prefs', [\App\Http\Controllers\Api\V1\MemberController::class, 'updatePrefs'])->middleware('auth:member');
 
+    // Member dashboard (stats) + market/news subscriptions
+    Route::get('/member/dashboard', [\App\Http\Controllers\Api\V1\MemberController::class, 'dashboard'])->middleware('auth:member');
+    Route::post('/member/subscriptions', [\App\Http\Controllers\Api\V1\MemberController::class, 'updateSubscriptions'])->middleware(['auth:member', 'throttle:30,1']);
+
     // Public wallpapers
     Route::get('/wallpapers', [WallpaperController::class, 'index']);
     Route::get('/wallpapers/search', [WallpaperController::class, 'search']);

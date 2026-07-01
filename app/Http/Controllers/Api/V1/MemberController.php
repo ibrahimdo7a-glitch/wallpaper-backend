@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\Brand;
 use App\Models\MarketListing;
+use App\Models\Member;
 use App\Models\MemberSave;
+use App\Models\MemberSubscription;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -67,5 +70,71 @@ class MemberController extends Controller
         $data = $request->validate(['news_telegram' => 'required|boolean']);
         $request->user()->update(['news_telegram' => $data['news_telegram']]);
         return response()->json(['news_telegram' => (bool) $data['news_telegram']]);
+    }
+
+    // GET /v1/member/dashboard  — stats + subscriptions + brand options (one call)
+    public function dashboard(Request $request): JsonResponse
+    {
+        /** @var Member $m */
+        $m = $request->user();
+
+        $listings = MarketListing::where('member_id', $m->id);
+        $stats = [
+            'listings_total'     => (clone $listings)->count(),
+            'listings_published' => (clone $listings)->where('status', 'published')->count(),
+            'listings_pending'   => (clone $listings)->where('status', 'pending')->count(),
+            'views_total'        => (int) (clone $listings)->sum('views_count'),
+            'saved_count'        => $m->saves()->count(),
+            'expiring_soon'      => (clone $listings)->where('status', 'published')
+                ->whereNotNull('expires_at')
+                ->whereBetween('expires_at', [now(), now()->addDays(3)])->count(),
+            'member_since'       => $m->created_at?->toIso8601String(),
+        ];
+
+        $subs = MemberSubscription::where('member_id', $m->id)->get();
+        $shape = function (string $channel) use ($subs): array {
+            $row = $subs->firstWhere('channel', $channel);
+            return ['enabled' => (bool) $row, 'brand_id' => $row?->brand_id];
+        };
+
+        return response()->json([
+            'stats' => $stats,
+            'subscriptions' => [
+                'news'  => ['enabled' => (bool) $m->news_telegram],
+                'cars'  => $shape('cars'),
+                'parts' => $shape('parts'),
+            ],
+            'brands' => Brand::active()->orderBy('sort_order')->orderBy('name_ar')->get(['id', 'name_ar']),
+            'telegram_linked' => filled($m->telegram_id),
+        ]);
+    }
+
+    // POST /v1/member/subscriptions  — reconcile all three channels in one call
+    public function updateSubscriptions(Request $request): JsonResponse
+    {
+        $v = $request->validate([
+            'news'           => 'required|boolean',
+            'cars_enabled'   => 'required|boolean',
+            'cars_brand_id'  => 'nullable|integer|exists:brands,id',
+            'parts_enabled'  => 'required|boolean',
+            'parts_brand_id' => 'nullable|integer|exists:brands,id',
+        ]);
+
+        /** @var Member $m */
+        $m = $request->user();
+        $m->update(['news_telegram' => $v['news']]);
+        $this->syncChannel($m, 'cars', (bool) $v['cars_enabled'], $v['cars_brand_id'] ?? null);
+        $this->syncChannel($m, 'parts', (bool) $v['parts_enabled'], $v['parts_brand_id'] ?? null);
+
+        return response()->json(['ok' => true]);
+    }
+
+    /** Replace a member's rows for one channel with the desired single-brand (or all) state. */
+    private function syncChannel(Member $m, string $channel, bool $enabled, ?int $brandId): void
+    {
+        MemberSubscription::where('member_id', $m->id)->where('channel', $channel)->delete();
+        if ($enabled) {
+            MemberSubscription::create(['member_id' => $m->id, 'channel' => $channel, 'brand_id' => $brandId]);
+        }
     }
 }

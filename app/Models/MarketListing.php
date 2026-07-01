@@ -27,11 +27,12 @@ class MarketListing extends Model
         return [
             'specs'           => 'array',
             'images'          => 'array',
-            'is_negotiable'   => 'boolean',
-            'is_paid_listing' => 'boolean',
-            'is_featured'     => 'boolean',
-            'published_at'    => 'datetime',
-            'expires_at'      => 'datetime',
+            'is_negotiable'        => 'boolean',
+            'is_paid_listing'      => 'boolean',
+            'is_featured'          => 'boolean',
+            'subscribers_notified' => 'boolean',
+            'published_at'         => 'datetime',
+            'expires_at'           => 'datetime',
         ];
     }
 
@@ -60,6 +61,95 @@ class MarketListing extends Model
                 }
             }
         });
+
+        // On first publish, DM every member subscribed to this channel (cars/parts) —
+        // either to all listings or to this listing's brand. Once-only (subscribers_notified),
+        // dispatched after the response, throttled under Telegram's limits.
+        static::saved(function (self $l) {
+            if ($l->status !== 'published' || $l->subscribers_notified || ! $l->subscriptionChannel()) {
+                return;
+            }
+
+            \Illuminate\Support\Facades\DB::table('market_listings')
+                ->where('id', $l->id)->update(['subscribers_notified' => true]);
+
+            $id = $l->id;
+            dispatch(function () use ($id) {
+                try {
+                    $l = static::find($id);
+                    if (! $l || ! ($channel = $l->subscriptionChannel())) {
+                        return;
+                    }
+                    $caption = $l->telegramSubscriberCaption();
+                    $tg = app(\App\Services\TelegramService::class);
+
+                    $memberIds = \App\Models\MemberSubscription::where('channel', $channel)
+                        ->where(function ($q) use ($l) {
+                            $q->whereNull('brand_id');
+                            if ($l->brand_id) {
+                                $q->orWhere('brand_id', $l->brand_id);
+                            }
+                        })
+                        ->pluck('member_id')->unique();
+
+                    if ($memberIds->isEmpty()) {
+                        return;
+                    }
+
+                    \App\Models\Member::whereIn('id', $memberIds)
+                        ->where('status', 'active')->whereNotNull('telegram_id')
+                        ->select('telegram_id')->chunk(50, function ($members) use ($tg, $caption) {
+                            foreach ($members as $m) {
+                                $tg->sendMessage((string) $m->telegram_id, $caption);
+                                usleep(40000); // ~25/sec, under Telegram limits
+                            }
+                        });
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error('listing subscriber notify failed: ' . $e->getMessage());
+                }
+            })->afterResponse();
+        });
+    }
+
+    /** Which subscription channel this listing belongs to (null = not notifiable). */
+    public function subscriptionChannel(): ?string
+    {
+        return match ($this->listing_type) {
+            'car_sale', 'car_request' => 'cars',
+            'part', 'accessory'       => 'parts',
+            default                   => null,
+        };
+    }
+
+    /** DM body sent to subscribers when this listing goes live. */
+    public function telegramSubscriberCaption(): string
+    {
+        $front = rtrim(config('app.frontend_url', 'https://qev.app'), '/');
+        $price = $this->price !== null
+            ? number_format((float) $this->price, 0) . ' ' . $this->currency
+            : 'حسب الطلب';
+        $loc  = trim(implode('، ', array_filter([$this->city, $this->country])));
+        $head = match ($this->listing_type) {
+            'car_sale'    => '🚗 سيارة جديدة للبيع',
+            'car_request' => '🔎 طلب سيارة جديد',
+            'part'        => '🔧 قطعة غيار جديدة',
+            'accessory'   => '🎁 إكسسوار جديد',
+            default       => '🛒 إعلان جديد',
+        };
+
+        $lines = [
+            "<b>{$head}</b>",
+            '«' . e($this->title_ar) . '»',
+            '💰 ' . e($price) . ($this->is_negotiable ? ' • قابل للتفاوض' : ''),
+        ];
+        if ($loc) {
+            $lines[] = '📍 ' . e($loc);
+        }
+        $lines[] = '';
+        $lines[] = '🔗 <a href="' . e("{$front}/ar/market/{$this->slug}") . '">تفاصيل الإعلان</a>';
+        $lines[] = '⚙️ <a href="' . e("{$front}/ar/account") . '">إدارة اشتراكاتك</a>';
+
+        return implode("\n", $lines);
     }
 
     public function category()
