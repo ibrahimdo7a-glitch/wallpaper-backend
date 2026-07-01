@@ -209,6 +209,11 @@ class UserResource extends Resource
                     ->label('مفعل')
                     ->boolean(),
 
+                Tables\Columns\IconColumn::make('telegram_chat_id')
+                    ->label('تلجرام')
+                    ->boolean()
+                    ->state(fn ($record) => filled($record->telegram_chat_id)),
+
                 Tables\Columns\TextColumn::make('last_login_at')
                     ->label('آخر دخول')
                     ->dateTime('d/m/Y H:i')
