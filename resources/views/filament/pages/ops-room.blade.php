@@ -72,6 +72,25 @@
             @endforeach
         </div>
 
+        {{-- ── Content + community totals ── --}}
+        @php $c = $this->ops['counts'] ?? []; @endphp
+        <div class="ops-tile ops-s3">
+            <div class="ops-kpi">{{ number_format($c['members'] ?? 0) }}</div>
+            <div class="ops-cap">👥 الأعضاء</div>
+        </div>
+        <div class="ops-tile ops-s3">
+            <div class="ops-kpi">{{ number_format($c['wallpapers'] ?? 0) }}</div>
+            <div class="ops-cap">🖼️ الخلفيات</div>
+        </div>
+        <div class="ops-tile ops-s3">
+            <div class="ops-kpi">{{ number_format($c['apps'] ?? 0) }}</div>
+            <div class="ops-cap">📱 البرامج</div>
+        </div>
+        <div class="ops-tile ops-s3">
+            <div class="ops-kpi">{{ number_format($c['listings'] ?? 0) }}</div>
+            <div class="ops-cap">🛒 الإعلانات</div>
+        </div>
+
         {{-- ── Task queue ── --}}
         <div class="ops-head">🚨 يحتاج إجراءك</div>
         @foreach($this->ops['tasks'] ?? [] as $t)

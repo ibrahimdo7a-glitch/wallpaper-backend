@@ -57,6 +57,7 @@ class Dashboard extends BaseDashboard
 
         $this->ops = [
             'pulse'         => $this->pulse($svc),
+            'counts'        => $this->contentCounts(),
             'tasks'         => $this->tasks(),
             'launch'        => $this->launch(),
             'activity'      => $this->activity(),
@@ -100,6 +101,18 @@ class Dashboard extends BaseDashboard
             'visitors_today'       => $visitorsToday,
             'registrations_today'  => $registrationsToday,
             'system'               => $system,
+        ];
+    }
+
+    // ─── content + community totals ──────────────────────────────────────────
+
+    private function contentCounts(): array
+    {
+        return [
+            'members'    => $this->safeCount(fn () => Member::count()),
+            'wallpapers' => $this->safeCount(fn () => ContentItem::where('content_type', 'wallpapers')->where('status', 'published')->count()),
+            'apps'       => $this->safeCount(fn () => AndroidApp::where('status', 'published')->count()),
+            'listings'   => $this->safeCount(fn () => MarketListing::where('status', 'published')->count()),
         ];
     }
 
