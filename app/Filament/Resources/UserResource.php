@@ -211,8 +211,12 @@ class UserResource extends Resource
 
                 Tables\Columns\IconColumn::make('telegram_chat_id')
                     ->label('تلجرام')
+                    ->getStateUsing(fn ($record) => filled($record->telegram_chat_id))
                     ->boolean()
-                    ->state(fn ($record) => filled($record->telegram_chat_id)),
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('danger'),
 
                 Tables\Columns\TextColumn::make('last_login_at')
                     ->label('آخر دخول')
